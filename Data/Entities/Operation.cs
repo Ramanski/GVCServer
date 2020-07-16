@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace GVCServer.Models
+namespace GVCServer.Data.Entities
 {
-    public partial class Operations
+    public partial class Operation
     {
-        public Operations()
+        public Operation()
         {
+            OpTrain = new HashSet<OpTrain>();
             OpVag = new HashSet<OpVag>();
         }
 
@@ -14,7 +15,9 @@ namespace GVCServer.Models
         public string Code { get; set; }
         public string Mnemonic { get; set; }
         public string Name { get; set; }
+        public string Message { get; set; }
 
+        public virtual ICollection<OpTrain> OpTrain { get; set; }
         public virtual ICollection<OpVag> OpVag { get; set; }
     }
 }

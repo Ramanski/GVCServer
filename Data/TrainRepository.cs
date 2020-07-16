@@ -15,7 +15,17 @@ namespace GVCServer.Data
             _context = context;
         }
 
-        public Task<string> AddTrain(Trains train, string station)
+        public Task<string> AddTrainAsync(Trains train, string station)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> Appendix(string index, string station)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> Arrival(string index, string station)
         {
             throw new NotImplementedException();
         }
@@ -25,23 +35,32 @@ namespace GVCServer.Data
             throw new NotImplementedException();
         }
 
-
-        public List<Trains> GetActualTrains(string station, bool detailed = false)
-        {
-            var actualTrains = _context.Trains.Where(t => t.Ksnz == station);
-        }
-
-        public Task<IEnumerable<Trains>> GetAllTrains()
+        public Task<bool> Departure(string index, string station)
         {
             throw new NotImplementedException();
         }
 
-        public Task<Trains> GetTrainAsync(string index, bool detailed = false)
+        public Task<bool> Disbanding(string index, string station)
         {
             throw new NotImplementedException();
         }
 
-        public Task<bool> PutTrain(string index, Trains train, string station)
+        public Task<Trains[]> GetComingTrainsAsync(string station, bool detailed)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Trains> GetTrainAsync(string index)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> Proceed(string index, string station)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> PutTrainAsync(string index, List<Cars> cars, string station)
         {
             throw new NotImplementedException();
         }
