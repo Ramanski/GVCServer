@@ -7,9 +7,7 @@ using System.Threading.Tasks;
 namespace GVCServer.Data
 {
     interface ITrainRepository
-    {
-        Task<IEnumerable<Trains>> GetAllTrains();
-        
+    {        
         /// <summary>
         /// Выдача ТГНЛ на поезд
         /// </summary>
@@ -19,7 +17,7 @@ namespace GVCServer.Data
         Task<Trains> GetTrainAsync(string index);
 
         /// <summary>
-        /// Корректировка сведений о составе поезда (сообщение 09, P0073)
+        /// Корректировка сведений о составе поезда (сообщение 09, P0071, P0072, P0073)
         /// </summary>
         /// <param name="index"></param>    
         /// <param name="cars"></param>
@@ -41,7 +39,7 @@ namespace GVCServer.Data
         /// <param name="station">Станция прибытия</param>
         /// <param name="detailed">Полнота сведений о поезде</param>
         /// <returns>Информация по поезду в объеме ТГНЛ либо общие сведения</returns>
-        Task<Trains[]> GetActualTrainsAsync(string station, bool detailed);
+        Task<Trains[]> GetComingTrainsAsync(string station, bool detailed);
 
         /// <summary>
         /// Отмена ТГНЛ (сообщение 333)
@@ -73,14 +71,6 @@ namespace GVCServer.Data
         /// <param name="station">Станция совершения операции</param>
         /// <returns></returns>
         Task<bool> Proceed(string index, string station);
-
-        /// <summary>
-        /// Оформление операции расформирования поезда (203, P0004)
-        /// </summary>
-        /// <param name="index">Индекс поезда</param>
-        /// <param name="station">Станция совершения операции</param>
-        /// <returns></returns>
-        Task<bool> Disbanding(string index, string station);
 
         /// <summary>
         /// Оформление операции расформирования поезда (203, P0004)
