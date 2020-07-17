@@ -9,6 +9,7 @@ namespace GVCServer.Data.Entities
         {
             OpTrain = new HashSet<OpTrain>();
             OpVag = new HashSet<OpVag>();
+            PlanForm = new HashSet<PlanForm>();
         }
 
         public string Code { get; set; }
@@ -18,5 +19,6 @@ namespace GVCServer.Data.Entities
 
         public virtual ICollection<OpTrain> OpTrain { get; set; }
         public virtual ICollection<OpVag> OpVag { get; set; }
+        public virtual ICollection<PlanForm> PlanForm { get; set; }
     }
 }

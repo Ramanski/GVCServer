@@ -22,8 +22,10 @@ namespace GVCServer.Data.Entities
         public virtual DbSet<OpTrain> OpTrain { get; set; }
         public virtual DbSet<OpVag> OpVag { get; set; }
         public virtual DbSet<Operation> Operation { get; set; }
+        public virtual DbSet<PlanForm> PlanForm { get; set; }
         public virtual DbSet<Station> Station { get; set; }
         public virtual DbSet<Train> Train { get; set; }
+        public virtual DbSet<TrainKind> TrainKind { get; set; }
         public virtual DbSet<Vagon> Vagon { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -31,7 +33,7 @@ namespace GVCServer.Data.Entities
             if (!optionsBuilder.IsConfigured)
             {
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
-                optionsBuilder.UseSqlServer("Server=DESKTOP-OAQDEMQ\\RAILSQL;Database=IVCStorage;Trusted_Connection=True;MultipleActiveResultSets=true");
+                optionsBuilder.UseSqlServer("Server=DESKTOP-OAQDEMQ\\RAILSQL;Database=IVCStorage;Trusted_Connection=True;");
             }
         }
 
@@ -191,6 +193,47 @@ namespace GVCServer.Data.Entities
                 entity.Property(e => e.Name).HasMaxLength(100);
             });
 
+            modelBuilder.Entity<PlanForm>(entity =>
+            {
+                entity.Property(e => e.Id).HasColumnName("ID");
+
+                entity.Property(e => e.FormStation)
+                    .IsRequired()
+                    .HasMaxLength(6)
+                    .IsUnicode(false)
+                    .IsFixedLength();
+
+                entity.Property(e => e.HighRange)
+                    .IsRequired()
+                    .HasMaxLength(6)
+                    .IsUnicode(false)
+                    .IsFixedLength();
+
+                entity.Property(e => e.LowRange)
+                    .IsRequired()
+                    .HasMaxLength(6)
+                    .IsUnicode(false)
+                    .IsFixedLength();
+
+                entity.Property(e => e.TargetStation)
+                    .IsRequired()
+                    .HasMaxLength(6)
+                    .IsUnicode(false)
+                    .IsFixedLength();
+
+                entity.HasOne(d => d.FormStationNavigation)
+                    .WithMany(p => p.PlanForm)
+                    .HasForeignKey(d => d.FormStation)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_PlanForm_Sta");
+
+                entity.HasOne(d => d.TrainKindNavigation)
+                    .WithMany(p => p.PlanForm)
+                    .HasForeignKey(d => d.TrainKind)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_PlanForm_TrainKind");
+            });
+
             modelBuilder.Entity<Station>(entity =>
             {
                 entity.HasKey(e => e.Code)
@@ -206,9 +249,8 @@ namespace GVCServer.Data.Entities
                     .IsFixedLength();
 
                 entity.Property(e => e.Mnemonic)
-                    .HasMaxLength(5)
-                    .IsUnicode(false)
-                    .IsFixedLength();
+                    .HasMaxLength(6)
+                    .IsUnicode(false);
 
                 entity.Property(e => e.Name)
                     .IsRequired()
@@ -270,6 +312,20 @@ namespace GVCServer.Data.Entities
                     .HasComment("НОМЕР ПОЕЗДА");
 
                 entity.Property(e => e.WeightBrutto).HasComment("ВЕС БРУТТО ПОЕЗДА");
+            });
+
+            modelBuilder.Entity<TrainKind>(entity =>
+            {
+                entity.HasKey(e => e.Code);
+
+                entity.Property(e => e.Mnemocode)
+                    .IsRequired()
+                    .HasMaxLength(10)
+                    .IsFixedLength();
+
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(50);
             });
 
             modelBuilder.Entity<Vagon>(entity =>

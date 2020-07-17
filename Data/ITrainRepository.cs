@@ -1,4 +1,5 @@
-﻿using GVCServer.Models;
+﻿using GVCServer.Data.Entities;
+using GVCServer.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace GVCServer.Data
 {
-    interface ITrainRepository
+    public interface ITrainRepository
     {        
         /// <summary>
         /// Выдача ТГНЛ на поезд
@@ -14,7 +15,7 @@ namespace GVCServer.Data
         /// <param name="index">Индекс поезда</param>
         /// <param name="detailed"></param>
         /// <returns></returns>
-        Task<Trains> GetTrainAsync(string index);
+        Task<Train> GetTrainAsync(string index);
 
         /// <summary>
         /// Корректировка сведений о составе поезда (сообщение 09, P0071, P0072, P0073)
@@ -23,7 +24,7 @@ namespace GVCServer.Data
         /// <param name="cars"></param>
         /// <param name="station"></param>
         /// <returns></returns>
-        Task<bool> PutTrainAsync(string index, List<Cars> cars, string station);
+        Task<bool> PutTrainAsync(string index, List<Vagon> cars, string station);
 
         /// <summary>
         /// Запись поезда из ТНГЛ (сообщение 02, P0005)
@@ -31,7 +32,7 @@ namespace GVCServer.Data
         /// <param name="train">Инфо по составу поезда</param>
         /// <param name="station">Станция передачи инфо</param>
         /// <returns></returns>
-        Task<string> AddTrainAsync(Trains train, string station);
+        Task<string> AddTrainAsync(Train train, string station);
 
         /// <summary>
         /// Получение ТГНЛ на прибывающие поезда
@@ -39,7 +40,7 @@ namespace GVCServer.Data
         /// <param name="station">Станция прибытия</param>
         /// <param name="detailed">Полнота сведений о поезде</param>
         /// <returns>Информация по поезду в объеме ТГНЛ либо общие сведения</returns>
-        Task<Trains[]> GetComingTrainsAsync(string station, bool detailed);
+        Task<Train[]> GetComingTrainsAsync(string station, bool detailed);
 
         /// <summary>
         /// Отмена ТГНЛ (сообщение 333)
