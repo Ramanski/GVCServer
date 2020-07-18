@@ -7,17 +7,13 @@ namespace GVCServer.Data.Entities
 {
     public partial class IVCStorageContext : DbContext
     {
-        public IVCStorageContext(IConfiguration configuration)
+        private IConfiguration Configuration { get; }
+
+        public IVCStorageContext(DbContextOptions options, IConfiguration configuration) : base(options)
         {
             Configuration = configuration;
         }
 
-        public IConfiguration Configuration { get; }
-
-        public IVCStorageContext(DbContextOptions<IVCStorageContext> options)
-            : base(options)
-        {
-        }
 
         public virtual DbSet<OpTrain> OpTrain { get; set; }
         public virtual DbSet<OpVag> OpVag { get; set; }
@@ -140,11 +136,12 @@ namespace GVCServer.Data.Entities
 
                 entity.Property(e => e.TrainId).HasComment("Поезд");
 
-                entity.Property(e => e.VagonId)
+                entity.Property(e => e.VagonNum)
                     .IsRequired()
                     .HasMaxLength(8)
                     .IsUnicode(false)
                     .IsFixedLength()
+                    .HasColumnName("VagonId")
                     .HasComment("Номер вагона");
 
                 entity.Property(e => e.WeightNetto).HasDefaultValueSql("((0))");
@@ -164,7 +161,7 @@ namespace GVCServer.Data.Entities
 
                 entity.HasOne(d => d.Vagon)
                     .WithMany(p => p.OpVag)
-                    .HasForeignKey(d => d.VagonId)
+                    .HasForeignKey(d => d.VagonNum)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_OP_VAG_Cars");
             });
@@ -295,13 +292,6 @@ namespace GVCServer.Data.Entities
                     .HasComment("ИНДЕКС НЕГАБАРИТНОСТИ");
 
                 entity.Property(e => e.SequenceSign).HasComment("ПРИЗНАК СПИСЫВАНИЯ СОСТАВА");
-
-                entity.Property(e => e.SourceStation)
-                    .IsRequired()
-                    .HasMaxLength(6)
-                    .IsUnicode(false)
-                    .IsFixedLength()
-                    .HasComment("КОД СТАНЦИИ ПЕРЕДАЧИ ИНФОРМАЦИИ");
 
                 entity.Property(e => e.TrainNum)
                     .IsRequired()

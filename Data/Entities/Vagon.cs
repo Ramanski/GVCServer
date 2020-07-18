@@ -11,7 +11,8 @@ namespace GVCServer.Data.Entities
         }
 
         public string Nv { get; set; }
-        public short? Ksob { get; set; }
+        public short Ksob { get; set; }
+        public short Kind { get; set; }
         public short Tvag { get; set; }
 
         public virtual ICollection<OpVag> OpVag { get; set; }

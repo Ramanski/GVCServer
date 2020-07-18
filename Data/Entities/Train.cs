@@ -11,7 +11,6 @@ namespace GVCServer.Data.Entities
         }
 
         public Guid Uid { get; set; }
-        public string SourceStation { get; set; }
         public string TrainNum { get; set; }
         public string FormNode { get; set; }
         public byte Ordinal { get; set; }

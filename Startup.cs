@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore.SqlServer;
+using GVCServer.Data;
 
 namespace GVCServer
 {
@@ -32,6 +33,7 @@ namespace GVCServer
         {
             services.AddControllers();
             services.AddAutoMapper(typeof(Startup));
+            services.AddScoped<ITrainRepository, TrainRepository>();
             services.AddDbContext<IVCStorageContext>(options =>
                     options.UseSqlServer(Configuration.GetConnectionString("IVCStorage")));
         }

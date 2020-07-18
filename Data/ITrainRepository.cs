@@ -15,7 +15,7 @@ namespace GVCServer.Data
         /// <param name="index">Индекс поезда</param>
         /// <param name="detailed"></param>
         /// <returns></returns>
-        Task<Train> GetTrainAsync(string index);
+        Task<TrainList> GetTrainAsync(string index);
 
         /// <summary>
         /// Корректировка сведений о составе поезда (сообщение 09, P0071, P0072, P0073)
@@ -40,7 +40,7 @@ namespace GVCServer.Data
         /// <param name="station">Станция прибытия</param>
         /// <param name="detailed">Полнота сведений о поезде</param>
         /// <returns>Информация по поезду в объеме ТГНЛ либо общие сведения</returns>
-        Task<Train[]> GetComingTrainsAsync(string station, bool detailed);
+        Task<TrainSummary[]> GetComingTrainsAsync(string station);
 
         /// <summary>
         /// Отмена ТГНЛ (сообщение 333)

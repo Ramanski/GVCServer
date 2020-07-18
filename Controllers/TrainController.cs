@@ -4,15 +4,17 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using GVCServer.Data;
+using GVCServer.Data.Entities;
 using GVCServer.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 using Microsoft.Extensions.Logging;
 
 namespace GVCServer.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("{station}/[controller]")]
     public class TrainController : ControllerBase
     {
         private readonly ITrainRepository _trainRepository;
@@ -26,20 +28,26 @@ namespace GVCServer.Controllers
             _mapper = mapper;
         }
 
+
         [HttpGet]
-        public async Task<ActionResult<TrainUndetailed[]>> Get(bool includeVagons = false)
+        public async Task<ActionResult<TrainSummary[]>> Get(string station)
         {
             try
             {
-                var result = await _trainRepository.GetComingTrainsAsync("123456", includeVagons);
+                TrainSummary[] result = await _trainRepository.GetComingTrainsAsync(station);
 
-                //  return _imapper.Map<CampModel[]>(result);
-                //return null;
-            return new OkObjectResult ( new { Monika = "ATL2020", Name = "Atlanta Code Camp" });
+                if (result.Length == 0)
+                {
+                    return new NotFoundObjectResult($"Нет поездов назначением на станцию {station}");
+                }
+                else
+                {
+                    return result;
+                }
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                return new StatusCodeResult(StatusCodes.Status501NotImplemented);
+                return new ObjectResult(e.Message);
             }
         }
 
