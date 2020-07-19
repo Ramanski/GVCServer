@@ -70,9 +70,38 @@ namespace GVCServer.Data
             else return null;
         }
 
-        public Task<TrainList> GetTrainAsync(string index)
+        public async Task<TrainList> GetTrainAsync(string index)
         {
-            throw new NotImplementedException();
+            TrainList trainList;
+            Train train;
+            List<OpVag> vagons;
+
+            try
+            {
+                int[] trainParams = DefineIndex(index);
+
+                train = await _context.Train
+                                      .Where(t => t.FormNode == trainParams[0].ToString() && t.Ordinal == trainParams[1] && t.DestinationNode == trainParams[2].ToString())
+                                      .OrderByDescending(t=> t.FormTime)
+                                      .FirstOrDefaultAsync();
+                if (train == null)
+                {
+                    throw new KeyNotFoundException($"Не найдена информация по индексу запрашиваемого поезда: {index}");
+                }
+
+                vagons = await _context.OpVag
+                                       .Where(o => o.TrainId.Equals(train.Uid) && o.CodeOper == "P0005")
+                                       .Include(o => o.Vagon)
+                                       .ToListAsync();
+
+                trainList = _imapper.Map<TrainList>(train);
+                trainList.Vagons = _imapper.Map<List<VagonModel>>(vagons);
+                return trainList;
+            }
+            catch(Exception e)
+            {
+                throw e;
+            }
         }
 
         public Task<bool> Proceed(string index, string station)
@@ -84,5 +113,25 @@ namespace GVCServer.Data
         {
             throw new NotImplementedException();
         }
+
+        private int[] DefineIndex(string index)
+        {
+            int[] trainParams = new int[3];
+            string[] indexParams;
+            
+            indexParams = index.Split(' ', 3);
+            
+            if (indexParams.Length != 3 || index.Length != 13)
+                throw new FormatException($"Неверно задан индекс запрашиваемого поезда: {index}");
+
+            for(byte i=0; i<3; i++)
+            {
+                if(!Int32.TryParse(indexParams[i], out trainParams[i]))
+                    throw new FormatException($"Невозможно определить параметр из индекса: {trainParams[i]}");
+            }
+
+            return trainParams;
+        }
+
     }
 }

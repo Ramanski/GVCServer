@@ -22,5 +22,6 @@ namespace GVCServer.Data.Entities
         public string Oversize { get; set; }
 
         public virtual ICollection<OpTrain> OpTrain { get; set; }
+        public virtual ICollection<OpVag> OpVag { get; set; }
     }
 }

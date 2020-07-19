@@ -22,5 +22,6 @@ namespace GVCServer.Data.Entities
         public virtual Operation CodeOperNavigation { get; set; }
         public virtual Station SourceNavigation { get; set; }
         public virtual Vagon Vagon { get; set; }
+        public virtual Train Train { get; set; }
     }
 }

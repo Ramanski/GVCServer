@@ -38,6 +38,7 @@ namespace GVCServer.Controllers
 
                 if (result.Length == 0)
                 {
+                    // TODO: Заменить номер станции на название
                     return new NotFoundObjectResult($"Нет поездов назначением на станцию {station}");
                 }
                 else
@@ -50,6 +51,30 @@ namespace GVCServer.Controllers
                 return new ObjectResult(e.Message);
             }
         }
+
+
+        [HttpGet("{index}")]
+        public async Task<ActionResult<TrainList>> Get(string station, string index)
+        {
+            try
+            {
+                TrainList result = await _trainRepository.GetTrainAsync(index);
+
+                if (result.Length == 0)
+                {
+                    return new NotFoundObjectResult($"Не найдено поездов по запрашиваемому индексу {index}");
+                }
+                else
+                {
+                    return result;
+                }
+            }
+            catch (Exception e)
+            {
+                return new ObjectResult(e.Message);
+            }
+        }
+
 
     }
 }

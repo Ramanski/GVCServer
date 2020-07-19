@@ -19,7 +19,6 @@ namespace GVCServer.Models
 
     public class TrainList
     {
-        public string SourceStation { get; set; }
         public string TrainNum { get; set; }
         public string Index { get; set; }
         public DateTime FormTime { get; set; }

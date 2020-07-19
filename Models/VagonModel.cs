@@ -10,6 +10,7 @@ namespace GVCServer.Models
         public byte SequenceNum { get; set; }
         public string VagonNum { get; set; }
         public short Ksob { get; set; }
+        public short Kind { get; set; }
         public short Tvag { get; set; }
         public string Destination { get; set; }
         public short WeightNetto { get; set; }
