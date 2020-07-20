@@ -8,7 +8,7 @@ namespace GVCServer.Data.Entities
         public Guid Uid { get; set; }
         public DateTime? Msgid { get; set; }
         public string VagonNum { get; set; }
-        public short NumRoute { get; set; }
+        public short? NumRoute { get; set; }
         public string CodeOper { get; set; }
         public string Source { get; set; }
         public DateTime? DateOper { get; set; }

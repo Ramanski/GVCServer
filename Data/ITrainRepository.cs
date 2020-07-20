@@ -29,10 +29,10 @@ namespace GVCServer.Data
         /// <summary>
         /// Запись поезда из ТНГЛ (сообщение 02, P0005)
         /// </summary>
-        /// <param name="train">Инфо по составу поезда</param>
+        /// <param name="trainList">Инфо по составу поезда</param>
         /// <param name="station">Станция передачи инфо</param>
         /// <returns></returns>
-        Task<string> AddTrainAsync(Train train, string station);
+        Task<bool> AddTrainAsync(TrainList trainList, string station);
 
         /// <summary>
         /// Получение ТГНЛ на прибывающие поезда

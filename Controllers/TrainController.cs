@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using AutoMapper;
 using GVCServer.Data;
@@ -28,6 +29,13 @@ namespace GVCServer.Controllers
             _mapper = mapper;
         }
 
+
+        [HttpPost]
+        public async Task<ActionResult<bool>> Post(TrainList trainList, string station)
+        {
+            //TrainList trainList = (TrainList) JsonSerializer.Deserialize(json, typeof(TrainList));
+            return await _trainRepository.AddTrainAsync(trainList, station);
+        }
 
         [HttpGet]
         public async Task<ActionResult<TrainSummary[]>> Get(string station)

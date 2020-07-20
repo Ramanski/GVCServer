@@ -20,9 +20,51 @@ namespace GVCServer.Data
             _imapper = imapper;
         }
 
-        public Task<string> AddTrainAsync(Train train, string station)
+        public async Task<bool> AddTrainAsync(TrainList trainList, string station)
         {
-            throw new NotImplementedException();
+            Train train;
+            OpTrain opTrain;
+            List<OpVag> opVag;
+
+            try
+            {
+                train = _imapper.Map<Train>(trainList);
+                opTrain = new OpTrain
+                {
+                    SourceStation = station,
+                    Datop = trainList.FormTime,
+                    Kop = "P0005",
+                    Msgid = DateTime.Now,
+                    Train = train
+                };
+
+                opVag = _imapper.Map<List<OpVag>>(trainList.Vagons);
+                foreach(OpVag vagon in opVag)
+                {
+                    vagon.Source = station;
+                    vagon.Train = train;
+                    vagon.CodeOper = "P0005";
+                    vagon.Msgid = DateTime.Now;
+                    vagon.PlanForm = _context.Station.Where(s => s.Code.StartsWith(train.DestinationNode)).Select(s => s.Code).FirstOrDefault();
+                    Vagon vag = _context.Vagon
+                                        .Where(v => v.Nv == vagon.VagonNum)
+                                        .SingleOrDefault();
+                    if (vag == null)
+                        throw new KeyNotFoundException($"Не найден вагон {vagon.VagonNum} в картотеке БД");
+                    else
+                        vagon.Vagon = vag;
+                }
+
+                await _context.AddAsync(train);
+                await _context.AddAsync(opTrain);
+                await _context.AddRangeAsync(opVag);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
         }
 
         public Task<bool> Appendix(string index, string station)
