@@ -117,7 +117,7 @@ namespace GVCServer.Data.Entities
                     .HasDefaultValueSql("(getdate())")
                     .HasComment("Дата и время сообщения");
 
-                entity.Property(e => e.NumRoute).HasComment("Номер рейса вагона");
+                entity.Property(e => e.LastOper).HasComment("Последняя операция");
 
                 entity.Property(e => e.PlanForm)
                     .HasMaxLength(6)

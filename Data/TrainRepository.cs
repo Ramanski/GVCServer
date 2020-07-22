@@ -2,6 +2,7 @@
 using GVCServer.Data.Entities;
 using GVCServer.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -67,29 +68,99 @@ namespace GVCServer.Data
             }
         }
 
-        public Task<bool> Appendix(string index, string station)
+        public async Task<bool> ProcessTrain(string index, string station, DateTime timeOper, string codeOper)
         {
-            throw new NotImplementedException();
+            Train train = await FindTrain(index);
+            OpTrain arrival = new OpTrain()
+            {
+                Datop = timeOper,
+                Kop = codeOper,
+                Msgid = DateTime.Now,
+                SourceStation = station,
+                Train = train
+            };
+            await _context.OpTrain.AddAsync(arrival);
+            return await _context.SaveChangesAsync() != 0;
         }
 
-        public Task<bool> Arrival(string index, string station)
+        public async Task<bool> DeleteVagonOperaions(string index, string vagonNum)
         {
-            throw new NotImplementedException();
+            Train train;
+            OpVag[] vagonOperations;
+
+            if(string.IsNullOrEmpty(vagonNum))
+            {
+                train = await FindTrain(index);
+                vagonOperations =  await _context.OpVag.Where(o => o.Train == train && o.LastOper).ToArrayAsync();
+            }
+            else
+            {
+                vagonOperations = await _context.OpVag.Where(o => o.VagonNum == vagonNum && o.LastOper).ToArrayAsync();
+            }
+
+            _context.OpVag.RemoveRange(vagonOperations);
+
+            return await _context.SaveChangesAsync() != 0;
         }
 
-        public Task<bool> DeleteTrain(string index)
+        public async Task<bool> DeleteTrainOperaion(string index)
         {
-            throw new NotImplementedException();
+            Train train;
+            OpTrain trainOperation;
+
+            train = await FindTrain(index);
+            trainOperation= await _context.OpTrain.Where(o => o.Train == train && o.LastOper).FirstOrDefaultAsync();
+            _context.OpTrain.Remove(trainOperation);
+
+            return await _context.SaveChangesAsync() != 0;
         }
 
-        public Task<bool> Departure(string index, string station)
+        public async Task<bool> DisbandTrain(string index, string station)
         {
-            throw new NotImplementedException();
+            Train train = await FindTrain(index);
+            OpVag[] vagonOperations = await _context.OpVag
+                                                        .Where(o => o.Train == train && o.LastOper)
+                                                        .ToArrayAsync();
+            OpVag[] vagonsDisbanding = new OpVag[vagonOperations.Length];
+            Array.Copy(vagonOperations, vagonsDisbanding, vagonOperations.Length);
+            foreach (OpVag vagon in vagonsDisbanding)
+            {
+                vagon.Train = null;
+                vagon.CodeOper = "P0004";
+                vagon.Source = station;
+                vagon.Msgid = DateTime.Now;
+            }
+
+            return await _context.SaveChangesAsync() != 0;
         }
 
-        public Task<bool> Disbanding(string index, string station)
+        public async Task<bool> DetachVagons(string index, string[] vagonNums, string station)
         {
-            throw new NotImplementedException();
+            Train train = await FindTrain(index);
+            List<OpVag> oldList = await _context.OpVag
+                                               .Where(o => o.Train == train && o.LastOper)
+                                               .ToListAsync();
+            short deltaWeight = 0;
+
+            foreach (string vagonNum in vagonNums)
+            {
+                OpVag oldVagon = oldList.Where(ol => ol.VagonNum == vagonNum).FirstOrDefault();
+                if (oldVagon == null)
+                {
+                    throw new ArgumentException($"Отцепляемый вагон {vagonNum} в поезде {index} отсутствует!");
+                }
+                deltaWeight += oldVagon.WeightNetto;
+                OpVag newVagon = oldVagon;
+                newVagon.CodeOper = "P0072";
+                newVagon.Train = null;
+                newVagon.Source = station;
+                newVagon.Msgid = DateTime.Now;
+                await _context.OpVag.AddAsync(newVagon);
+            }
+            train.WeightBrutto -= deltaWeight;
+            train.Length -= (short)vagonNums.Length;
+            _context.Train.Update(train);
+            return await _context.SaveChangesAsync() != 0;
         }
 
         public async Task<TrainSummary[]> GetComingTrainsAsync(string station)
@@ -120,19 +191,9 @@ namespace GVCServer.Data
 
             try
             {
-                int[] trainParams = DefineIndex(index);
-
-                train = await _context.Train
-                                      .Where(t => t.FormNode == trainParams[0].ToString() && t.Ordinal == trainParams[1] && t.DestinationNode == trainParams[2].ToString())
-                                      .OrderByDescending(t=> t.FormTime)
-                                      .FirstOrDefaultAsync();
-                if (train == null)
-                {
-                    throw new KeyNotFoundException($"Не найдена информация по индексу запрашиваемого поезда: {index}");
-                }
-
+                train = await FindTrain(index);
                 vagons = await _context.OpVag
-                                       .Where(o => o.TrainId.Equals(train.Uid) && o.CodeOper == "P0005")
+                                       .Where(o => o.TrainId.Equals(train.Uid) && o.LastOper)
                                        .Include(o => o.Vagon)
                                        .ToListAsync();
 
@@ -146,14 +207,40 @@ namespace GVCServer.Data
             }
         }
 
-        public Task<bool> Proceed(string index, string station)
+        public async Task<bool> CorrectVagons(string index, List<OpVag> newList, string station)
         {
-            throw new NotImplementedException();
-        }
+            Train train = await FindTrain(index);
+            List<OpVag> oldList = await _context.OpVag
+                                               .Where(o => o.Train == train && o.LastOper)
+                                               .ToListAsync();
+            short deltaWeight = 0;
+            short deltaLength = 0;
 
-        public Task<bool> PutTrainAsync(string index, List<Vagon> cars, string station)
-        {
-            throw new NotImplementedException();
+            // Cравнение списков вагонов
+            foreach(OpVag newVagon in newList)
+            {
+                OpVag oldVagon = oldList.Where(ol => ol.VagonNum == newVagon.VagonNum).FirstOrDefault();
+                if (oldVagon == null)
+                {
+                    newVagon.CodeOper = "P0071";
+                    deltaWeight += newVagon.WeightNetto;
+                    deltaLength++;
+                }
+                else
+                {
+                    deltaWeight += (short)(newVagon.WeightNetto - oldVagon.WeightNetto);
+                    newVagon.CodeOper = "P0073";
+                    newVagon.PlanForm = oldVagon.PlanForm;
+                }
+                newVagon.Train = train;
+                newVagon.Source = station;
+                newVagon.Msgid = DateTime.Now;
+                await _context.OpVag.AddAsync(newVagon);
+            }
+            train.WeightBrutto += deltaWeight;
+            train.Length += deltaLength;
+            _context.Train.Update(train);
+            return await _context.SaveChangesAsync() != 0;
         }
 
         private int[] DefineIndex(string index)
@@ -173,6 +260,21 @@ namespace GVCServer.Data
             }
 
             return trainParams;
+        }
+
+        private async Task<Train> FindTrain(string index)
+        {
+            int[] trainParams = DefineIndex(index);
+
+            Train train = await _context.Train
+                                      .Where(t => t.FormNode == trainParams[0].ToString() && t.Ordinal == trainParams[1] && t.DestinationNode == trainParams[2].ToString())
+                                      .OrderByDescending(t => t.FormTime)
+                                      .FirstOrDefaultAsync();
+            if (train == null)
+            {
+                throw new KeyNotFoundException($"Не найдена информация по индексу запрашиваемого поезда: {index}");
+            }
+            return train;
         }
 
     }

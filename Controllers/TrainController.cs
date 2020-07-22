@@ -30,11 +30,65 @@ namespace GVCServer.Controllers
         }
 
 
-        [HttpPost]
-        public async Task<ActionResult<bool>> Post(TrainList trainList, string station)
+        public async Task<ActionResult<bool>> Post(MsgModel message, string station)
         {
-            //TrainList trainList = (TrainList) JsonSerializer.Deserialize(json, typeof(TrainList));
-            return await _trainRepository.AddTrainAsync(trainList, station);
+            bool result = false;
+            int msgCode = 0;
+
+            msgCode = message.MsgId;
+
+            try
+            {
+                switch (msgCode)
+                {
+                    case 2:
+                        {
+                            TrainList trainList = (TrainList) JsonSerializer.Deserialize<TrainList>(message.Body);
+                            result = await _trainRepository.AddTrainAsync(trainList, station);
+                            break;
+                        }
+                    case 9:
+                        {
+
+                            throw new NotImplementedException("Операция в разработке ...");
+                        }
+                    case 200:
+                        {
+                            throw new NotImplementedException("Операция в разработке ...");
+                        }
+                    case 201:
+                        {
+                            throw new NotImplementedException("Операция в разработке ...");
+                        }
+                    case 202:
+                        {
+                            throw new NotImplementedException("Операция в разработке ...");
+                        }
+                    case 203:
+                        {
+                            throw new NotImplementedException("Операция в разработке ...");
+                        }
+                    case 333:
+                        {
+                            throw new NotImplementedException("Операция в разработке ...");
+                        }
+                    default:
+                        throw new ArgumentException($"Обработки сообщения c кодом {msgCode} не существует");
+                }
+            }
+            catch (Exception e)
+            {
+                return new ObjectResult(e.Message);
+            }
+
+            return result;
+        }
+
+        [HttpPost("serialize")]
+        public ActionResult<MsgModel> GetSerial(string station, TrainList trainList)
+        {
+            string json = JsonSerializer.Serialize<TrainList>(trainList);
+            return new MsgModel { MsgId = 2, Parameter = 0, Body = json };
         }
 
         [HttpGet]
@@ -60,9 +114,8 @@ namespace GVCServer.Controllers
             }
         }
 
-
         [HttpGet("{index}")]
-        public async Task<ActionResult<TrainList>> Get(string station, string index)
+        public async Task<ActionResult<TrainList>> GetList(string station, string index)
         {
             try
             {
