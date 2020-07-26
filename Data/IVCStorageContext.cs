@@ -1,19 +1,20 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace GVCServer.Data.Entities
 {
     public partial class IVCStorageContext : DbContext
     {
-        private IConfiguration Configuration { get; }
-
-        public IVCStorageContext(DbContextOptions options, IConfiguration configuration) : base(options)
+        public IVCStorageContext()
         {
-            Configuration = configuration;
         }
 
+        public IVCStorageContext(DbContextOptions<IVCStorageContext> options, IConfiguration configuration)
+            : base(options)
+        {
+        }
 
         public virtual DbSet<OpTrain> OpTrain { get; set; }
         public virtual DbSet<OpVag> OpVag { get; set; }
@@ -29,7 +30,7 @@ namespace GVCServer.Data.Entities
             if (!optionsBuilder.IsConfigured)
             {
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
-                optionsBuilder.UseSqlServer("Server=DESKTOP-OAQDEMQ\\RAILSQL;Database=IVCStorage;Trusted_Connection=True;");
+                optionsBuilder.UseSqlServer("Server=DESKTOP-OAQDEMQ\\RAILSQL;Database=IVCStorage;Trusted_Connection=True");
             }
         }
 
@@ -55,6 +56,8 @@ namespace GVCServer.Data.Entities
                     .HasMaxLength(5)
                     .IsUnicode(false)
                     .IsFixedLength();
+
+                entity.Property(e => e.LastOper).HasDefaultValueSql("true");
 
                 entity.Property(e => e.Msgid)
                     .HasColumnName("MSGID")
@@ -112,12 +115,12 @@ namespace GVCServer.Data.Entities
                     .IsUnicode(false)
                     .IsFixedLength();
 
+                entity.Property(e => e.LastOper).HasComment("Номер рейса вагона");
+
                 entity.Property(e => e.Msgid)
                     .HasColumnName("MSGID")
                     .HasDefaultValueSql("(getdate())")
                     .HasComment("Дата и время сообщения");
-
-                entity.Property(e => e.LastOper).HasComment("Последняя операция");
 
                 entity.Property(e => e.PlanForm)
                     .HasMaxLength(6)
@@ -136,12 +139,11 @@ namespace GVCServer.Data.Entities
 
                 entity.Property(e => e.TrainId).HasComment("Поезд");
 
-                entity.Property(e => e.VagonNum)
+                entity.Property(e => e.VagonId)
                     .IsRequired()
                     .HasMaxLength(8)
                     .IsUnicode(false)
                     .IsFixedLength()
-                    .HasColumnName("VagonId")
                     .HasComment("Номер вагона");
 
                 entity.Property(e => e.WeightNetto).HasDefaultValueSql("((0))");
@@ -159,9 +161,14 @@ namespace GVCServer.Data.Entities
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_OP_VAG_STA");
 
+                entity.HasOne(d => d.Train)
+                    .WithMany(p => p.OpVag)
+                    .HasForeignKey(d => d.TrainId)
+                    .HasConstraintName("FK_OP_VAG_ToTrain");
+
                 entity.HasOne(d => d.Vagon)
                     .WithMany(p => p.OpVag)
-                    .HasForeignKey(d => d.VagonNum)
+                    .HasForeignKey(d => d.VagonId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_OP_VAG_Cars");
             });
@@ -201,16 +208,10 @@ namespace GVCServer.Data.Entities
                     .IsFixedLength();
 
                 entity.Property(e => e.HighRange)
-                    .IsRequired()
-                    .HasMaxLength(6)
-                    .IsUnicode(false)
-                    .IsFixedLength();
+                    .IsRequired();
 
                 entity.Property(e => e.LowRange)
-                    .IsRequired()
-                    .HasMaxLength(6)
-                    .IsUnicode(false)
-                    .IsFixedLength();
+                    .IsRequired();
 
                 entity.Property(e => e.TargetStation)
                     .IsRequired()
@@ -320,11 +321,11 @@ namespace GVCServer.Data.Entities
 
             modelBuilder.Entity<Vagon>(entity =>
             {
-                entity.HasKey(e => e.Nv)
+                entity.HasKey(e => e.Id)
                     .HasName("PK_Cars");
 
-                entity.Property(e => e.Nv)
-                    .HasColumnName("NV")
+                entity.Property(e => e.Id)
+                    .HasColumnName("Id")
                     .HasMaxLength(8)
                     .IsUnicode(false)
                     .IsFixedLength()

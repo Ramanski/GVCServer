@@ -8,12 +8,13 @@ namespace GVCServer.Data.Entities
         public Train()
         {
             OpTrain = new HashSet<OpTrain>();
+            OpVag = new HashSet<OpVag>();
         }
 
         public Guid Uid { get; set; }
         public string TrainNum { get; set; }
         public string FormNode { get; set; }
-        public byte Ordinal { get; set; }
+        public short Ordinal { get; set; }
         public string DestinationNode { get; set; }
         public bool SequenceSign { get; set; }
         public DateTime? FormTime { get; set; }

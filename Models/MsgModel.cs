@@ -7,8 +7,8 @@ namespace GVCServer.Models
 {
     public class MsgModel
     {
-        public int MsgId { get; set; }
-        public int Parameter { get; set; }
+        public int Code { get; set; }
+        public string[] Params { get; set; }
         public string Body { get; set; }
     }
 }

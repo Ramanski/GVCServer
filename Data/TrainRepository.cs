@@ -3,6 +3,7 @@ using GVCServer.Data.Entities;
 using GVCServer.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,42 +26,52 @@ namespace GVCServer.Data
         {
             Train train;
             OpTrain opTrain;
-            List<OpVag> opVag;
+            OpVag[] opVag;
+            string planForm;
+            List<Exception> errors;
+            const string sentTGNL = "P0005";
 
             try
             {
                 train = _imapper.Map<Train>(trainList);
+                opVag = _imapper.Map<OpVag[]>(trainList.Vagons);
+
+                errors = await CheckValuesForTGNL(station, opVag);
+                if (errors.Any())
+                    throw new AggregateException(errors);
+
                 opTrain = new OpTrain
                 {
                     SourceStation = station,
                     Datop = trainList.FormTime,
-                    Kop = "P0005",
+                    Kop = sentTGNL,
                     Msgid = DateTime.Now,
-                    Train = train
+                    Train = train,
+                    LastOper = true
                 };
 
-                opVag = _imapper.Map<List<OpVag>>(trainList.Vagons);
-                foreach(OpVag vagon in opVag)
+                planForm = _context.Station
+                                    .Where(s => s.Code.StartsWith(train.DestinationNode))
+                                    .Select(s => s.Code)
+                                    .FirstOrDefault();
+                if (planForm == null)
+                    throw new ArgumentException($"Не найдена станция назначения по коду ЕСР {train.DestinationNode}");
+
+                foreach (OpVag vagon in opVag)
                 {
+                    vagon.LastOper = true;
                     vagon.Source = station;
                     vagon.Train = train;
-                    vagon.CodeOper = "P0005";
-                    vagon.Msgid = DateTime.Now;
-                    vagon.PlanForm = _context.Station.Where(s => s.Code.StartsWith(train.DestinationNode)).Select(s => s.Code).FirstOrDefault();
-                    Vagon vag = _context.Vagon
-                                        .Where(v => v.Nv == vagon.VagonNum)
-                                        .SingleOrDefault();
-                    if (vag == null)
-                        throw new KeyNotFoundException($"Не найден вагон {vagon.VagonNum} в картотеке БД");
-                    else
-                        vagon.Vagon = vag;
+                    vagon.DateOper = trainList.FormTime;
+                    vagon.CodeOper = sentTGNL;
+                    vagon.PlanForm = planForm;
+                    vagon.Vagon = _context.Vagon.Where(v => v.Id == vagon.VagonId).FirstOrDefault();
                 }
 
-                await _context.AddAsync(train);
-                await _context.AddAsync(opTrain);
-                await _context.AddRangeAsync(opVag);
-                await _context.SaveChangesAsync();
-                return true;
+                train.OpTrain.Add(opTrain);
+                train.OpVag = opVag;
+                _context.Train.Add(train);
+                return await _context.SaveChangesAsync() != 0;
             }
             catch (Exception e)
             {
@@ -68,101 +79,244 @@ namespace GVCServer.Data
             }
         }
 
-        public async Task<bool> ProcessTrain(string index, string station, DateTime timeOper, string codeOper)
+        public async Task<bool> ProcessTrain(string index, string station, DateTime timeOper, string messageCode)
         {
-            Train train = await FindTrain(index);
-            OpTrain arrival = new OpTrain()
+            Train train;
+            Operation[] operations;
+
+            train = await FindTrain(index);
+            operations = await GetOperations(messageCode);
+
+            OpTrain newOperation = new OpTrain()
             {
                 Datop = timeOper,
-                Kop = codeOper,
+                Kop = operations.First().Code,
                 Msgid = DateTime.Now,
                 SourceStation = station,
                 Train = train
             };
-            await _context.OpTrain.AddAsync(arrival);
+            await _context.OpTrain.AddAsync(newOperation);
+            if (messageCode.Equals("203"))
+            {
+                return await DisbandVagons(train, station, timeOper, messageCode);
+            }
             return await _context.SaveChangesAsync() != 0;
         }
 
-        public async Task<bool> DeleteVagonOperaions(string index, string vagonNum)
+        public async Task<bool> DeleteLastVagonOperaions(string index, string messageCode)
         {
-            Train train;
-            OpVag[] vagonOperations;
-
-            if(string.IsNullOrEmpty(vagonNum))
-            {
-                train = await FindTrain(index);
-                vagonOperations =  await _context.OpVag.Where(o => o.Train == train && o.LastOper).ToArrayAsync();
-            }
-            else
-            {
-                vagonOperations = await _context.OpVag.Where(o => o.VagonNum == vagonNum && o.LastOper).ToArrayAsync();
-            }
-
-            _context.OpVag.RemoveRange(vagonOperations);
-
-            return await _context.SaveChangesAsync() != 0;
+            Train train = await FindTrain(index);
+            string[] vagonNums = await GetLastVagonOperationsQuery(train, false)
+                                                                    .Select(vo => vo.VagonId)
+                                                                    .ToArrayAsync();
+            return await DeleteLastVagonOperaions(vagonNums, messageCode);
         }
 
-        public async Task<bool> DeleteTrainOperaion(string index)
+        public async Task<bool> DeleteLastVagonOperaions(string[] vagonNums, string messageCode)
+        {
+            OpVag[] currentVagonOperations;
+            Operation[] operationTypesToDelete;
+            List<Exception> errors = new List<Exception>();
+
+            currentVagonOperations = await GetLastVagonOperationsQuery(vagonNums, false)
+                                                                    .Include(vo => vo.CodeOperNavigation)
+                                                                    .Include(vo => vo.Train)
+                                                                    .ToArrayAsync();
+            operationTypesToDelete = await _context.Operation
+                                                   .Where(o => o.Message.Equals(messageCode))
+                                                   .ToArrayAsync();
+
+            var assignedTrain = currentVagonOperations.Select(o => o.Train).Distinct();
+            if (assignedTrain.Count() > 1)
+                throw new ArgumentException("Один или несколько вагонов находятся в разных поездах");
+
+            foreach (OpVag vagonOperation in currentVagonOperations)
+            {
+                if (!operationTypesToDelete.Contains(vagonOperation.CodeOperNavigation))
+                {
+                    errors.Add(new MethodAccessException($"Последняя операция для вагона {vagonOperation.VagonId} - {vagonOperation.CodeOperNavigation.Name}\n"));
+                }
+            }
+            if (errors.Any())
+                throw new AggregateException("Возникли ошибки при обработке вагонов:\n", errors);
+
+            _context.OpVag.RemoveRange(currentVagonOperations);
+            await _context.SaveChangesAsync();
+
+            if (assignedTrain != null)
+            {
+                await UpdateTrainParameters(assignedTrain.First());
+            }
+            return true;
+        }
+
+        public async Task<bool> DeleteLastTrainOperaion(string index, string messageCode, bool includeVagonOperations)
         {
             Train train;
             OpTrain trainOperation;
+            Operation[] operationTypesToDelete;
+            OpVag[] vagonOperations;
 
             train = await FindTrain(index);
-            trainOperation= await _context.OpTrain.Where(o => o.Train == train && o.LastOper).FirstOrDefaultAsync();
-            _context.OpTrain.Remove(trainOperation);
+            trainOperation= await _context.OpTrain
+                                          .Where(o => o.Train == train && o.LastOper)
+                                          .Include(o => o.KopNavigation)
+                                          .FirstOrDefaultAsync();
+            operationTypesToDelete = await _context.Operation
+                                                   .Where(o => o.Message.Equals(messageCode))
+                                                   .ToArrayAsync();
 
-            return await _context.SaveChangesAsync() != 0;
-        }
-
-        public async Task<bool> DisbandTrain(string index, string station)
-        {
-            Train train = await FindTrain(index);
-            OpVag[] vagonOperations = await _context.OpVag
-                                                        .Where(o => o.Train == train && o.LastOper)
-                                                        .ToArrayAsync();
-            OpVag[] vagonsDisbanding = new OpVag[vagonOperations.Length];
-            Array.Copy(vagonOperations, vagonsDisbanding, vagonOperations.Length);
-            foreach (OpVag vagon in vagonsDisbanding)
+            if (operationTypesToDelete.Contains(trainOperation.KopNavigation))
             {
-                vagon.Train = null;
-                vagon.CodeOper = "P0004";
-                vagon.Source = station;
-                vagon.Msgid = DateTime.Now;
+                _context.OpTrain.Remove(trainOperation);
+                if (trainOperation.Kop == "P0005")
+                    _context.Train.Remove(train);
+            }
+            else
+            {
+                throw new MethodAccessException($"Последняя операция для поезда {index} - {trainOperation.KopNavigation.Name}");
+            }
+
+            if(includeVagonOperations)
+            {
+                List<Exception> errors = new List<Exception>();
+                vagonOperations = await GetLastVagonOperationsQuery(train, false)
+                                                    .Include(vo => vo.CodeOperNavigation)
+                                                    .ToArrayAsync();
+                foreach (OpVag vagonOperation in vagonOperations)
+                {
+                    if (!operationTypesToDelete.Contains(vagonOperation.CodeOperNavigation))
+                    {
+                        errors.Add(new MethodAccessException($"Последняя операция для вагона {vagonOperation.VagonId} - {vagonOperation.CodeOperNavigation.Name}\n"));
+                    }
+                }
+                if (errors.Any())
+                    throw new AggregateException("Возникли ошибки при обработке вагонов:\n", errors);
+                _context.OpVag.RemoveRange(vagonOperations);
             }
 
             return await _context.SaveChangesAsync() != 0;
         }
 
-        public async Task<bool> DetachVagons(string index, string[] vagonNums, string station)
+        public async Task<bool> DisbandVagons(Train train, string station, DateTime timeOper, string messageCode)
+        {
+            Operation operation = (await GetOperations(messageCode)).First();
+            List<OpVag> vagonOperations = await GetLastVagonOperationsQuery(train, false)
+                                                        .Select(lvo => new OpVag
+                                                        {
+                                                            Destination = lvo.Destination,
+                                                            Mark = lvo.Mark,
+                                                            VagonId = lvo.VagonId,
+                                                            WeightNetto = lvo.WeightNetto,
+                                                            CodeOper = operation.Code,
+                                                            DateOper = timeOper,
+                                                            Source = station,
+                                                            LastOper = true
+                                                        })
+                                                        .ToListAsync();
+            _context.OpVag.AddRange(vagonOperations);
+            return await _context.SaveChangesAsync() != 0;
+        }
+
+        public async Task<bool> DetachVagons(string index, string[] vagonNums, DateTime timeOper, string station)
         {
             Train train = await FindTrain(index);
-            List<OpVag> oldList = await _context.OpVag
-                                               .Where(o => o.Train == train && o.LastOper)
-                                               .ToListAsync();
-            short deltaWeight = 0;
+            List<OpVag> vagonOperations = await GetLastVagonOperationsQuery(train, false).ToListAsync();
 
             foreach (string vagonNum in vagonNums)
             {
-                OpVag oldVagon = oldList.Where(ol => ol.VagonNum == vagonNum).FirstOrDefault();
-                if (oldVagon == null)
+                OpVag vagOper = vagonOperations.Where(ol => ol.VagonId == vagonNum)
+                                        .Select(ol => new OpVag {
+                                            Destination = ol.Destination,
+                                            Mark = ol.Mark,
+                                            VagonId = ol.VagonId,
+                                            WeightNetto = ol.WeightNetto,
+                                            CodeOper = "P0072",
+                                            DateOper = timeOper,
+                                            Source = station,
+                                            LastOper = true
+                                        })
+                                        .FirstOrDefault();
+                if (vagOper == null)
                 {
                     throw new ArgumentException($"Отцепляемый вагон {vagonNum} в поезде {index} отсутствует!");
                 }
-                deltaWeight += oldVagon.WeightNetto;
-                OpVag newVagon = oldVagon;
-                newVagon.CodeOper = "P0072";
-                newVagon.Train = null;
-                newVagon.Source = station;
-                newVagon.Msgid = DateTime.Now;
-                await _context.OpVag.AddAsync(newVagon);
+                await _context.OpVag.AddAsync(vagOper);
             }
-            train.WeightBrutto -= deltaWeight;
-            train.Length -= (short)vagonNums.Length;
-            _context.Train.Update(train);
-            return await _context.SaveChangesAsync() != 0;
+
+            OpTrain newOperation = new OpTrain()
+            {
+                Datop = timeOper,
+                Kop = "P0073",
+                Msgid = DateTime.Now,
+                SourceStation = station,
+                Train = train
+            };
+
+            await _context.OpTrain.AddAsync(newOperation);
+            await _context.SaveChangesAsync();       
+            return await UpdateTrainParameters(train);
         }
 
+        public async Task<bool> CorrectVagons(string index, List<VagonModel> newList, DateTime timeOper, string station)
+        {
+            Train train = await FindTrain(index);
+            List<OpVag> oldList = await GetLastVagonOperationsQuery(train, false).ToListAsync();
+            string planForm = _context.Station
+                                        .Where(s => s.Code.StartsWith(train.DestinationNode))
+                                        .Select(s => s.Code)
+                                        .FirstOrDefault();
+
+            foreach (VagonModel correctedVagon in newList)
+            {
+                OpVag oldVagon;
+                OpVag newVagon;
+                
+                newVagon = new OpVag()
+                {
+                    LastOper = true,
+                    Source = station,
+                    Train = train,
+                    DateOper = timeOper,
+                    PlanForm = planForm,
+                    Vagon = _context.Vagon.Where(v => correctedVagon.VagonId.Equals(v.Id)).FirstOrDefault(),
+                    Destination = correctedVagon.Destination,
+                    WeightNetto = correctedVagon.WeightNetto,
+                    SequenceNum = correctedVagon.SequenceNum,
+                    Mark = correctedVagon.Mark
+                };
+
+                oldVagon = oldList.Where(ol => correctedVagon.VagonId.Equals(ol.VagonId))
+                                  .FirstOrDefault();
+
+                if (oldVagon == null)
+                {
+                    // Вагон прицепливается
+                    newVagon.CodeOper = "P0071";
+                }
+                else
+                {
+                    // Вагон корректируется
+                    newVagon.CodeOper = "P0073";
+                }
+
+                await _context.OpVag.AddAsync(newVagon);
+            }
+            
+            OpTrain newOperation = new OpTrain()
+            {
+                Datop = timeOper,
+                Kop = "P0073",
+                Msgid = DateTime.Now,
+                SourceStation = station,
+                Train = train
+            };
+
+            await _context.OpTrain.AddAsync(newOperation);
+            await _context.SaveChangesAsync();
+            return await UpdateTrainParameters(train);
+        }
+        
         public async Task<TrainSummary[]> GetComingTrainsAsync(string station)
         {
             string targetNode = station.Substring(0, 4);
@@ -183,19 +337,16 @@ namespace GVCServer.Data
             else return null;
         }
 
-        public async Task<TrainList> GetTrainAsync(string index)
+        public async Task<TrainList> GetTrainListAsync(string index)
         {
             TrainList trainList;
             Train train;
-            List<OpVag> vagons;
+            OpVag[] vagons;
 
             try
             {
                 train = await FindTrain(index);
-                vagons = await _context.OpVag
-                                       .Where(o => o.TrainId.Equals(train.Uid) && o.LastOper)
-                                       .Include(o => o.Vagon)
-                                       .ToListAsync();
+                vagons = await GetLastVagonOperationsQuery(train, false).ToArrayAsync();
 
                 trainList = _imapper.Map<TrainList>(train);
                 trainList.Vagons = _imapper.Map<List<VagonModel>>(vagons);
@@ -207,40 +358,32 @@ namespace GVCServer.Data
             }
         }
 
-        public async Task<bool> CorrectVagons(string index, List<OpVag> newList, string station)
+        private IQueryable<OpVag> GetLastVagonOperationsQuery(Train train, bool includeVagonParams)
         {
-            Train train = await FindTrain(index);
-            List<OpVag> oldList = await _context.OpVag
-                                               .Where(o => o.Train == train && o.LastOper)
-                                               .ToListAsync();
-            short deltaWeight = 0;
-            short deltaLength = 0;
-
-            // Cравнение списков вагонов
-            foreach(OpVag newVagon in newList)
+            var lastOperations = _context.OpVag.Where(o => o.Train == train && o.LastOper);
+            if (includeVagonParams)
             {
-                OpVag oldVagon = oldList.Where(ol => ol.VagonNum == newVagon.VagonNum).FirstOrDefault();
-                if (oldVagon == null)
-                {
-                    newVagon.CodeOper = "P0071";
-                    deltaWeight += newVagon.WeightNetto;
-                    deltaLength++;
-                }
-                else
-                {
-                    deltaWeight += (short)(newVagon.WeightNetto - oldVagon.WeightNetto);
-                    newVagon.CodeOper = "P0073";
-                    newVagon.PlanForm = oldVagon.PlanForm;
-                }
-                newVagon.Train = train;
-                newVagon.Source = station;
-                newVagon.Msgid = DateTime.Now;
-                await _context.OpVag.AddAsync(newVagon);
+                return lastOperations.Include(o => o.Vagon);
             }
-            train.WeightBrutto += deltaWeight;
-            train.Length += deltaLength;
-            _context.Train.Update(train);
-            return await _context.SaveChangesAsync() != 0;
+            else
+            {
+                return lastOperations;
+            }
+        }
+
+        private IQueryable<OpVag> GetLastVagonOperationsQuery(string[] vagonNums, bool includeVagonParams)
+        {
+            var lastOperations = _context.OpVag
+                                         .Where(o => vagonNums.Contains(o.VagonId) && o.LastOper);
+            var result = lastOperations.ToArray();
+            if (includeVagonParams)
+            {
+                return lastOperations.Include(o => o.Vagon);
+            }
+            else
+            {
+                return lastOperations;
+            }
         }
 
         private int[] DefineIndex(string index)
@@ -261,7 +404,7 @@ namespace GVCServer.Data
 
             return trainParams;
         }
-
+        
         private async Task<Train> FindTrain(string index)
         {
             int[] trainParams = DefineIndex(index);
@@ -276,6 +419,81 @@ namespace GVCServer.Data
             }
             return train;
         }
+        
+        private async Task<bool> UpdateTrainParameters(Train train)
+        {
+            OpVag[] vagons = await GetLastVagonOperationsQuery(train, true).ToArrayAsync();
+            train.Length = (short)vagons.Length;
+            train.WeightBrutto = (short)(vagons.Sum(o => o.WeightNetto) + vagons.Sum(o => o.Vagon.Tvag));
+            _context.Update(train);
+            return await _context.SaveChangesAsync() != 0;
+        }
 
+        private async Task<List<Exception>> CheckValuesForTGNL (string station, OpVag[] currentVgOpers)
+        {
+                List<Exception> errors = new List<Exception>();
+            try
+            {
+                string[] vagonOperNums = currentVgOpers.Select(vo => vo.VagonId)
+                                                       .ToArray();
+                OpVag[] lastVgOpers = await GetLastVagonOperationsQuery(vagonOperNums, false).Select(vo => new OpVag
+                {
+                    VagonId = vo.VagonId,
+                    //CodeOper = vo.CodeOper, 
+                    Source = vo.Source,
+                    DateOper = vo.DateOper,
+                    TrainId = vo.TrainId
+                })
+                                                                                        .ToArrayAsync();
+                // Проверка наличия вагонов
+                if (lastVgOpers.Count() < currentVgOpers.Count())
+                {
+                    string[] vagonCardsNums = _context.Vagon
+                                                   .Where(vg => vagonOperNums.Contains(vg.Id))
+                                                   .Select(vg => vg.Id)
+                                                   .ToArray();
+                        if (vagonCardsNums.Length != vagonOperNums.Length)
+                        {
+                        string[] notFoundVagons = vagonOperNums.Except(vagonCardsNums).ToArray();
+                        errors.Add(new KeyNotFoundException($"Не найдены вагоны в картотеке БД: {string.Join(',', notFoundVagons)}"));
+                        }
+                }
+
+                if (!lastVgOpers.Any())
+                    return errors;
+                foreach (OpVag lastVgOper in lastVgOpers)
+                {
+                    OpVag currentVgOper = currentVgOpers.Where(vgo => lastVgOper.VagonId.Equals(vgo.VagonId)).FirstOrDefault();
+
+                    if (!lastVgOper.Source.Equals(station))
+                        errors.Add(new ArgumentException($"Вагон {lastVgOper.VagonId} на станции {lastVgOper.Source}"));
+
+                    if (lastVgOper.TrainId != null)
+                        errors.Add(new ArgumentException($"Вагон {lastVgOper.VagonId} уже в другом поезде"));
+
+                    if (lastVgOper.DateOper > currentVgOper.DateOper)
+                        errors.Add(new ArgumentException($"Время последней операции {lastVgOper.DateOper} для вагона {lastVgOper.VagonId} позже указанной {currentVgOper.DateOper}"));
+
+                }
+            }
+            catch(Exception exc)
+            {
+                errors.Add(exc);
+            }
+            return errors;
+        }
+
+        private async Task<Operation[]> GetOperations(string messageCode)
+        {
+            Operation[] operationCode;
+
+            operationCode = await _context.Operation
+                                            .Where(o => messageCode.Equals(o.Message))
+                                            .ToArrayAsync();
+            if (operationCode.Length == 0)
+                throw new NullReferenceException($"Не найдено ни одной операции по сообщению {messageCode}");
+
+            return operationCode;
+        }
     }
 }

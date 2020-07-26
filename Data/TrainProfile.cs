@@ -26,11 +26,12 @@ namespace GVCServer.Data
                 .ForMember(vm => vm.Ksob, m => m.MapFrom(v => v.Vagon.Ksob))
                 .ForMember(vm => vm.Tvag, m => m.MapFrom(v => v.Vagon.Tvag))
                 .ForMember(vm => vm.Kind, m => m.MapFrom(v => v.Vagon.Kind))
+                .ForMember(vm => vm.VagonId, m => m.MapFrom(v => v.VagonId))
                 .ReverseMap();
 
             this.CreateMap<TrainList, Train>()
                 .ForMember(t => t.DestinationNode, m => m.MapFrom(tl => tl.Index.Substring(9, 4)))
-                .ForMember(t => t.Ordinal, m => m.MapFrom(tl => Byte.Parse(tl.Index.Substring(5, 3))))
+                .ForMember(t => t.Ordinal, m => m.MapFrom(tl => short.Parse(tl.Index.Substring(5, 3))))
                 .ForMember(t => t.FormNode, m => m.MapFrom(tl => tl.Index.Substring(0, 4)));
         }
     }

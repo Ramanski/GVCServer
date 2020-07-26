@@ -36,6 +36,7 @@ namespace GVCServer
                                     options.JsonSerializerOptions.IgnoreNullValues = true);
             services.AddAutoMapper(typeof(Startup));
             services.AddScoped<ITrainRepository, TrainRepository>();
+            services.AddScoped<IGuideRepository, GuideRepository>();
             services.AddDbContext<IVCStorageContext>(options =>
                     options.UseSqlServer(Configuration.GetConnectionString("IVCStorage")));
         }

@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text.Json.Serialization;
 
 namespace GVCServer.Data.Entities
 {
     public partial class OpTrain
     {
-        [JsonIgnore]
         public Guid Uid { get; set; }
         public Guid TrainId { get; set; }
         public string Kop { get; set; }
