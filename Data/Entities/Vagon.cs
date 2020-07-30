@@ -13,8 +13,9 @@ namespace GVCServer.Data.Entities
         public string Id { get; set; }
         public short? Ksob { get; set; }
         public short Tvag { get; set; }
-        public short Kind { get; set; }
+        public byte Kind { get; set; }
 
+        public virtual VagonKind KindNavigation { get; set; }
         public virtual ICollection<OpVag> OpVag { get; set; }
     }
 }

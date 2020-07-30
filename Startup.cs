@@ -32,8 +32,11 @@ namespace GVCServer
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers()
-                    .AddJsonOptions(options => 
-                                    options.JsonSerializerOptions.IgnoreNullValues = true);
+                    .AddJsonOptions(options =>
+                    {
+                        options.JsonSerializerOptions.IgnoreNullValues = true;
+                        options.JsonSerializerOptions.Converters.Add(new TimeSpanJsonConverter());
+                    });
             services.AddAutoMapper(typeof(Startup));
             services.AddScoped<ITrainRepository, TrainRepository>();
             services.AddScoped<IGuideRepository, GuideRepository>();

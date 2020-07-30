@@ -9,7 +9,7 @@ namespace GVCServer.Data.Entities
         public Guid TrainId { get; set; }
         public string Kop { get; set; }
         public DateTime? Datop { get; set; }
-        public DateTime? Msgid { get; set; }
+        public DateTime Msgid { get; set; }
         public string SourceStation { get; set; }
         public bool LastOper { get; set; }
 

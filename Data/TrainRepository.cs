@@ -438,8 +438,7 @@ namespace GVCServer.Data
                                                        .ToArray();
                 OpVag[] lastVgOpers = await GetLastVagonOperationsQuery(vagonOperNums, false).Select(vo => new OpVag
                 {
-                    VagonId = vo.VagonId,
-                    //CodeOper = vo.CodeOper, 
+                    VagonId = vo.VagonId, 
                     Source = vo.Source,
                     DateOper = vo.DateOper,
                     TrainId = vo.TrainId

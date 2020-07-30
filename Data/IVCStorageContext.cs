@@ -1,6 +1,5 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace GVCServer.Data.Entities
@@ -11,31 +10,36 @@ namespace GVCServer.Data.Entities
         {
         }
 
-        public IVCStorageContext(DbContextOptions<IVCStorageContext> options, IConfiguration configuration)
+        public IVCStorageContext(DbContextOptions<IVCStorageContext> options)
             : base(options)
         {
         }
 
+        public virtual DbSet<Direction> Direction { get; set; }
         public virtual DbSet<OpTrain> OpTrain { get; set; }
         public virtual DbSet<OpVag> OpVag { get; set; }
         public virtual DbSet<Operation> Operation { get; set; }
+        public virtual DbSet<Pfclaim> Pfclaim { get; set; }
         public virtual DbSet<PlanForm> PlanForm { get; set; }
+        public virtual DbSet<Schedule> Schedule { get; set; }
         public virtual DbSet<Station> Station { get; set; }
         public virtual DbSet<Train> Train { get; set; }
         public virtual DbSet<TrainKind> TrainKind { get; set; }
         public virtual DbSet<Vagon> Vagon { get; set; }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (!optionsBuilder.IsConfigured)
-            {
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
-                optionsBuilder.UseSqlServer("Server=DESKTOP-OAQDEMQ\\RAILSQL;Database=IVCStorage;Trusted_Connection=True");
-            }
-        }
+        public virtual DbSet<VagonKind> VagonKind { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<Direction>(entity =>
+            {
+                entity.Property(e => e.Id).ValueGeneratedNever();
+
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .IsFixedLength();
+            });
+
             modelBuilder.Entity<OpTrain>(entity =>
             {
                 entity.HasKey(e => e.Uid);
@@ -57,11 +61,13 @@ namespace GVCServer.Data.Entities
                     .IsUnicode(false)
                     .IsFixedLength();
 
-                entity.Property(e => e.LastOper).HasDefaultValueSql("true");
+                entity.Property(e => e.LastOper)
+                    .IsRequired()
+                    .HasDefaultValueSql("((1))");
 
                 entity.Property(e => e.Msgid)
                     .HasColumnName("MSGID")
-                    .HasColumnType("datetime");
+                    .HasDefaultValueSql("(getdate())");
 
                 entity.Property(e => e.SourceStation)
                     .HasMaxLength(6)
@@ -115,7 +121,9 @@ namespace GVCServer.Data.Entities
                     .IsUnicode(false)
                     .IsFixedLength();
 
-                entity.Property(e => e.LastOper).HasComment("Номер рейса вагона");
+                entity.Property(e => e.LastOper)
+                    .IsRequired()
+                    .HasDefaultValueSql("((1))");
 
                 entity.Property(e => e.Msgid)
                     .HasColumnName("MSGID")
@@ -170,7 +178,7 @@ namespace GVCServer.Data.Entities
                     .WithMany(p => p.OpVag)
                     .HasForeignKey(d => d.VagonId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_OP_VAG_Cars");
+                    .HasConstraintName("FK_OP_VAG_ToCars");
             });
 
             modelBuilder.Entity<Operation>(entity =>
@@ -197,6 +205,29 @@ namespace GVCServer.Data.Entities
                 entity.Property(e => e.Name).HasMaxLength(100);
             });
 
+            modelBuilder.Entity<Pfclaim>(entity =>
+            {
+                entity.ToTable("PFclaim");
+
+                entity.Property(e => e.StaDestination)
+                    .IsRequired()
+                    .HasMaxLength(6)
+                    .IsUnicode(false)
+                    .IsFixedLength();
+
+                entity.Property(e => e.StaForm)
+                    .IsRequired()
+                    .HasMaxLength(6)
+                    .IsUnicode(false)
+                    .IsFixedLength();
+
+                entity.HasOne(d => d.StaFormNavigation)
+                    .WithMany(p => p.Pfclaim)
+                    .HasForeignKey(d => d.StaForm)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_PFclaim_Station");
+            });
+
             modelBuilder.Entity<PlanForm>(entity =>
             {
                 entity.Property(e => e.Id).HasColumnName("ID");
@@ -206,12 +237,6 @@ namespace GVCServer.Data.Entities
                     .HasMaxLength(6)
                     .IsUnicode(false)
                     .IsFixedLength();
-
-                entity.Property(e => e.HighRange)
-                    .IsRequired();
-
-                entity.Property(e => e.LowRange)
-                    .IsRequired();
 
                 entity.Property(e => e.TargetStation)
                     .IsRequired()
@@ -230,6 +255,31 @@ namespace GVCServer.Data.Entities
                     .HasForeignKey(d => d.TrainKind)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_PlanForm_TrainKind");
+            });
+
+            modelBuilder.Entity<Schedule>(entity =>
+            {
+                entity.Property(e => e.ArrivalTime).HasColumnType("time(0)");
+
+                entity.Property(e => e.DepartureTime).HasColumnType("time(0)");
+
+                entity.Property(e => e.Station)
+                    .IsRequired()
+                    .HasMaxLength(6)
+                    .IsUnicode(false)
+                    .IsFixedLength();
+
+                entity.HasOne(d => d.Direction)
+                    .WithMany(p => p.Schedule)
+                    .HasForeignKey(d => d.DirectionId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Schedule_Direction");
+
+                entity.HasOne(d => d.StationNavigation)
+                    .WithMany(p => p.Schedule)
+                    .HasForeignKey(d => d.Station)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Schedule_Station");
             });
 
             modelBuilder.Entity<Station>(entity =>
@@ -292,17 +342,18 @@ namespace GVCServer.Data.Entities
                     .HasDefaultValueSql("((0))")
                     .HasComment("ИНДЕКС НЕГАБАРИТНОСТИ");
 
-                entity.Property(e => e.SequenceSign).HasComment("ПРИЗНАК СПИСЫВАНИЯ СОСТАВА");
-
                 entity.Property(e => e.TrainNum)
-                    .IsRequired()
                     .HasMaxLength(4)
                     .IsUnicode(false)
                     .IsFixedLength()
-                    .HasDefaultValueSql("((9999))")
                     .HasComment("НОМЕР ПОЕЗДА");
 
                 entity.Property(e => e.WeightBrutto).HasComment("ВЕС БРУТТО ПОЕЗДА");
+
+                entity.HasOne(d => d.TrainKind)
+                    .WithMany(p => p.Train)
+                    .HasForeignKey(d => d.TrainKindId)
+                    .HasConstraintName("FK_Train_TrainKind");
             });
 
             modelBuilder.Entity<TrainKind>(entity =>
@@ -311,21 +362,17 @@ namespace GVCServer.Data.Entities
 
                 entity.Property(e => e.Mnemocode)
                     .IsRequired()
-                    .HasMaxLength(10)
+                    .HasMaxLength(15)
                     .IsFixedLength();
 
                 entity.Property(e => e.Name)
                     .IsRequired()
-                    .HasMaxLength(50);
+                    .HasMaxLength(150);
             });
 
             modelBuilder.Entity<Vagon>(entity =>
             {
-                entity.HasKey(e => e.Id)
-                    .HasName("PK_Cars");
-
                 entity.Property(e => e.Id)
-                    .HasColumnName("Id")
                     .HasMaxLength(8)
                     .IsUnicode(false)
                     .IsFixedLength()
@@ -339,6 +386,23 @@ namespace GVCServer.Data.Entities
                 entity.Property(e => e.Tvag)
                     .HasColumnName("TVAG")
                     .HasComment("ТАРА ВАГОНА");
+
+                entity.HasOne(d => d.KindNavigation)
+                    .WithMany(p => p.Vagon)
+                    .HasForeignKey(d => d.Kind)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Vagon_VagonKind");
+            });
+
+            modelBuilder.Entity<VagonKind>(entity =>
+            {
+                entity.Property(e => e.Mnemocode)
+                    .IsRequired()
+                    .HasMaxLength(5);
+
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(90);
             });
 
             OnModelCreatingPartial(modelBuilder);

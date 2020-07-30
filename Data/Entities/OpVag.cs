@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GVCServer.Data.Entities
 {
@@ -9,7 +8,6 @@ namespace GVCServer.Data.Entities
         public Guid Uid { get; set; }
         public DateTime? Msgid { get; set; }
         public string VagonId { get; set; }
-        public bool LastOper { get; set; }
         public string CodeOper { get; set; }
         public string Source { get; set; }
         public DateTime? DateOper { get; set; }
@@ -19,11 +17,11 @@ namespace GVCServer.Data.Entities
         public byte? SequenceNum { get; set; }
         public short? WeightNetto { get; set; }
         public byte? Mark { get; set; }
+        public bool LastOper { get; set; }
 
         public virtual Operation CodeOperNavigation { get; set; }
         public virtual Station SourceNavigation { get; set; }
         public virtual Train Train { get; set; }
-        [ForeignKey("VagonId")]
         public virtual Vagon Vagon { get; set; }
     }
 }
