@@ -35,6 +35,19 @@ namespace GVCServer.Controllers
             }
         }
 
+        [HttpGet("Operations")]
+        public async Task<ActionResult<List<Operation>>> GetOperations(string station)
+        {
+            try
+            {
+                return await _guideRepository.GetOperations();
+            }
+            catch (Exception e)
+            {
+                return new ObjectResult(e.Message);
+            }
+        }
+
         [HttpGet("Schedule")]
         public async Task<ActionResult<List<Schedule>>> GetSchedule(string station)
         {

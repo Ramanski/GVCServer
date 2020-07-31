@@ -43,6 +43,15 @@ namespace GVCServer.Data
             return stationSchedule;
         }
 
+        public async Task<List<Operation>> GetOperations()
+        {
+            var operations = await _context.Operation
+                                          .ToListAsync();
+            if (operations.Count == 0)
+                throw new KeyNotFoundException($"Справочник не может быть получен");
+            return operations;
+        }
+
         public async Task<List<Pfclaim>> GetPlanFormClaims(string sourceStation)
         {
             var claims = _context.Pfclaim

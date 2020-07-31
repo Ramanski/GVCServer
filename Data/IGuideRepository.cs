@@ -17,5 +17,7 @@ namespace GVCServer.Data
         public Task<List<VagonKind>> GetVagonKinds();
 
         public Task<List<TrainKind>> GetTrainKinds();
+
+        public Task<List<Operation>> GetOperations();
     }
 }

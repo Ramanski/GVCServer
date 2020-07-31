@@ -14,8 +14,8 @@ namespace GVCServer.Data
         {
             this.CreateMap<Train, TrainSummary>()
                 .ForMember(ts => ts.Index, m => m.MapFrom(t => string.Format($"{t.FormNode} {t.Ordinal.ToString().PadLeft(3,'0')} {t.DestinationNode}")))
-                .ForMember(ts => ts.LastOperation, m => m.MapFrom(t => t.OpTrain.Select(o => o.Kop).LastOrDefault()))
-                .ForMember(ts => ts.SourceStation, m => m.MapFrom(t => t.OpTrain.Select(o => o.SourceStation).LastOrDefault()));
+                .ForMember(ts => ts.LastOperation, m => m.MapFrom(t => t.OpTrain.Select(o => o.KopNavigation.Mnemonic).FirstOrDefault().Trim()))
+                .ForMember(ts => ts.SourceStation, m => m.MapFrom(t => t.OpTrain.Select(o => o.SourceStation).FirstOrDefault()));
 
             this.CreateMap<Train, TrainList>()
               //  .ForMember(tl => tl.SourceStation, m => m.MapFrom(t => t.OpTrain.Select(o => o.SourceStation).LastOrDefault()))

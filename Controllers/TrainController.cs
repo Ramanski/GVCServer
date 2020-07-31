@@ -176,7 +176,7 @@ namespace GVCServer.Controllers
 
         }
 
-        [HttpGet]
+        [HttpGet("Arriving")]
         public async Task<ActionResult<TrainSummary[]>> Get(string station)
         {
             try
@@ -220,7 +220,5 @@ namespace GVCServer.Controllers
                 return new ObjectResult(e.Message);
             }
         }
-
-
     }
 }

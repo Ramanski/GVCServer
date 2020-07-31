@@ -222,6 +222,7 @@ namespace GVCServer.Data
         {
             Train train = await FindTrain(index);
             List<OpVag> vagonOperations = await GetLastVagonOperationsQuery(train, false).ToListAsync();
+            string detachCode = GetOperations("9").Result.Where(o => o.Parameter.Equals(0)).FirstOrDefault().Code;
 
             foreach (string vagonNum in vagonNums)
             {
@@ -231,7 +232,7 @@ namespace GVCServer.Data
                                             Mark = ol.Mark,
                                             VagonId = ol.VagonId,
                                             WeightNetto = ol.WeightNetto,
-                                            CodeOper = "P0072",
+                                            CodeOper = detachCode,
                                             DateOper = timeOper,
                                             Source = station,
                                             LastOper = true
@@ -266,6 +267,8 @@ namespace GVCServer.Data
                                         .Where(s => s.Code.StartsWith(train.DestinationNode))
                                         .Select(s => s.Code)
                                         .FirstOrDefault();
+            string attachCode = GetOperations("9").Result.Where(o => o.Parameter.Equals(1)).FirstOrDefault().Code;
+            string correctCode = GetOperations("9").Result.Where(o => o.Parameter.Equals(2)).FirstOrDefault().Code;
 
             foreach (VagonModel correctedVagon in newList)
             {
@@ -292,12 +295,12 @@ namespace GVCServer.Data
                 if (oldVagon == null)
                 {
                     // Вагон прицепливается
-                    newVagon.CodeOper = "P0071";
+                    newVagon.CodeOper = attachCode;
                 }
                 else
                 {
                     // Вагон корректируется
-                    newVagon.CodeOper = "P0073";
+                    newVagon.CodeOper = correctCode;
                 }
 
                 await _context.OpVag.AddAsync(newVagon);
@@ -322,13 +325,14 @@ namespace GVCServer.Data
             string targetNode = station.Substring(0, 4);
             Train[] trains = await _context.Train.Where(t => t.DestinationNode == targetNode)
                                                  .Include(t => t.OpTrain)
+                                                    .ThenInclude(o => o.KopNavigation)
                                                  .Select(t => new Train { TrainNum = t.TrainNum,
                                                                           FormNode = t.FormNode,
                                                                           Ordinal = t.Ordinal,
                                                                           DestinationNode = t.DestinationNode,
                                                                           Length = t.Length,
                                                                           WeightBrutto = t.WeightBrutto,
-                                                                          OpTrain = new List<OpTrain> { t.OpTrain.OrderByDescending(t => t.Msgid).FirstOrDefault() }
+                                                                          OpTrain = new List<OpTrain> { t.OpTrain.Where(o => o.LastOper).FirstOrDefault() }
                                                  })
                                                  .ToArrayAsync();
 
