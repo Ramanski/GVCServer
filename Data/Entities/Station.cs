@@ -11,7 +11,6 @@ namespace GVCServer.Data.Entities
             OpVag = new HashSet<OpVag>();
             Pfclaim = new HashSet<Pfclaim>();
             PlanForm = new HashSet<PlanForm>();
-            Schedule = new HashSet<Schedule>();
         }
 
         public string Code { get; set; }
@@ -23,6 +22,5 @@ namespace GVCServer.Data.Entities
         public virtual ICollection<OpVag> OpVag { get; set; }
         public virtual ICollection<Pfclaim> Pfclaim { get; set; }
         public virtual ICollection<PlanForm> PlanForm { get; set; }
-        public virtual ICollection<Schedule> Schedule { get; set; }
     }
 }

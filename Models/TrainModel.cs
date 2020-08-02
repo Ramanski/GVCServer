@@ -13,6 +13,7 @@ namespace GVCServer.Models
         public string Index { get; set; }
         public short Length { get; set; }
         public short WeightBrutto { get; set; }
+        public string Dislocation { get; set; }
         public string LastOperation { get; set; }
         public string SourceStation { get; set; }
     }

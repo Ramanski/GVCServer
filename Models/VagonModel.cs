@@ -9,12 +9,9 @@ namespace GVCServer.Models
     public class VagonModel
     {
         public byte SequenceNum { get; set; }
-        public string VagonId { get; set; }
-        [JsonIgnore]
+        public string Num { get; set; }
         public short Ksob { get; set; }
-        [JsonIgnore]
         public short Kind { get; set; }
-        [JsonIgnore]
         public short Tvag { get; set; }
         public string Destination { get; set; }
         public short WeightNetto { get; set; }

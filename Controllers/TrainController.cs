@@ -89,6 +89,14 @@ namespace GVCServer.Controllers
                             result = await _trainRepository.ProcessTrain(index, station, timeOper, messageCode.ToString());
                             break;
                         }
+                    case 209:
+                        {
+                            string index = parameters[0];
+                            short trainNum = short.Parse(parameters[1]);
+
+                            result = await _trainRepository.UpdateTrainNum(index, trainNum);
+                            break;
+                        }
                     case 333:
                         {
                             if (parameters.Length < 2)
@@ -161,7 +169,7 @@ namespace GVCServer.Controllers
                         int i = rnd.Next(14);
                         while (i>0)
                         {
-                            trainList.Vagons.Add(new VagonModel { Destination = "130100", Mark = (byte)rnd.Next(7), SequenceNum = (byte)i, VagonId = vagonNums[i].ToString(), WeightNetto = (short)rnd.Next(1000) });
+                            trainList.Vagons.Add(new VagonModel { Destination = "130100", Mark = (byte)rnd.Next(7), SequenceNum = (byte)i, Num = vagonNums[i].ToString(), WeightNetto = (short)rnd.Next(1000) });
                             i--;
                         }
                         trainList.Length = (short) trainList.Vagons.Count();

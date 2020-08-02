@@ -20,7 +20,7 @@ namespace GVCServer.Controllers
             _guideRepository = guideRepository;
         }
 
-        [HttpGet("PF")]
+        [HttpPost("PF")]
         public async Task<ActionResult<List<string[]>>> GetPFStations(string station, string[] destination)
         {
             try

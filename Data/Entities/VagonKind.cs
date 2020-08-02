@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text.Json.Serialization;
 
 namespace GVCServer.Data.Entities
 {
@@ -10,10 +9,11 @@ namespace GVCServer.Data.Entities
         {
             Vagon = new HashSet<Vagon>();
         }
+
         public byte Id { get; set; }
         public string Mnemocode { get; set; }
         public string Name { get; set; }
-        [JsonIgnore]
+
         public virtual ICollection<Vagon> Vagon { get; set; }
     }
 }

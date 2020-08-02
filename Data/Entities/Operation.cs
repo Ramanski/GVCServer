@@ -16,8 +16,8 @@ namespace GVCServer.Data.Entities
         public string Code { get; set; }
         public string Mnemonic { get; set; }
         public string Name { get; set; }
-        public byte? Parameter { get; set; }
         public string Message { get; set; }
+        public byte? Parameter { get; set; }
 
         public virtual ICollection<OpTrain> OpTrain { get; set; }
         public virtual ICollection<OpVag> OpVag { get; set; }

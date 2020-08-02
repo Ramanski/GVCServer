@@ -130,6 +130,13 @@ namespace GVCServer.Data.Entities
                     .HasDefaultValueSql("(getdate())")
                     .HasComment("Дата и время сообщения");
 
+                entity.Property(e => e.Num)
+                    .IsRequired()
+                    .HasMaxLength(8)
+                    .IsUnicode(false)
+                    .IsFixedLength()
+                    .HasComment("Номер вагона");
+
                 entity.Property(e => e.PlanForm)
                     .HasMaxLength(6)
                     .IsUnicode(false)
@@ -147,13 +154,6 @@ namespace GVCServer.Data.Entities
 
                 entity.Property(e => e.TrainId).HasComment("Поезд");
 
-                entity.Property(e => e.VagonId)
-                    .IsRequired()
-                    .HasMaxLength(8)
-                    .IsUnicode(false)
-                    .IsFixedLength()
-                    .HasComment("Номер вагона");
-
                 entity.Property(e => e.WeightNetto).HasDefaultValueSql("((0))");
 
                 entity.HasOne(d => d.CodeOperNavigation)
@@ -162,6 +162,12 @@ namespace GVCServer.Data.Entities
                     .HasForeignKey(d => d.CodeOper)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_OP_VAG_Oper");
+
+                entity.HasOne(d => d.NumNavigation)
+                    .WithMany(p => p.OpVag)
+                    .HasForeignKey(d => d.Num)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_OP_VAG_ToCars");
 
                 entity.HasOne(d => d.SourceNavigation)
                     .WithMany(p => p.OpVag)
@@ -173,12 +179,6 @@ namespace GVCServer.Data.Entities
                     .WithMany(p => p.OpVag)
                     .HasForeignKey(d => d.TrainId)
                     .HasConstraintName("FK_OP_VAG_ToTrain");
-
-                entity.HasOne(d => d.Vagon)
-                    .WithMany(p => p.OpVag)
-                    .HasForeignKey(d => d.VagonId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_OP_VAG_ToCars");
             });
 
             modelBuilder.Entity<Operation>(entity =>
@@ -274,12 +274,6 @@ namespace GVCServer.Data.Entities
                     .HasForeignKey(d => d.DirectionId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Schedule_Direction");
-
-                entity.HasOne(d => d.StationNavigation)
-                    .WithMany(p => p.Schedule)
-                    .HasForeignKey(d => d.Station)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Schedule_Station");
             });
 
             modelBuilder.Entity<Station>(entity =>
@@ -313,16 +307,22 @@ namespace GVCServer.Data.Entities
                     .HasColumnName("UID")
                     .HasDefaultValueSql("(newid())");
 
-                entity.Property(e => e.DestinationNode)
+                entity.Property(e => e.DestinationStation)
                     .IsRequired()
-                    .HasMaxLength(4)
+                    .HasMaxLength(6)
                     .IsUnicode(false)
                     .IsFixedLength()
                     .HasComment("КОД СТАНЦИИ НАЗНАЧЕНИЯ ПОЕЗДА");
 
-                entity.Property(e => e.FormNode)
+                entity.Property(e => e.Dislocation)
                     .IsRequired()
-                    .HasMaxLength(4)
+                    .HasMaxLength(6)
+                    .IsUnicode(false)
+                    .IsFixedLength();
+
+                entity.Property(e => e.FormStation)
+                    .IsRequired()
+                    .HasMaxLength(6)
                     .IsUnicode(false)
                     .IsFixedLength()
                     .HasComment("КОД СТАНЦИИ ФОРМИРОВАНИЯ ПОЕЗДА");

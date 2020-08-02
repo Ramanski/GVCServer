@@ -21,6 +21,11 @@ namespace GVCServer.Data
             List<string[]> groupPFStations = new List<string[]>();
             foreach(string destinationStation in destinationStations)
             {
+                if(sourceStation.Equals(destinationStation))
+                {
+                    groupPFStations.Add(new string[] { sourceStation, sourceStation, null });
+                    continue;
+                }    
                 int destinationInt;
                 int.TryParse(destinationStation, out destinationInt);
                 string[] target = await _context.PlanForm.Where(pf => sourceStation.Equals(pf.FormStation) && destinationInt >= pf.LowRange && destinationInt <= pf.HighRange)

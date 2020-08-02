@@ -14,10 +14,11 @@ namespace GVCServer.Data.Entities
         public Guid Uid { get; set; }
         public string TrainNum { get; set; }
         public byte? TrainKindId { get; set; }
-        public string FormNode { get; set; }
+        public string FormStation { get; set; }
         public short Ordinal { get; set; }
-        public string DestinationNode { get; set; }
+        public string DestinationStation { get; set; }
         public DateTime? FormTime { get; set; }
+        public string Dislocation { get; set; }
         public short Length { get; set; }
         public short WeightBrutto { get; set; }
         public string Oversize { get; set; }

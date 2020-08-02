@@ -34,6 +34,9 @@ namespace GVCServer.Data
             try
             {
                 train = _imapper.Map<Train>(trainList);
+                train.FormStation = _context.Station.Where(s => s.Code.StartsWith(train.FormStation)).Select(s => s.Code).FirstOrDefault();
+                train.DestinationStation = _context.Station.Where(s => s.Code.StartsWith(train.DestinationStation)).Select(s => s.Code).FirstOrDefault();
+                train.Dislocation = station;
                 opVag = _imapper.Map<OpVag[]>(trainList.Vagons);
 
                 errors = await CheckValuesForTGNL(station, opVag);
@@ -51,11 +54,11 @@ namespace GVCServer.Data
                 };
 
                 planForm = _context.Station
-                                    .Where(s => s.Code.StartsWith(train.DestinationNode))
+                                    .Where(s => s.Code.StartsWith(train.DestinationStation))
                                     .Select(s => s.Code)
                                     .FirstOrDefault();
                 if (planForm == null)
-                    throw new ArgumentException($"Не найдена станция назначения по коду ЕСР {train.DestinationNode}");
+                    throw new ArgumentException($"Не найдена станция назначения по коду ЕСР {train.DestinationStation}");
 
                 foreach (OpVag vagon in opVag)
                 {
@@ -65,7 +68,7 @@ namespace GVCServer.Data
                     vagon.DateOper = trainList.FormTime;
                     vagon.CodeOper = sentTGNL;
                     vagon.PlanForm = planForm;
-                    vagon.Vagon = _context.Vagon.Where(v => v.Id == vagon.VagonId).FirstOrDefault();
+                    vagon.NumNavigation = _context.Vagon.Where(v => v.Id == vagon.Num).FirstOrDefault();
                 }
 
                 train.OpTrain.Add(opTrain);
@@ -96,6 +99,7 @@ namespace GVCServer.Data
                 Train = train
             };
             await _context.OpTrain.AddAsync(newOperation);
+            train.Dislocation = station;
             if (messageCode.Equals("203"))
             {
                 return await DisbandVagons(train, station, timeOper, messageCode);
@@ -103,11 +107,19 @@ namespace GVCServer.Data
             return await _context.SaveChangesAsync() != 0;
         }
 
+        public async Task<bool> UpdateTrainNum(string index, short trainNum)
+        {
+            Train train = await FindTrain(index);
+            train.TrainNum = trainNum.ToString();
+            _context.Train.Update(train);
+            return (await _context.SaveChangesAsync()) != 0;
+        }
+
         public async Task<bool> DeleteLastVagonOperaions(string index, string messageCode)
         {
             Train train = await FindTrain(index);
             string[] vagonNums = await GetLastVagonOperationsQuery(train, false)
-                                                                    .Select(vo => vo.VagonId)
+                                                                    .Select(vo => vo.Num)
                                                                     .ToArrayAsync();
             return await DeleteLastVagonOperaions(vagonNums, messageCode);
         }
@@ -134,7 +146,7 @@ namespace GVCServer.Data
             {
                 if (!operationTypesToDelete.Contains(vagonOperation.CodeOperNavigation))
                 {
-                    errors.Add(new MethodAccessException($"Последняя операция для вагона {vagonOperation.VagonId} - {vagonOperation.CodeOperNavigation.Name}\n"));
+                    errors.Add(new MethodAccessException($"Последняя операция для вагона {vagonOperation.Num} - {vagonOperation.CodeOperNavigation.Name}\n"));
                 }
             }
             if (errors.Any())
@@ -187,7 +199,7 @@ namespace GVCServer.Data
                 {
                     if (!operationTypesToDelete.Contains(vagonOperation.CodeOperNavigation))
                     {
-                        errors.Add(new MethodAccessException($"Последняя операция для вагона {vagonOperation.VagonId} - {vagonOperation.CodeOperNavigation.Name}\n"));
+                        errors.Add(new MethodAccessException($"Последняя операция для вагона {vagonOperation.Num} - {vagonOperation.CodeOperNavigation.Name}\n"));
                     }
                 }
                 if (errors.Any())
@@ -206,7 +218,7 @@ namespace GVCServer.Data
                                                         {
                                                             Destination = lvo.Destination,
                                                             Mark = lvo.Mark,
-                                                            VagonId = lvo.VagonId,
+                                                            Num = lvo.Num,
                                                             WeightNetto = lvo.WeightNetto,
                                                             CodeOper = operation.Code,
                                                             DateOper = timeOper,
@@ -226,11 +238,11 @@ namespace GVCServer.Data
 
             foreach (string vagonNum in vagonNums)
             {
-                OpVag vagOper = vagonOperations.Where(ol => ol.VagonId == vagonNum)
+                OpVag vagOper = vagonOperations.Where(ol => ol.Num == vagonNum)
                                         .Select(ol => new OpVag {
                                             Destination = ol.Destination,
                                             Mark = ol.Mark,
-                                            VagonId = ol.VagonId,
+                                            Num = ol.Num,
                                             WeightNetto = ol.WeightNetto,
                                             CodeOper = detachCode,
                                             DateOper = timeOper,
@@ -264,7 +276,7 @@ namespace GVCServer.Data
             Train train = await FindTrain(index);
             List<OpVag> oldList = await GetLastVagonOperationsQuery(train, false).ToListAsync();
             string planForm = _context.Station
-                                        .Where(s => s.Code.StartsWith(train.DestinationNode))
+                                        .Where(s => s.Code.StartsWith(train.DestinationStation))
                                         .Select(s => s.Code)
                                         .FirstOrDefault();
             string attachCode = GetOperations("9").Result.Where(o => o.Parameter.Equals(1)).FirstOrDefault().Code;
@@ -282,14 +294,14 @@ namespace GVCServer.Data
                     Train = train,
                     DateOper = timeOper,
                     PlanForm = planForm,
-                    Vagon = _context.Vagon.Where(v => correctedVagon.VagonId.Equals(v.Id)).FirstOrDefault(),
+                    NumNavigation = _context.Vagon.Where(v => correctedVagon.Num.Equals(v.Id)).FirstOrDefault(),
                     Destination = correctedVagon.Destination,
                     WeightNetto = correctedVagon.WeightNetto,
                     SequenceNum = correctedVagon.SequenceNum,
                     Mark = correctedVagon.Mark
                 };
 
-                oldVagon = oldList.Where(ol => correctedVagon.VagonId.Equals(ol.VagonId))
+                oldVagon = oldList.Where(ol => correctedVagon.Num.Equals(ol.Num))
                                   .FirstOrDefault();
 
                 if (oldVagon == null)
@@ -323,22 +335,21 @@ namespace GVCServer.Data
         public async Task<TrainSummary[]> GetComingTrainsAsync(string station)
         {
             string targetNode = station.Substring(0, 4);
-            Train[] trains = await _context.Train.Where(t => t.DestinationNode == targetNode)
+            Train[] trains = await _context.Train.Where(t => targetNode.Equals(t.DestinationStation) && !t.Dislocation.Equals(station))
                                                  .Include(t => t.OpTrain)
                                                     .ThenInclude(o => o.KopNavigation)
                                                  .Select(t => new Train { TrainNum = t.TrainNum,
-                                                                          FormNode = t.FormNode,
+                                                                          FormStation = t.FormStation,
                                                                           Ordinal = t.Ordinal,
-                                                                          DestinationNode = t.DestinationNode,
+                                                                          DestinationStation = t.DestinationStation,
                                                                           Length = t.Length,
+                                                                          Dislocation = t.Dislocation,
                                                                           WeightBrutto = t.WeightBrutto,
                                                                           OpTrain = new List<OpTrain> { t.OpTrain.Where(o => o.LastOper).FirstOrDefault() }
                                                  })
                                                  .ToArrayAsync();
 
-            if (trains != null)
                 return _imapper.Map<TrainSummary[]>(trains);
-            else return null;
         }
 
         public async Task<TrainList> GetTrainListAsync(string index)
@@ -350,7 +361,7 @@ namespace GVCServer.Data
             try
             {
                 train = await FindTrain(index);
-                vagons = await GetLastVagonOperationsQuery(train, false).ToArrayAsync();
+                vagons = await GetLastVagonOperationsQuery(train, true).ToArrayAsync();
 
                 trainList = _imapper.Map<TrainList>(train);
                 trainList.Vagons = _imapper.Map<List<VagonModel>>(vagons);
@@ -367,7 +378,7 @@ namespace GVCServer.Data
             var lastOperations = _context.OpVag.Where(o => o.Train == train && o.LastOper);
             if (includeVagonParams)
             {
-                return lastOperations.Include(o => o.Vagon);
+                return lastOperations.Include(o => o.NumNavigation);
             }
             else
             {
@@ -378,11 +389,11 @@ namespace GVCServer.Data
         private IQueryable<OpVag> GetLastVagonOperationsQuery(string[] vagonNums, bool includeVagonParams)
         {
             var lastOperations = _context.OpVag
-                                         .Where(o => vagonNums.Contains(o.VagonId) && o.LastOper);
+                                         .Where(o => vagonNums.Contains(o.Num) && o.LastOper);
             var result = lastOperations.ToArray();
             if (includeVagonParams)
             {
-                return lastOperations.Include(o => o.Vagon);
+                return lastOperations.Include(o => o.NumNavigation);
             }
             else
             {
@@ -414,7 +425,7 @@ namespace GVCServer.Data
             int[] trainParams = DefineIndex(index);
 
             Train train = await _context.Train
-                                      .Where(t => t.FormNode == trainParams[0].ToString() && t.Ordinal == trainParams[1] && t.DestinationNode == trainParams[2].ToString())
+                                      .Where(t => t.FormStation == trainParams[0].ToString() && t.Ordinal == trainParams[1] && t.DestinationStation == trainParams[2].ToString())
                                       .OrderByDescending(t => t.FormTime)
                                       .FirstOrDefaultAsync();
             if (train == null)
@@ -428,7 +439,7 @@ namespace GVCServer.Data
         {
             OpVag[] vagons = await GetLastVagonOperationsQuery(train, true).ToArrayAsync();
             train.Length = (short)vagons.Length;
-            train.WeightBrutto = (short)(vagons.Sum(o => o.WeightNetto) + vagons.Sum(o => o.Vagon.Tvag));
+            train.WeightBrutto = (short)(vagons.Sum(o => o.WeightNetto) + vagons.Sum(o => o.NumNavigation.Tvag));
             _context.Update(train);
             return await _context.SaveChangesAsync() != 0;
         }
@@ -438,11 +449,11 @@ namespace GVCServer.Data
                 List<Exception> errors = new List<Exception>();
             try
             {
-                string[] vagonOperNums = currentVgOpers.Select(vo => vo.VagonId)
+                string[] vagonOperNums = currentVgOpers.Select(vo => vo.Num)
                                                        .ToArray();
                 OpVag[] lastVgOpers = await GetLastVagonOperationsQuery(vagonOperNums, false).Select(vo => new OpVag
                 {
-                    VagonId = vo.VagonId, 
+                    Num = vo.Num, 
                     Source = vo.Source,
                     DateOper = vo.DateOper,
                     TrainId = vo.TrainId
@@ -466,16 +477,16 @@ namespace GVCServer.Data
                     return errors;
                 foreach (OpVag lastVgOper in lastVgOpers)
                 {
-                    OpVag currentVgOper = currentVgOpers.Where(vgo => lastVgOper.VagonId.Equals(vgo.VagonId)).FirstOrDefault();
+                    OpVag currentVgOper = currentVgOpers.Where(vgo => lastVgOper.Num.Equals(vgo.Num)).FirstOrDefault();
 
                     if (!lastVgOper.Source.Equals(station))
-                        errors.Add(new ArgumentException($"Вагон {lastVgOper.VagonId} на станции {lastVgOper.Source}"));
+                        errors.Add(new ArgumentException($"Вагон {lastVgOper.Num} на станции {lastVgOper.Source}"));
 
                     if (lastVgOper.TrainId != null)
-                        errors.Add(new ArgumentException($"Вагон {lastVgOper.VagonId} уже в другом поезде"));
+                        errors.Add(new ArgumentException($"Вагон {lastVgOper.Num} уже в другом поезде"));
 
                     if (lastVgOper.DateOper > currentVgOper.DateOper)
-                        errors.Add(new ArgumentException($"Время последней операции {lastVgOper.DateOper} для вагона {lastVgOper.VagonId} позже указанной {currentVgOper.DateOper}"));
+                        errors.Add(new ArgumentException($"Время последней операции {lastVgOper.DateOper} для вагона {lastVgOper.Num} позже указанной {currentVgOper.DateOper}"));
 
                 }
             }

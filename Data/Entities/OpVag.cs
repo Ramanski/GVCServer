@@ -7,7 +7,7 @@ namespace GVCServer.Data.Entities
     {
         public Guid Uid { get; set; }
         public DateTime? Msgid { get; set; }
-        public string VagonId { get; set; }
+        public string Num { get; set; }
         public string CodeOper { get; set; }
         public string Source { get; set; }
         public DateTime? DateOper { get; set; }
@@ -20,8 +20,8 @@ namespace GVCServer.Data.Entities
         public bool LastOper { get; set; }
 
         public virtual Operation CodeOperNavigation { get; set; }
+        public virtual Vagon NumNavigation { get; set; }
         public virtual Station SourceNavigation { get; set; }
         public virtual Train Train { get; set; }
-        public virtual Vagon Vagon { get; set; }
     }
 }

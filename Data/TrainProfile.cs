@@ -10,29 +10,26 @@ namespace GVCServer.Data
 {
     public class TrainProfile : Profile
     {
-        public TrainProfile()
+        public TrainProfile()//IVCStorageContext context)
         {
             this.CreateMap<Train, TrainSummary>()
-                .ForMember(ts => ts.Index, m => m.MapFrom(t => string.Format($"{t.FormNode} {t.Ordinal.ToString().PadLeft(3,'0')} {t.DestinationNode}")))
+                .ForMember(ts => ts.Index, m => m.MapFrom(t => string.Format($"{t.FormStation.Substring(0,4)} {t.Ordinal.ToString().PadLeft(3,'0')} {t.DestinationStation.Substring(0,4)}")))
                 .ForMember(ts => ts.LastOperation, m => m.MapFrom(t => t.OpTrain.Select(o => o.KopNavigation.Mnemonic).FirstOrDefault().Trim()))
                 .ForMember(ts => ts.SourceStation, m => m.MapFrom(t => t.OpTrain.Select(o => o.SourceStation).FirstOrDefault()));
 
             this.CreateMap<Train, TrainList>()
-              //  .ForMember(tl => tl.SourceStation, m => m.MapFrom(t => t.OpTrain.Select(o => o.SourceStation).LastOrDefault()))
-                .ForMember(tl => tl.Index, m => m.MapFrom(t => string.Format($"{t.FormNode} {t.Ordinal.ToString().PadLeft(3, '0')} {t.DestinationNode}")))
+                .ForMember(tl => tl.Index, m => m.MapFrom(t => string.Format($"{t.FormStation.Substring(0, 4)} {t.Ordinal.ToString().PadLeft(3, '0')} {t.DestinationStation.Substring(0, 4)}")))
                 .ForMember(tl => tl.Vagons, m => m.Ignore());
 
             this.CreateMap<OpVag, VagonModel>()
-                .ForMember(vm => vm.Ksob, m => m.MapFrom(v => v.Vagon.Ksob))
-                .ForMember(vm => vm.Tvag, m => m.MapFrom(v => v.Vagon.Tvag))
-                .ForMember(vm => vm.Kind, m => m.MapFrom(v => v.Vagon.Kind))
-                .ForMember(vm => vm.VagonId, m => m.MapFrom(v => v.VagonId))
+                .ForMember(vm => vm.Ksob, m => m.MapFrom(v => v.NumNavigation.Ksob))
+                .ForMember(vm => vm.Tvag, m => m.MapFrom(v => v.NumNavigation.Tvag))
+                .ForMember(vm => vm.Kind, m => m.MapFrom(v => v.NumNavigation.Kind))
+                .ForMember(vm => vm.Num, m => m.MapFrom(v => v.Num))
                 .ReverseMap();
 
             this.CreateMap<TrainList, Train>()
-                .ForMember(t => t.DestinationNode, m => m.MapFrom(tl => tl.Index.Substring(9, 4)))
-                .ForMember(t => t.Ordinal, m => m.MapFrom(tl => short.Parse(tl.Index.Substring(5, 3))))
-                .ForMember(t => t.FormNode, m => m.MapFrom(tl => tl.Index.Substring(0, 4)));
+                .ForMember(t => t.Ordinal, m => m.MapFrom(tl => short.Parse(tl.Index.Substring(5, 3))));
         }
     }
 }
