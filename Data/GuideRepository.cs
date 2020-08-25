@@ -38,6 +38,17 @@ namespace GVCServer.Data
             return groupPFStations;
         }
 
+        public async Task<byte> GetTrainKind(string formStation, string destination)
+        {
+            int destinationNum = int.Parse(destination);
+            byte trainKindVal = await _context.PlanForm.Where(p => p.FormStation.Equals(formStation) && destinationNum >= p.LowRange && destinationNum <= p.HighRange)
+                                                 .Select(p => p.TrainKind)
+                                                 .FirstOrDefaultAsync();
+            if (trainKindVal == 0)
+                throw new Exception($"Значение рода поезда не определено для назначения {destination}");
+            return trainKindVal;
+        }
+
         public async Task<List<Schedule>> GetSchedule(string station)
         {
             var stationSchedule = await _context.Schedule
@@ -55,6 +66,41 @@ namespace GVCServer.Data
             if (operations.Count == 0)
                 throw new KeyNotFoundException($"Справочник не может быть получен");
             return operations;
+        }
+
+        public async Task<string[]> GetClosestDeparture(string station, int trainKind, int directionId, int minutesOffset = 30)
+        {
+            DateTime departureTime;
+            var trainKindNums = await _context.TrainKind
+                                        .Where(t => t.Code == trainKind)
+                                        .FirstOrDefaultAsync();
+            if (trainKindNums == null)
+                throw new ArgumentException($"Не найден род поезда {trainKind}");
+            var depatrureRouteQuery = _context.Schedule
+                                         .Where(s => s.Station.Equals(station) &&
+                                                s.DirectionId == directionId &&
+                                                trainKindNums.TrainNumLow <= s.TrainNum &&
+                                                trainKindNums.TrainNumHigh >= s.TrainNum)
+                                         .OrderBy(s => s.DepartureTime);
+            var depatrureRoute = await depatrureRouteQuery.Where(s => s.DepartureTime > DateTime.Now.AddMinutes(minutesOffset).TimeOfDay)
+                                                    .FirstOrDefaultAsync();
+            if(depatrureRoute == null)
+            {
+                depatrureRoute = await depatrureRouteQuery.Where(s => s.DepartureTime != null).FirstOrDefaultAsync();
+                if(depatrureRoute != null)
+                {
+                    departureTime = (DateTime)(DateTime.Today.AddDays(1) + depatrureRoute.DepartureTime);
+                }
+                else
+                {
+                    throw new Exception("Не найдено ни одной подходящей нитки графика");
+                }
+            }
+            else
+            {
+                departureTime = (DateTime)(DateTime.Today + depatrureRoute.DepartureTime);
+            }
+            return new string[] { depatrureRoute.TrainNum.ToString(), departureTime.ToString()};
         }
 
         public async Task<List<Pfclaim>> GetPlanFormClaims(string sourceStation)

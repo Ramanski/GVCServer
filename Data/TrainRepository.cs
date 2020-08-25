@@ -373,6 +373,19 @@ namespace GVCServer.Data
             }
         }
 
+        public async Task<short> GetNextOrdinal(string formStation)
+        {
+            short lastOrdinal = await _context.Train
+                                              .Where(t => formStation.Equals(t.FormStation))
+                                              .OrderByDescending(t => t.FormTime)
+                                              .Select(t => t.Ordinal)
+                                              .FirstOrDefaultAsync();
+            if (lastOrdinal == 0 || lastOrdinal == 999)
+                return 1;
+            else 
+                return (short) (lastOrdinal + 1);
+        }
+
         private IQueryable<OpVag> GetLastVagonOperationsQuery(Train train, bool includeVagonParams)
         {
             var lastOperations = _context.OpVag.Where(o => o.Train == train && o.LastOper);
@@ -425,7 +438,7 @@ namespace GVCServer.Data
             int[] trainParams = DefineIndex(index);
 
             Train train = await _context.Train
-                                      .Where(t => t.FormStation == trainParams[0].ToString() && t.Ordinal == trainParams[1] && t.DestinationStation == trainParams[2].ToString())
+                                      .Where(t => t.FormStation.Substring(0, 4) == trainParams[0].ToString() && t.Ordinal == trainParams[1] && t.DestinationStation.Substring(0, 4) == trainParams[2].ToString())
                                       .OrderByDescending(t => t.FormTime)
                                       .FirstOrDefaultAsync();
             if (train == null)

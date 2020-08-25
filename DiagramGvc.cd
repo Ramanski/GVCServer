@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="GVCServer.Data.TimeSpanJsonConverter">
+    <Position X="8" Y="1.75" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAEAAAA=</HashCode>
+      <FileName>Data\TimeSpanJsonConverter.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="GVCServer.Data.TrainRepository">
+    <Position X="5.5" Y="1.75" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>DAAgAQAAAiEABAAAAAAAABAAgAEAEABAAAAAGAAAgAg=</HashCode>
+      <FileName>Data\TrainRepository.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="GVCServer.Data.GuideRepository">
+    <Position X="3.25" Y="1.75" Width="2" />
+    <TypeIdentifier>
+      <HashCode>EAAAAAAAAAAABAGAQAAAAAQAAAAAAQgAAAAACAAAAAA=</HashCode>
+      <FileName>Data\GuideRepository.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="GVCServer.Data.TrainProfile">
+    <Position X="8" Y="3.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Data\TrainProfile.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

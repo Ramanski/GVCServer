@@ -31,7 +31,7 @@ namespace GVCServer
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers()
+            services.AddControllers(options => options.Filters.Add(new HttpResponseExceptionFilter()))
                     .AddJsonOptions(options =>
                     {
                         options.JsonSerializerOptions.IgnoreNullValues = true;
@@ -47,10 +47,14 @@ namespace GVCServer
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (env.IsDevelopment())
+/*            if (env.IsDevelopment())
             {
-                app.UseDeveloperExceptionPage();
-            }
+                app.UseExceptionHandler("/error-local-development");
+            }*/
+
+            //app.ConfigureExceptionHandler(logger);
+
+            app.UseExceptionHandler("/error");
 
             app.UseHttpsRedirection();
 

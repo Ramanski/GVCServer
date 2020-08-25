@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
+//using System.Web.Http;
 using AutoMapper;
 using AutoMapper.Internal;
 using GVCServer.Data;
@@ -48,7 +51,12 @@ namespace GVCServer.Controllers
                     case 9:
                         {
                             if (parameters.Length < 3)
-                                throw new ArgumentNullException("Нe заданы все необходимые параметры в сообщении (индекс поезда, дата операции и код корректировки)");
+                                throw new HttpResponseException()
+                                {
+                                    Status = (int)HttpStatusCode.BadRequest,
+                                    Value = "Нe заданы все необходимые параметры в сообщении (индекс поезда, дата операции и код корректировки)"
+                                };
+
                             string index = parameters[0];
                             DateTime timeOper = DateTime.Parse(parameters[1]);
                             string correctType = parameters[2];
@@ -72,7 +80,11 @@ namespace GVCServer.Controllers
                                         break;
                                     }
                                 default:
-                                    throw new ArgumentException($"Обработки параметра операции \"{ parameters[1] }\" не существует");
+                                    throw new HttpResponseException()
+                                    {
+                                        Status = (int)HttpStatusCode.NotFound,
+                                        Value = $"Обработки параметра операции \"{ parameters[1] }\" не существует"
+                                    };
                             }
                             break;
                         }
@@ -82,7 +94,11 @@ namespace GVCServer.Controllers
                     case 203:
                         {
                             if (parameters.Length < 2)
-                                throw new ArgumentNullException("Нe заданы все необходимые параметры в сообщении (индекс и дата операции)");
+                                throw new HttpResponseException()
+                                {
+                                    Status = (int)HttpStatusCode.BadRequest,
+                                    Value = "Нe заданы все необходимые параметры в сообщении (индекс и дата операции)"
+                                };
                             string index = parameters[0];
                             DateTime timeOper = DateTime.Parse(parameters[1]);
 
@@ -100,12 +116,16 @@ namespace GVCServer.Controllers
                     case 333:
                         {
                             if (parameters.Length < 2)
-                                throw new ArgumentNullException("Нe заданы все необходимые параметры в сообщении (индекс и код отменяемого сообщения)");
+                                throw new HttpResponseException() 
+                                { 
+                                    Status = (int)HttpStatusCode.BadRequest, 
+                                    Value = "Нe заданы все необходимые параметры в сообщении (индекс и код отменяемого сообщения)" 
+                                };
 
                             string index = parameters[0];
                             string cancelMessageCode = parameters[1];
 
-                            switch(cancelMessageCode)
+                            switch (cancelMessageCode)
                             {
                                 case "200":
                                 case "201":
@@ -114,36 +134,44 @@ namespace GVCServer.Controllers
                                         result = await _trainRepository.DeleteLastTrainOperaion(index, cancelMessageCode, false);
                                         break;
                                     }
-                                case "2": 
+                                case "2":
                                 case "203":
                                     {
-                                        result = await _trainRepository.DeleteLastTrainOperaion(index, cancelMessageCode, true);                                     
+                                        result = await _trainRepository.DeleteLastTrainOperaion(index, cancelMessageCode, true);
                                         break;
                                     }
                                 case "9":
                                     {
                                         if (message.Body == null)
                                         {
-                                            result = await _trainRepository.DeleteLastTrainOperaion(index, cancelMessageCode,true);
+                                            result = await _trainRepository.DeleteLastTrainOperaion(index, cancelMessageCode, true);
                                         }
                                         else
                                         {
                                             string[] vagonNums = message.Body.Split(';');
-                                                     vagonNums.ForAll(s => s.Trim());
+                                            vagonNums.ForAll(s => s.Trim());
                                             result = await _trainRepository.DeleteLastVagonOperaions(vagonNums, cancelMessageCode);
                                         }
                                         break;
-                                    }                                
+                                    }
                             }
                         }
                         break;
                     default:
-                        throw new ArgumentException($"Обработки сообщения c кодом {messageCode} не существует");
+                        throw new HttpResponseException()
+                        {
+                            Status = (int)HttpStatusCode.NotFound,
+                            Value = $"Обработки параметра операции \"{ parameters[1] }\" не существует"
+                        };
                 }
             }
-            catch (Exception e)
+            catch(Exception e)
             {
-                return new ObjectResult(e.Message);
+                throw new HttpResponseException()
+                {
+                    Status = (int)HttpStatusCode.BadRequest,
+                    Value = e.Message
+                };
             }
 
             return new StatusCodeResult(StatusCodes.Status200OK);
@@ -194,12 +222,29 @@ namespace GVCServer.Controllers
                 if (result.Length == 0)
                 {
                     // TODO: Заменить номер станции на название
-                    return new NotFoundObjectResult($"Нет поездов назначением на станцию {station}");
+                    throw new HttpResponseException()
+                    {
+                        Status = (int)HttpStatusCode.NotFound,
+                        Value = $"Нет поездов назначением на станцию {station}"
+                    };
                 }
                 else
                 {
                     return result;
                 }
+            }
+            catch (Exception e)
+            {
+                return new ObjectResult(e.Message);
+            }
+        }
+
+        [HttpGet("Next-Ordinal")]
+        public async Task<ActionResult<short>> GetOrdinal(string station)
+        {
+            try
+            {
+                return await _trainRepository.GetNextOrdinal(station);
             }
             catch (Exception e)
             {
@@ -216,7 +261,11 @@ namespace GVCServer.Controllers
 
                 if (result.Length == 0)
                 {
-                    return new NotFoundObjectResult($"Не найдено поездов по запрашиваемому индексу {index}");
+                    throw new HttpResponseException()
+                    {
+                        Status = (int)HttpStatusCode.NotFound,
+                        Value = $"Не найдено поездов по запрашиваемому индексу {index}"
+                    };
                 }
                 else
                 {

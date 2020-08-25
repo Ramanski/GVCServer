@@ -14,6 +14,10 @@ namespace GVCServer.Data
 
         public Task<List<Pfclaim>> GetPlanFormClaims(string sourceStation);
 
+        public Task<string[]> GetClosestDeparture(string station, int trainKind, int directionId, int minutesOffset);
+
+        public Task<byte> GetTrainKind(string formStation, string destination);
+
         public Task<List<VagonKind>> GetVagonKinds();
 
         public Task<List<TrainKind>> GetTrainKinds();

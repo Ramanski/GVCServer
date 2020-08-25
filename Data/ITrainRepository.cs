@@ -42,6 +42,8 @@ namespace GVCServer.Data
         /// <returns></returns>
         public Task<bool> AddTrainAsync(TrainList trainList, string station);
 
+        public Task<short> GetNextOrdinal(string formStation);
+
         public Task<bool> UpdateTrainNum(string index, short TrainNum);
 
         /// <summary>

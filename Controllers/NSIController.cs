@@ -35,6 +35,32 @@ namespace GVCServer.Controllers
             }
         }
 
+        [HttpGet("Train-Kind")]
+        public async Task<ActionResult<byte>> GetTrainKind(string station, string destination)
+        {
+            try
+            {
+                return await _guideRepository.GetTrainKind(station, destination);
+            }
+            catch (Exception e)
+            {
+                return new ObjectResult(e.Message);
+            }
+        }
+
+        [HttpGet("Closest-Departure")]
+        public async Task<ActionResult<string[]>> GetClosestDeparture(string station, int minsOffset, int direction, int kind)
+        {
+            try
+            {
+                return await _guideRepository.GetClosestDeparture(station, kind, direction, minsOffset);
+            }
+            catch (Exception e)
+            {
+                return new ObjectResult(e.Message);
+            }
+        }
+
         [HttpGet("Operations")]
         public async Task<ActionResult<List<Operation>>> GetOperations(string station)
         {
