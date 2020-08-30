@@ -15,6 +15,7 @@ namespace GVCServer.Models
         public short WeightBrutto { get; set; }
         public string Dislocation { get; set; }
         public string LastOperation { get; set; }
+        public string ArrivingTime { get; set; }
     }
 
     public class TrainList

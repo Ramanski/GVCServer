@@ -380,6 +380,7 @@ namespace GVCServer.Data.Entities
 
                 entity.Property(e => e.Ksob)
                     .HasColumnName("KSOB")
+                    .HasMaxLength(8)
                     .HasDefaultValueSql("((99))")
                     .HasComment("КОД СОБСТВЕННИКА");
 

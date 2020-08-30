@@ -171,7 +171,7 @@ namespace GVCServer.Data
 
             train = await FindTrain(index);
             trainOperation= await _context.OpTrain
-                                          .Where(o => o.Train == train && o.LastOper)
+                                          .Where(o => o.Train == train && (bool)o.LastOper)
                                           .Include(o => o.KopNavigation)
                                           .FirstOrDefaultAsync();
             operationTypesToDelete = await _context.Operation
@@ -345,11 +345,16 @@ namespace GVCServer.Data
                                                                           Length = t.Length,
                                                                           Dislocation = t.Dislocation,
                                                                           WeightBrutto = t.WeightBrutto,
-                                                                          OpTrain = new List<OpTrain> { t.OpTrain.Where(o => o.LastOper).FirstOrDefault() }
+                                                                          OpTrain = new List<OpTrain> { t.OpTrain.Where(o => (bool)o.LastOper).FirstOrDefault() }
                                                  })
                                                  .ToArrayAsync();
 
-                return _imapper.Map<TrainSummary[]>(trains);
+            var trainModels = _imapper.Map<TrainSummary[]>(trains);
+            foreach(TrainSummary trainModel in trainModels)
+            {
+                trainModel.ArrivingTime = _context.Schedule.Where(s => s.TrainNum.ToString() == trainModel.TrainNum).Select(s => s.ArrivalTime).FirstOrDefault().ToString();
+            }
+            return trainModels;
         }
 
         public async Task<TrainList> GetTrainListAsync(string index)
@@ -388,7 +393,7 @@ namespace GVCServer.Data
 
         private IQueryable<OpVag> GetLastVagonOperationsQuery(Train train, bool includeVagonParams)
         {
-            var lastOperations = _context.OpVag.Where(o => o.Train == train && o.LastOper);
+            var lastOperations = _context.OpVag.Where(o => o.Train == train && (bool)o.LastOper);
             if (includeVagonParams)
             {
                 return lastOperations.Include(o => o.NumNavigation);
@@ -402,7 +407,7 @@ namespace GVCServer.Data
         private IQueryable<OpVag> GetLastVagonOperationsQuery(string[] vagonNums, bool includeVagonParams)
         {
             var lastOperations = _context.OpVag
-                                         .Where(o => vagonNums.Contains(o.Num) && o.LastOper);
+                                         .Where(o => vagonNums.Contains(o.Num) && (bool)o.LastOper);
             var result = lastOperations.ToArray();
             if (includeVagonParams)
             {

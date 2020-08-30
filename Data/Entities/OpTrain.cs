@@ -11,7 +11,7 @@ namespace GVCServer.Data.Entities
         public DateTime? Datop { get; set; }
         public DateTime Msgid { get; set; }
         public string SourceStation { get; set; }
-        public bool LastOper { get; set; }
+        public bool? LastOper { get; set; }
 
         public virtual Operation KopNavigation { get; set; }
         public virtual Station SourceStationNavigation { get; set; }

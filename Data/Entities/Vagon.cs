@@ -11,7 +11,7 @@ namespace GVCServer.Data.Entities
         }
 
         public string Id { get; set; }
-        public short? Ksob { get; set; }
+        public string Ksob { get; set; }
         public short Tvag { get; set; }
         public byte Kind { get; set; }
 
