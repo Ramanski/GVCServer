@@ -10,7 +10,7 @@ namespace GVCServer.Data
 {
     public class TrainProfile : Profile
     {
-        public TrainProfile()//IVCStorageContext context)
+        public TrainProfile()
         {
             this.CreateMap<Train, TrainSummary>()
                 .ForMember(ts => ts.Index, m => m.MapFrom(t => string.Format($"{t.FormStation.Substring(0,4)} {t.Ordinal.ToString().PadLeft(3,'0')} {t.DestinationStation.Substring(0,4)}")))

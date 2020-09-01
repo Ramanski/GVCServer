@@ -38,15 +38,24 @@ namespace GVCServer.Controllers
             int messageCode = message.Code;
             string[] parameters = message.Params;
 
-            try
-            {
                 switch (messageCode)
                 {
                     case 2:
                         {
-                            TrainList trainList = JsonSerializer.Deserialize<TrainList>(message.Body) as TrainList;
-                            result = await _trainRepository.AddTrainAsync(trainList, station);
-                            break;
+                            try
+                            {
+                                TrainList trainList = JsonSerializer.Deserialize<TrainList>(message.Body);
+                                result = await _trainRepository.AddTrainAsync(trainList, station);
+                            }
+                            catch (Exception e)
+                            {
+                                throw new HttpResponseException()
+                                {
+                                    Status = (int)HttpStatusCode.BadRequest,
+                                    Value = e.Message
+                                };
+                            }
+                        break;
                         }
                     case 9:
                         {
@@ -57,36 +66,54 @@ namespace GVCServer.Controllers
                                     Value = "Нe заданы все необходимые параметры в сообщении (индекс поезда, дата операции и код корректировки)"
                                 };
 
-                            string index = parameters[0];
+                            if(string.IsNullOrEmpty(message.Body))
+                                throw new HttpResponseException()
+                                {
+                                    Status = (int)HttpStatusCode.BadRequest,
+                                    Value = "Нe заданы вагоны для корректировки)"
+                                };
+
+                        string index = parameters[0];
                             DateTime timeOper = DateTime.Parse(parameters[1]);
                             string correctType = parameters[2];
 
-                            switch (correctType)
+                            try
                             {
-                                // Корректировка сведений о вагонах
-                                case "2":
-                                // Прицепка вагонов
-                                case "1":
-                                    {
-                                        List<VagonModel> newVagons = JsonSerializer.Deserialize<List<VagonModel>>(message.Body);
-                                        result = await _trainRepository.CorrectVagons(index, newVagons, timeOper, station);
-                                        break;
-                                    }
-                                // Отцепка вагонов
-                                case "0":
-                                    {
-                                        string[] vagonsToDetach = message.Body.Split(';');
-                                        result = await _trainRepository.DetachVagons(index, vagonsToDetach, timeOper, station);
-                                        break;
-                                    }
-                                default:
-                                    throw new HttpResponseException()
-                                    {
-                                        Status = (int)HttpStatusCode.NotFound,
-                                        Value = $"Обработки параметра операции \"{ parameters[1] }\" не существует"
-                                    };
+                                switch (correctType)
+                                {
+                                    // Корректировка сведений о вагонах
+                                    case "2":
+                                    // Прицепка вагонов
+                                    case "1":
+                                        {
+                                            List <VagonModel> newVagons = JsonSerializer.Deserialize<List<VagonModel>>(message.Body);
+                                            result = await _trainRepository.CorrectVagons(index, newVagons, timeOper, station);
+                                            break;
+                                        }
+                                    // Отцепка вагонов
+                                    case "0":
+                                        {
+                                            string[] vagonsToDetach = message.Body.Split(';');
+                                            result = await _trainRepository.DetachVagons(index, vagonsToDetach, timeOper, station);
+                                            break;
+                                        }
+                                    default:
+                                        throw new HttpResponseException()
+                                        {
+                                            Status = (int)HttpStatusCode.NotFound,
+                                            Value = $"Обработки параметра операции \"{ parameters[1] }\" не существует"
+                                        };
+                                }
                             }
-                            break;
+                            catch (Exception e)
+                            {
+                                throw new HttpResponseException()
+                                {
+                                    Status = (int)HttpStatusCode.BadRequest,
+                                    Value = e.Message
+                                };
+                            }
+                        break;
                         }
                     case 200:
                     case 201:
@@ -100,9 +127,21 @@ namespace GVCServer.Controllers
                                     Value = "Нe заданы все необходимые параметры в сообщении (индекс и дата операции)"
                                 };
                             string index = parameters[0];
-                            DateTime timeOper = DateTime.Parse(parameters[1]);
+                        
+                            try
+                            {                          
+                                DateTime timeOper = DateTime.Parse(parameters[1]);
+                                result = await _trainRepository.ProcessTrain(index, station, timeOper, messageCode.ToString());
+                            }
+                            catch (Exception e)
+                            {
+                                throw new HttpResponseException()
+                                {
+                                    Status = (int)HttpStatusCode.BadRequest,
+                                    Value = e.Message
+                                };
+                            }
 
-                            result = await _trainRepository.ProcessTrain(index, station, timeOper, messageCode.ToString());
                             break;
                         }
                     case 209:
@@ -110,8 +149,19 @@ namespace GVCServer.Controllers
                             string index = parameters[0];
                             short trainNum = short.Parse(parameters[1]);
 
-                            result = await _trainRepository.UpdateTrainNum(index, trainNum);
-                            break;
+                            try
+                            {
+                                result = await _trainRepository.UpdateTrainNum(index, trainNum);
+                            }
+                            catch (Exception e)
+                            {
+                                throw new HttpResponseException()
+                                {
+                                    Status = (int)HttpStatusCode.BadRequest,
+                                    Value = e.Message
+                                };
+                            }
+                        break;
                         }
                     case 333:
                         {
@@ -131,28 +181,61 @@ namespace GVCServer.Controllers
                                 case "201":
                                 case "202":
                                     {
+                                    try
+                                    {
                                         result = await _trainRepository.DeleteLastTrainOperaion(index, cancelMessageCode, false);
+                                    }
+                                    catch(Exception e)
+                                    {
+                                        throw new HttpResponseException()
+                                        {
+                                            Status = (int)HttpStatusCode.BadRequest,
+                                            Value = e.Message
+                                        };
+                                    }
                                         break;
                                     }
                                 case "2":
                                 case "203":
                                     {
-                                        result = await _trainRepository.DeleteLastTrainOperaion(index, cancelMessageCode, true);
-                                        break;
-                                    }
-                                case "9":
-                                    {
-                                        if (message.Body == null)
+                                        try
                                         {
                                             result = await _trainRepository.DeleteLastTrainOperaion(index, cancelMessageCode, true);
                                         }
-                                        else
+                                        catch (Exception e)
                                         {
-                                            string[] vagonNums = message.Body.Split(';');
-                                            vagonNums.ForAll(s => s.Trim());
-                                            result = await _trainRepository.DeleteLastVagonOperaions(vagonNums, cancelMessageCode);
+                                            throw new HttpResponseException()
+                                            {
+                                                Status = (int)HttpStatusCode.BadRequest,
+                                                Value = e.Message
+                                            };
                                         }
-                                        break;
+                                    break;
+                                    }
+                                case "9":
+                                    {
+                                        try
+                                        {
+                                            if (message.Body == null)
+                                            {
+                                                result = await _trainRepository.DeleteLastTrainOperaion(index, cancelMessageCode, true);
+                                            }
+                                            else
+                                            {
+                                                string[] vagonNums = message.Body.Split(';');
+                                                vagonNums.ForAll(s => s.Trim());
+                                                result = await _trainRepository.DeleteLastVagonOperaions(vagonNums, cancelMessageCode);
+                                            }
+                                        }
+                                        catch (Exception e)
+                                        {
+                                            throw new HttpResponseException()
+                                            {
+                                                Status = (int)HttpStatusCode.BadRequest,
+                                                Value = e.Message
+                                            };
+                                        }
+                                    break;
                                     }
                             }
                         }
@@ -164,8 +247,27 @@ namespace GVCServer.Controllers
                             Value = $"Обработки параметра операции \"{ parameters[1] }\" не существует"
                         };
                 }
+
+            if(result)
+                return new StatusCodeResult(StatusCodes.Status200OK);
+            else
+                throw new HttpResponseException()
+                {
+                    Status = (int)HttpStatusCode.BadRequest,
+                    Value = $"Неудача при сохранении операции в БД ГВЦ"
+                };
+        }
+
+        [HttpGet("Arriving")]
+        public async Task<ActionResult<TrainSummary[]>> Get(string station)
+        {
+            TrainSummary[] result;
+
+            try
+            {
+                result = await _trainRepository.GetComingTrainsAsync(station);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new HttpResponseException()
                 {
@@ -174,68 +276,18 @@ namespace GVCServer.Controllers
                 };
             }
 
-            return new StatusCodeResult(StatusCodes.Status200OK);
-        }
-
-        [HttpGet("Test/{msgCode}")]
-        public ActionResult<MsgModel> GetTestMessages(string station, string msgCode)
-        {
-            int[] vagonNums = new int[] { 12345678, 22222222, 33333333, 44444444, 55555555, 66666666, 77777777, 88888888, 99999999, 11111111, 12343210, 63173519, 12958839, 19474005 };
-            Random rnd = new Random();
-            switch(msgCode)
+            if (result.Length == 0)
             {
-                case "2":
-                    {
-                        TrainList trainList = new TrainList
-                        {
-                            FormTime = DateTime.Now.AddHours(rnd.Next(-8, 0)),
-                            Index = $"{station.Substring(0, 4)} {rnd.Next(1, 999).ToString().PadLeft(3, '0')} {rnd.Next(1000, 9999)}",
-                            TrainNum = rnd.Next(1000, 4000).ToString(),
-                            Oversize = "0000",
-                            Vagons = new List<VagonModel>()
-                        };
-                        int i = rnd.Next(14);
-                        while (i>0)
-                        {
-                            trainList.Vagons.Add(new VagonModel { Destination = "130100", Mark = (byte)rnd.Next(7), SequenceNum = (byte)i, Num = vagonNums[i].ToString(), WeightNetto = (short)rnd.Next(1000) });
-                            i--;
-                        }
-                        trainList.Length = (short) trainList.Vagons.Count();
-                        trainList.WeightBrutto = (short) (trainList.Vagons.Sum(v => v.WeightNetto) + rnd.Next(180, 320) * trainList.Length);
-
-                        string json = JsonSerializer.Serialize(trainList);
-                        return new MsgModel { Code = 2, Params = new string[] { station}, Body = json };
-                    }
-                default:
-                    throw new Exception("Нету пока такого кода сообщения");
-            }
-
-        }
-
-        [HttpGet("Arriving")]
-        public async Task<ActionResult<TrainSummary[]>> Get(string station)
-        {
-            try
-            {
-                TrainSummary[] result = await _trainRepository.GetComingTrainsAsync(station);
-
-                if (result.Length == 0)
+                // TODO: Заменить номер станции на название
+                throw new HttpResponseException()
                 {
-                    // TODO: Заменить номер станции на название
-                    throw new HttpResponseException()
-                    {
-                        Status = (int)HttpStatusCode.NotFound,
-                        Value = $"Нет поездов назначением на станцию {station}"
-                    };
-                }
-                else
-                {
-                    return result;
-                }
+                    Status = (int)HttpStatusCode.BadRequest,
+                    Value = $"Нет поездов назначением на станцию {station}"
+                };
             }
-            catch (Exception e)
+            else
             {
-                return new ObjectResult(e.Message);
+                return result;
             }
         }
 
@@ -246,36 +298,47 @@ namespace GVCServer.Controllers
             {
                 return await _trainRepository.GetNextOrdinal(station);
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                return new ObjectResult(e.Message);
+                throw new HttpResponseException()
+                {
+                    Status = (int)HttpStatusCode.NotFound,
+                    Value = $"Порядковый номер поезда для станции {station} неопределен"
+                };
             }
         }
 
         [HttpGet("{index}")]
         public async Task<ActionResult<TrainList>> GetList(string station, string index)
         {
+            TrainList result;
+
             try
             {
-                TrainList result = await _trainRepository.GetTrainListAsync(index);
-
-                if (result.Length == 0)
-                {
-                    throw new HttpResponseException()
-                    {
-                        Status = (int)HttpStatusCode.NotFound,
-                        Value = $"Не найдено поездов по запрашиваемому индексу {index}"
-                    };
-                }
-                else
-                {
-                    return result;
-                }
+                result = await _trainRepository.GetTrainListAsync(index);
             }
             catch (Exception e)
             {
-                return new ObjectResult(e.Message);
+                throw new HttpResponseException()
+                {
+                    Status = (int)HttpStatusCode.BadRequest,
+                    Value = e.Message
+                };
             }
+
+            if (result.Length == 0)
+            {
+                throw new HttpResponseException()
+                {
+                    Status = (int)HttpStatusCode.NotFound,
+                    Value = $"Не найден поезд по запрашиваемому индексу {index}"
+                };
+            }
+            else
+            {
+                return result;
+            }
+            
         }
     }
 }

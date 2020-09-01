@@ -34,8 +34,8 @@ namespace GVCServer.Data
             try
             {
                 train = _imapper.Map<Train>(trainList);
-                train.FormStation = _context.Station.Where(s => s.Code.StartsWith(train.FormStation)).Select(s => s.Code).FirstOrDefault();
-                train.DestinationStation = _context.Station.Where(s => s.Code.StartsWith(train.DestinationStation)).Select(s => s.Code).FirstOrDefault();
+                train.FormStation = _context.Station.Where(s => s.Code.StartsWith(trainList.Index.Substring(0, 4))).Select(s => s.Code).FirstOrDefault();
+                train.DestinationStation = _context.Station.Where(s => s.Code.StartsWith(trainList.Index.Substring(9, 4))).Select(s => s.Code).FirstOrDefault();
                 train.Dislocation = station;
                 opVag = _imapper.Map<OpVag[]>(trainList.Vagons);
 
@@ -181,8 +181,6 @@ namespace GVCServer.Data
             if (operationTypesToDelete.Contains(trainOperation.KopNavigation))
             {
                 _context.OpTrain.Remove(trainOperation);
-                if (trainOperation.Kop == "P0005")
-                    _context.Train.Remove(train);
             }
             else
             {
@@ -192,9 +190,20 @@ namespace GVCServer.Data
             if(includeVagonOperations)
             {
                 List<Exception> errors = new List<Exception>();
-                vagonOperations = await GetLastVagonOperationsQuery(train, false)
-                                                    .Include(vo => vo.CodeOperNavigation)
-                                                    .ToArrayAsync();
+
+                if(trainOperation.Kop == "P0004")
+                {
+                    vagonOperations = await GetDisbandedVagonOperations(train)
+                                                .Include(vo => vo.CodeOperNavigation)
+                                                .ToArrayAsync();
+                }
+                else
+                {
+                    vagonOperations = await GetLastVagonOperationsQuery(train, false)
+                                                        .Include(vo => vo.CodeOperNavigation)
+                                                        .ToArrayAsync();
+                }
+
                 foreach (OpVag vagonOperation in vagonOperations)
                 {
                     if (!operationTypesToDelete.Contains(vagonOperation.CodeOperNavigation))
@@ -205,6 +214,23 @@ namespace GVCServer.Data
                 if (errors.Any())
                     throw new AggregateException("Возникли ошибки при обработке вагонов:\n", errors);
                 _context.OpVag.RemoveRange(vagonOperations);
+            }
+
+            if (trainOperation.Kop == "P0005")
+            {
+                _context.Train.Remove(train);
+            }
+            else
+            // Вернуть дислокацию поезда из предыдущей операции
+            {
+                await _context.SaveChangesAsync();
+
+                string previousDislocation = await _context.OpTrain
+                                                           .Where(o => o.Train == train && (bool)o.LastOper)
+                                                           .Select(o => o.SourceStation)
+                                                           .FirstOrDefaultAsync();
+                if (previousDislocation != null)
+                    train.Dislocation = previousDislocation;
             }
 
             return await _context.SaveChangesAsync() != 0;
@@ -275,12 +301,8 @@ namespace GVCServer.Data
         {
             Train train = await FindTrain(index);
             List<OpVag> oldList = await GetLastVagonOperationsQuery(train, false).ToListAsync();
-            string planForm = _context.Station
-                                        .Where(s => s.Code.StartsWith(train.DestinationStation))
-                                        .Select(s => s.Code)
-                                        .FirstOrDefault();
-            string attachCode = GetOperations("9").Result.Where(o => o.Parameter.Equals(1)).FirstOrDefault().Code;
-            string correctCode = GetOperations("9").Result.Where(o => o.Parameter.Equals(2)).FirstOrDefault().Code;
+            string attachCode = GetOperations("9").Result.Where(o => o.Parameter == 1).FirstOrDefault().Code;
+            string correctCode = GetOperations("9").Result.Where(o => o.Parameter == 2).FirstOrDefault().Code;
 
             foreach (VagonModel correctedVagon in newList)
             {
@@ -293,7 +315,7 @@ namespace GVCServer.Data
                     Source = station,
                     Train = train,
                     DateOper = timeOper,
-                    PlanForm = planForm,
+                    PlanForm = train.DestinationStation,
                     NumNavigation = _context.Vagon.Where(v => correctedVagon.Num.Equals(v.Id)).FirstOrDefault(),
                     Destination = correctedVagon.Destination,
                     WeightNetto = correctedVagon.WeightNetto,
@@ -334,8 +356,7 @@ namespace GVCServer.Data
         
         public async Task<TrainSummary[]> GetComingTrainsAsync(string station)
         {
-            string targetNode = station.Substring(0, 4);
-            Train[] trains = await _context.Train.Where(t => targetNode.Equals(t.DestinationStation) && !t.Dislocation.Equals(station))
+            Train[] trains = await _context.Train.Where(t => station.Equals(t.DestinationStation) && !t.Dislocation.Equals(station))
                                                  .Include(t => t.OpTrain)
                                                     .ThenInclude(o => o.KopNavigation)
                                                  .Select(t => new Train { TrainNum = t.TrainNum,
@@ -389,6 +410,13 @@ namespace GVCServer.Data
                 return 1;
             else 
                 return (short) (lastOrdinal + 1);
+        }
+
+        private IQueryable<OpVag> GetDisbandedVagonOperations(Train train)
+        {
+            var disbandedVagons = _context.OpVag.Where(o => o.Train == train).Select(o => o.Num);
+            var lastOperations = _context.OpVag.Where(o => disbandedVagons.Contains(o.Num) && (bool)o.LastOper);
+            return lastOperations;
         }
 
         private IQueryable<OpVag> GetLastVagonOperationsQuery(Train train, bool includeVagonParams)

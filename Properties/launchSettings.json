@@ -18,8 +18,7 @@
       }
     },
     "GVCServer": {
-      "commandName": "Project",
-      "launchUrl": "weatherforecast",
+      "commandName": "IISExpress",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
