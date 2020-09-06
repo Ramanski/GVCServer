@@ -1,0 +1,183 @@
+﻿@page "/departure"
+
+@using Microsoft.AspNetCore.Authentication.JwtBearer;
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Popups
+@using System.Timers
+@inject NotificationService NotificationService
+@inject StationAssistant.Data.IGvcDataService GvcDataFetch
+@inject StationAssistant.Data.IStationDataService StationData
+@attribute [Authorize]
+
+@if (departingTrains == null)
+{
+    <img src="/Eclipse-load.gif" alt="Loading..." />
+}
+else
+{
+    <SfDialog @bind-Visible="@CancelConfirmVisible" Width="400px" Target="#target" ShowCloseIcon="true" Header="@Title" Content="@Body">
+        <DialogButtons>
+            <DialogButton Content="Yes" IsPrimary="true" OnClick="(async() => await CancelDeparting())" />
+            <DialogButton Content="No" OnClick="(() => { CancelConfirmVisible = false; })" />
+        </DialogButtons>
+    </SfDialog>
+
+    if (!(TrainListVisible || PathSelectorVisible || ScheduleSelectorVisible))
+    {
+        <h3> Прогноз отправления поездов </h3>
+        <div class="row">
+            <div class="col-xs-6 col-sm-6 col-lg-3 col-md-3">
+                <SfButton IsPrimary="true" OnClick="(async() => await Depart())">Отправить поезд</SfButton>
+                <SfButton IsPrimary="false" OnClick="(() => ShowDetails())">Натурный лист</SfButton>
+                <SfButton IsPrimary="false" OnClick="(() => onOpenPath())">Следующая нитка отправления</SfButton>
+                <SfButton IsPrimary="false" OnClick="(() => onOpenPath())">Перестановка состава</SfButton>
+            </div>
+        </div>
+
+        <h3> Прибывшие поезда </h3>
+        <div class="col-lg-12 control-section">
+            <div class="content-wrapper">
+                <div class="row">
+                    <TrainList @ref="departingList" trainList="departingTrains"></TrainList>
+                </div>
+            </div>
+            <div class="row">
+                <SfButton IsPrimary="false" OnClick="() => onCancel()">Отмена отправления</SfButton> @*Disabled=@(arrivedList.selectedTrain == null)*@
+            </div>
+            <div class="content-wrapper">
+                <div class="row">
+                    <TrainList @ref="departedList" trainList="departedTrains"></TrainList>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <ConfirmModal Title="@TitleModal" DialogClose="onCloseModal" OverlayClick="onCloseModal" OKClick="onOK">
+            @if (TrainListVisible)
+            {
+                <FormationSheet trainIndex="@departingList.selectedTrain.Index"></FormationSheet>
+            }
+            else if (PathSelectorVisible)
+            {
+                <PathSelector @ref="pathSelector" selectedTrain="departingList.selectedTrain" isArriving="false" isDeparting="true"></PathSelector>
+            }
+        </ConfirmModal>
+    }
+
+    <style>
+        .e-play-icon::before {
+            content: '\e677';
+            font-size: 12px;
+        }
+    </style>
+}
+
+@code {
+
+    PathSelector pathSelector;
+    TrainList departingList;
+    TrainList departedList;
+    private List<TrainModel> departedTrains { get; set; }
+    private List<TrainModel> departingTrains { get; set; }
+    private List<PathModel> paths { get; set; }
+    //private TrainModel selectedTrain;
+    Timer timer;
+    private string TitleModal { get; set; }
+    private bool TrainListVisible { get; set; } = false;
+    private bool PathSelectorVisible { get; set; } = false;
+    private bool ScheduleSelectorVisible { get; set; } = false;
+    private bool CancelConfirmVisible { get; set; } = false;
+    private string Title;
+    private string Body;
+
+    protected override async Task OnInitializedAsync()
+    {
+        departingTrains = await StationData.GetDepartingTrains();
+        timer = new Timer();
+        timer.Interval = 30000;
+        timer.Elapsed += onTimeElapsed;
+        timer.Start();
+    }
+
+    private async void onTimeElapsed(object sender, EventArgs e)
+    {
+        //await StationData.DeleteDepartedTrains();
+    }
+
+    private void ShowDetails()
+    {
+        if (departingList.selectedTrain == null)
+        {
+            NotificationService.SetMessage(TypeNotification.Info, "Выберите поезд из списка");
+            return;
+        }
+        //selectedTrain = departingList.selectedTrain;
+        onOpenList();
+        StateHasChanged();
+    }
+
+    void onCloseModal()
+    {
+        PathSelectorVisible = false;
+        TrainListVisible = false;
+    }
+
+    void onOpenList()
+    {
+        TitleModal = "Телеграмма-натурный лист поезда " + departingList.selectedTrain.TrainNum;
+        TrainListVisible = true;
+    }
+
+    async Task onOK()
+    {
+        if (PathSelectorVisible && pathSelector != null)
+        {
+            //departingList.selectedTrain.Path = await StationData.GetPathAsync(pathSelector.PathId);
+            PathModel newPathModel = await StationData.GetPathAsync(pathSelector.PathId);
+            await StationData.RelocateTrain(departingList.selectedTrain.Index, newPathModel.Id);
+        }
+        onCloseModal();
+    }
+
+    void onOpenPath()
+    {
+        var train = departingList.selectedTrain;
+        if (train != null)
+        {
+            TitleModal = "Выбор пути приема отправления " + (train.TrainNum == null ? train.TrainNum : train.Index) ;
+            PathSelectorVisible = true;
+        }
+    }
+
+    void onGetDepartureTime()
+    {
+
+    }
+
+    private async Task Depart()
+    {
+        if (departingList.selectedTrain == null)
+            return;
+        await GvcDataFetch.SendDeparting(departingList.selectedTrain.Index, DateTime.Now);
+        departedTrains.Add(departingList.selectedTrain);
+        departingTrains.Remove(departingList.selectedTrain);
+        StateHasChanged();
+    }
+
+    void onCancel()
+    {
+        Title = "Отмена отправления поезда";
+        Body = $"Отменить ранее переданное сообщение об отправлении поезда {departedList.selectedTrain.TrainNum}?";
+        CancelConfirmVisible = true;
+    }
+
+    private async Task CancelDeparting()
+    {
+        CancelConfirmVisible = false;
+        await GvcDataFetch.CancelOperation(departedList.selectedTrain.Index, "200");
+        departedTrains.Remove(departedList.selectedTrain);
+        StateHasChanged();
+    }
+
+}
