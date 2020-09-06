@@ -82,14 +82,15 @@ namespace GVCServer.Data
                                                 trainKindNums.TrainNumLow <= s.TrainNum &&
                                                 trainKindNums.TrainNumHigh >= s.TrainNum)
                                          .OrderBy(s => s.DepartureTime);
-            var depatrureRoute = await depatrureRouteQuery.Where(s => s.DepartureTime > DateTime.Now.AddMinutes(minutesOffset).TimeOfDay)
+            var timeStart = (DateTime.Now.AddMinutes(minutesOffset)).TimeOfDay;
+            var depatureRoute = await depatrureRouteQuery.Where(s => s.DepartureTime > timeStart)
                                                     .FirstOrDefaultAsync();
-            if(depatrureRoute == null)
+            if(depatureRoute == null)
             {
-                depatrureRoute = await depatrureRouteQuery.Where(s => s.DepartureTime != null).FirstOrDefaultAsync();
-                if(depatrureRoute != null)
+                depatureRoute = await depatrureRouteQuery.Where(s => s.DepartureTime != null).FirstOrDefaultAsync();
+                if(depatureRoute != null)
                 {
-                    departureTime = (DateTime)(DateTime.Today.AddDays(1) + depatrureRoute.DepartureTime);
+                    departureTime = (DateTime)(DateTime.Today.AddDays(1) + depatureRoute.DepartureTime);
                 }
                 else
                 {
@@ -98,9 +99,9 @@ namespace GVCServer.Data
             }
             else
             {
-                departureTime = (DateTime)(DateTime.Today + depatrureRoute.DepartureTime);
+                departureTime = (DateTime)(DateTime.Today + depatureRoute.DepartureTime);
             }
-            return new string[] { depatrureRoute.TrainNum.ToString(), departureTime.ToString()};
+            return new string[] { depatureRoute.TrainNum.ToString(), departureTime.ToString()};
         }
 
         public async Task<List<Pfclaim>> GetPlanFormClaims(string sourceStation)

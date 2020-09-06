@@ -5,9 +5,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Data\Models\**" />
     <Compile Remove="StationAssistant\**" />
+    <Content Remove="Data\Models\**" />
     <Content Remove="StationAssistant\**" />
+    <EmbeddedResource Remove="Data\Models\**" />
     <EmbeddedResource Remove="StationAssistant\**" />
+    <None Remove="Data\Models\**" />
     <None Remove="StationAssistant\**" />
   </ItemGroup>
 
@@ -18,6 +22,10 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ModelsLibrary\ModelsLibrary.csproj" />
   </ItemGroup>
 
 

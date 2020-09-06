@@ -1,5 +1,5 @@
 ﻿using GVCServer.Data.Entities;
-using GVCServer.Models;
+using ModelsLibrary;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +14,7 @@ namespace GVCServer.Data
         /// </summary>
         /// <param name="index"></param>
         /// <returns></returns>
-        Task<TrainList> GetTrainListAsync(string index);
+        Task<TrainModel> GetTrainModelAsync(string index);
 
         /// <summary>
         /// Корректировка сведений о составе поезда (сообщение 09, прицепка - P0071, корректировка - P0073)
@@ -37,10 +37,10 @@ namespace GVCServer.Data
         /// <summary>
         /// Запись поезда из ТНГЛ (сообщение 02, P0005)
         /// </summary>
-        /// <param name="trainList"></param>
+        /// <param name="TrainModel"></param>
         /// <param name="station"></param>
         /// <returns></returns>
-        public Task<bool> AddTrainAsync(TrainList trainList, string station);
+        public Task<bool> AddTrainAsync(TrainModel TrainModel, string station);
 
         public Task<short> GetNextOrdinal(string formStation);
 
@@ -51,7 +51,7 @@ namespace GVCServer.Data
         /// </summary>
         /// <param name="station"></param>
         /// <returns></returns>
-        Task<TrainSummary[]> GetComingTrainsAsync(string station);
+        Task<TrainModel[]> GetComingTrainsAsync(string station);
 
         /// <summary>
         /// Отмена последней операции с поездом (сообщение 333)

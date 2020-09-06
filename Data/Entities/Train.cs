@@ -20,7 +20,7 @@ namespace GVCServer.Data.Entities
         public DateTime? FormTime { get; set; }
         public string Dislocation { get; set; }
         public short Length { get; set; }
-        public short WeightBrutto { get; set; }
+        public int WeightBrutto { get; set; }
         public string Oversize { get; set; }
 
         public virtual TrainKind TrainKind { get; set; }

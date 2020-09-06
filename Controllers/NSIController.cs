@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using GVCServer.Data;
 using GVCServer.Data.Entities;
+using GVCServer.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -31,7 +33,11 @@ namespace GVCServer.Controllers
             }
             catch (Exception e)
             {
-                return new ObjectResult(e.Message);
+                throw new HttpResponseException()
+                {
+                    Status = (int)HttpStatusCode.BadRequest,
+                    Value = e.Message
+                };
             }
         }
 
@@ -44,7 +50,11 @@ namespace GVCServer.Controllers
             }
             catch (Exception e)
             {
-                return new ObjectResult(e.Message);
+                throw new HttpResponseException()
+                {
+                    Status = (int)HttpStatusCode.BadRequest,
+                    Value = e.Message
+                };
             }
         }
 
@@ -57,7 +67,11 @@ namespace GVCServer.Controllers
             }
             catch (Exception e)
             {
-                return new ObjectResult(e.Message);
+                throw new HttpResponseException()
+                {
+                    Status = (int)HttpStatusCode.BadRequest,
+                    Value = e.Message
+                };
             }
         }
 
@@ -70,7 +84,11 @@ namespace GVCServer.Controllers
             }
             catch (Exception e)
             {
-                return new ObjectResult(e.Message);
+                throw new HttpResponseException()
+                {
+                    Status = (int)HttpStatusCode.BadRequest,
+                    Value = e.Message
+                };
             }
         }
 
@@ -83,7 +101,11 @@ namespace GVCServer.Controllers
             }
             catch (Exception e)
             {
-                return new ObjectResult(e.Message);
+                throw new HttpResponseException()
+                {
+                    Status = (int)HttpStatusCode.BadRequest,
+                    Value = e.Message
+                };
             }
         }
 
@@ -96,7 +118,11 @@ namespace GVCServer.Controllers
             }
             catch (Exception e)
             {
-                return new ObjectResult(e.Message);
+                throw new HttpResponseException()
+                {
+                    Status = (int)HttpStatusCode.BadRequest,
+                    Value = e.Message
+                };
             }
         }
 
@@ -109,7 +135,11 @@ namespace GVCServer.Controllers
             }
             catch (Exception e)
             {
-                return new ObjectResult(e.Message);
+                throw new HttpResponseException()
+                {
+                    Status = (int)HttpStatusCode.BadRequest,
+                    Value = e.Message
+                };
             }
         }
 
@@ -122,7 +152,11 @@ namespace GVCServer.Controllers
             }
             catch (Exception e)
             {
-                return new ObjectResult(e.Message);
+                throw new HttpResponseException()
+                {
+                    Status = (int)HttpStatusCode.BadRequest,
+                    Value = e.Message
+                };
             }
         }
     }

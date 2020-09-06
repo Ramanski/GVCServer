@@ -2,19 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
-//using System.Web.Http;
-using AutoMapper;
 using AutoMapper.Internal;
 using GVCServer.Data;
-using GVCServer.Data.Entities;
 using GVCServer.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Query.Internal;
 using Microsoft.Extensions.Logging;
+using ModelsLibrary;
 
 namespace GVCServer.Controllers
 {
@@ -44,8 +40,8 @@ namespace GVCServer.Controllers
                         {
                             try
                             {
-                                TrainList trainList = JsonSerializer.Deserialize<TrainList>(message.Body);
-                                result = await _trainRepository.AddTrainAsync(trainList, station);
+                                TrainModel TrainModel = JsonSerializer.Deserialize<TrainModel>(message.Body);
+                                result = await _trainRepository.AddTrainAsync(TrainModel, station);
                             }
                             catch (Exception e)
                             {
@@ -259,9 +255,9 @@ namespace GVCServer.Controllers
         }
 
         [HttpGet("Arriving")]
-        public async Task<ActionResult<TrainSummary[]>> Get(string station)
+        public async Task<ActionResult<TrainModel[]>> Get(string station)
         {
-            TrainSummary[] result;
+            TrainModel[] result;
 
             try
             {
@@ -309,13 +305,13 @@ namespace GVCServer.Controllers
         }
 
         [HttpGet("{index}")]
-        public async Task<ActionResult<TrainList>> GetList(string station, string index)
+        public async Task<ActionResult<TrainModel>> GetList(string station, string index)
         {
-            TrainList result;
+            TrainModel result;
 
             try
             {
-                result = await _trainRepository.GetTrainListAsync(index);
+                result = await _trainRepository.GetTrainModelAsync(index);
             }
             catch (Exception e)
             {

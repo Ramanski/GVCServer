@@ -1,9 +1,8 @@
 ﻿using AutoMapper;
 using GVCServer.Data.Entities;
-using GVCServer.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Internal;
+using ModelsLibrary;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,7 +21,7 @@ namespace GVCServer.Data
             _imapper = imapper;
         }
 
-        public async Task<bool> AddTrainAsync(TrainList trainList, string station)
+        public async Task<bool> AddTrainAsync(TrainModel TrainModel, string station)
         {
             Train train;
             OpTrain opTrain;
@@ -33,11 +32,11 @@ namespace GVCServer.Data
 
             try
             {
-                train = _imapper.Map<Train>(trainList);
-                train.FormStation = _context.Station.Where(s => s.Code.StartsWith(trainList.Index.Substring(0, 4))).Select(s => s.Code).FirstOrDefault();
-                train.DestinationStation = _context.Station.Where(s => s.Code.StartsWith(trainList.Index.Substring(9, 4))).Select(s => s.Code).FirstOrDefault();
+                train = _imapper.Map<Train>(TrainModel);
+                train.FormStation = _context.Station.Where(s => s.Code.StartsWith(TrainModel.Index.Substring(0, 4))).Select(s => s.Code).FirstOrDefault();
+                train.DestinationStation = _context.Station.Where(s => s.Code.StartsWith(TrainModel.Index.Substring(9, 4))).Select(s => s.Code).FirstOrDefault();
                 train.Dislocation = station;
-                opVag = _imapper.Map<OpVag[]>(trainList.Vagons);
+                opVag = _imapper.Map<OpVag[]>(TrainModel.Vagons);
 
                 errors = await CheckValuesForTGNL(station, opVag);
                 if (errors.Any())
@@ -46,7 +45,7 @@ namespace GVCServer.Data
                 opTrain = new OpTrain
                 {
                     SourceStation = station,
-                    Datop = trainList.FormTime,
+                    Datop = TrainModel.DateOper,
                     Kop = sentTGNL,
                     Msgid = DateTime.Now,
                     Train = train,
@@ -65,7 +64,7 @@ namespace GVCServer.Data
                     vagon.LastOper = true;
                     vagon.Source = station;
                     vagon.Train = train;
-                    vagon.DateOper = trainList.FormTime;
+                    vagon.DateOper = TrainModel.DateOper;
                     vagon.CodeOper = sentTGNL;
                     vagon.PlanForm = planForm;
                     vagon.NumNavigation = _context.Vagon.Where(v => v.Id == vagon.Num).FirstOrDefault();
@@ -98,7 +97,7 @@ namespace GVCServer.Data
                 SourceStation = station,
                 Train = train
             };
-            await _context.OpTrain.AddAsync(newOperation);
+            _context.OpTrain.Add(newOperation);
             train.Dislocation = station;
             if (messageCode.Equals("203"))
             {
@@ -168,6 +167,7 @@ namespace GVCServer.Data
             OpTrain trainOperation;
             Operation[] operationTypesToDelete;
             OpVag[] vagonOperations;
+            bool dbSaveResult = false;
 
             train = await FindTrain(index);
             trainOperation= await _context.OpTrain
@@ -223,7 +223,7 @@ namespace GVCServer.Data
             else
             // Вернуть дислокацию поезда из предыдущей операции
             {
-                await _context.SaveChangesAsync();
+                dbSaveResult = await _context.SaveChangesAsync()!=0;
 
                 string previousDislocation = await _context.OpTrain
                                                            .Where(o => o.Train == train && (bool)o.LastOper)
@@ -233,7 +233,7 @@ namespace GVCServer.Data
                     train.Dislocation = previousDislocation;
             }
 
-            return await _context.SaveChangesAsync() != 0;
+            return await _context.SaveChangesAsync() != 0 || dbSaveResult;
         }
 
         public async Task<bool> DisbandVagons(Train train, string station, DateTime timeOper, string messageCode)
@@ -280,7 +280,7 @@ namespace GVCServer.Data
                 {
                     throw new ArgumentException($"Отцепляемый вагон {vagonNum} в поезде {index} отсутствует!");
                 }
-                await _context.OpVag.AddAsync(vagOper);
+                _context.OpVag.Add(vagOper);
             }
 
             OpTrain newOperation = new OpTrain()
@@ -292,7 +292,7 @@ namespace GVCServer.Data
                 Train = train
             };
 
-            await _context.OpTrain.AddAsync(newOperation);
+            _context.OpTrain.Add(newOperation);
             await _context.SaveChangesAsync();       
             return await UpdateTrainParameters(train);
         }
@@ -337,7 +337,7 @@ namespace GVCServer.Data
                     newVagon.CodeOper = correctCode;
                 }
 
-                await _context.OpVag.AddAsync(newVagon);
+                _context.OpVag.Add(newVagon);
             }
             
             OpTrain newOperation = new OpTrain()
@@ -349,12 +349,12 @@ namespace GVCServer.Data
                 Train = train
             };
 
-            await _context.OpTrain.AddAsync(newOperation);
+            _context.OpTrain.Add(newOperation);
             await _context.SaveChangesAsync();
             return await UpdateTrainParameters(train);
         }
         
-        public async Task<TrainSummary[]> GetComingTrainsAsync(string station)
+        public async Task<TrainModel[]> GetComingTrainsAsync(string station)
         {
             Train[] trains = await _context.Train.Where(t => station.Equals(t.DestinationStation) && !t.Dislocation.Equals(station))
                                                  .Include(t => t.OpTrain)
@@ -370,17 +370,25 @@ namespace GVCServer.Data
                                                  })
                                                  .ToArrayAsync();
 
-            var trainModels = _imapper.Map<TrainSummary[]>(trains);
-            foreach(TrainSummary trainModel in trainModels)
+            var trainModels = _imapper.Map<TrainModel[]>(trains);
+            foreach(TrainModel trainModel in trainModels)
             {
-                trainModel.ArrivingTime = _context.Schedule.Where(s => s.TrainNum.ToString() == trainModel.TrainNum).Select(s => s.ArrivalTime).FirstOrDefault().ToString();
+                var timeToArrive = _context.Schedule
+                                              .Where(s => s.TrainNum.ToString() == trainModel.TrainNum)
+                                              .Select(s => s.ArrivalTime)
+                                              .FirstOrDefault();
+                if(timeToArrive.HasValue)
+                {
+                    var dateTime = DateTime.Today.AddTicks(timeToArrive.Value.Ticks);
+                    trainModel.DateOper = (dateTime > DateTime.Now? dateTime :dateTime.AddDays(1));
+                }
             }
             return trainModels;
         }
 
-        public async Task<TrainList> GetTrainListAsync(string index)
+        public async Task<TrainModel> GetTrainModelAsync(string index)
         {
-            TrainList trainList;
+            TrainModel TrainModel;
             Train train;
             OpVag[] vagons;
 
@@ -389,9 +397,9 @@ namespace GVCServer.Data
                 train = await FindTrain(index);
                 vagons = await GetLastVagonOperationsQuery(train, true).ToArrayAsync();
 
-                trainList = _imapper.Map<TrainList>(train);
-                trainList.Vagons = _imapper.Map<List<VagonModel>>(vagons);
-                return trainList;
+                TrainModel = _imapper.Map<TrainModel>(train);
+                TrainModel.Vagons = _imapper.Map<List<VagonModel>>(vagons);
+                return TrainModel;
             }
             catch(Exception e)
             {
