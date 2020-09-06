@@ -1,0 +1,44 @@
+﻿@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Data
+@inject StationAssistant.Data.IStationDataService StationData
+
+
+
+<div class="padding-top col-8">
+    <SfDropDownList TItem="string" TValue="string" Placeholder="Выберите парк" PopupHeight="auto" @bind-Value="@PrefferedArea" DataSource="@areas">
+        <DropDownListEvents TValue="string" ValueChange="ChangeArea"></DropDownListEvents>
+        <DropDownListFieldSettings Text="Area" Value="Area"></DropDownListFieldSettings>
+    </SfDropDownList>
+</div>
+<div class="padding-top col-8">
+    <SfDropDownList TValue="int" TItem="PathModel" @bind-Value="@PathId" Placeholder="Выберите путь" Query="@PathQuery" PopupHeight="auto" DataSource="@availablePaths">
+        <DropDownListFieldSettings Text="PathNum" Value="Id"></DropDownListFieldSettings>
+        <DropDownListEvents TValue="string"></DropDownListEvents>
+    </SfDropDownList>
+</div>
+
+@code {
+    [Parameter] public TrainModel selectedTrain { get; set; }
+    [Parameter] public bool isArriving { get; set; } = false;
+    [Parameter] public bool isDeparting { get; set; } = false;
+    public List<PathModel> availablePaths { get; set; }
+    public List<string> areas;
+    public Query PathQuery { get; set; } = null;
+    public int PathId { get; set; } = 0;
+    public string PrefferedArea { get; set; } = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Выбрать предпочтительный путь
+        availablePaths = await StationData.GetAvailablePaths(selectedTrain, isArriving, isDeparting);
+        areas = availablePaths.Select(a => a.Area).Distinct().ToList();
+        PrefferedArea = areas[0];
+        this.PathQuery = new Query().Where(new WhereFilter() { Field = "Area", Operator = "equal", value = PrefferedArea, IgnoreCase = false, IgnoreAccent = false });
+    }
+
+    public void ChangeArea(Syncfusion.Blazor.DropDowns.ChangeEventArgs<string> args)
+    {
+        this.PathQuery = new Query().Where(new WhereFilter() { Field = "Area", Operator = "equal", value = args.Value, IgnoreCase = false, IgnoreAccent = false });
+        this.PathId = availablePaths.Where(a => a.Area.Equals(args.Value)).FirstOrDefault().Id;
+    }
+}

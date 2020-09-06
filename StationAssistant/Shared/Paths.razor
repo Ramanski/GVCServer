@@ -1,0 +1,128 @@
+﻿@using Syncfusion.Blazor.ProgressBar
+@using Syncfusion.Blazor.Buttons
+@inject StationAssistant.Data.IStationDataService StationData
+@inject NotificationService NotificationService
+
+@if (PathsHided)
+{
+    <p>Loading...</p>
+}
+else
+{
+    if (FormationIsVisible)
+    {
+        <ConfirmModal Title="Накопительная ведомость" DialogClose="(() => FormationIsVisible = false)" OverlayClick="(() => FormationIsVisible = false)" OKButtonName="Сформировать" OKClick="OnFormTrain">
+            <FormationSheet @ref="formationSheet" path="selectedPathItem"></FormationSheet>
+        </ConfirmModal>
+    }
+    else
+    {
+        <div>
+            <div class="row">
+                <div class="col-6">
+                    <label style="padding: 10px 70px 10px 0">Только сортировочные пути</label>
+                    <SfSwitch @bind-Checked="@isSort" TChecked="bool" ValueChange="(async () => await GetPaths())"></SfSwitch>
+                </div>
+            </div>
+            @foreach (PathModel path in paths)
+            {
+                if (!isSort && path.Sort)
+                    continue;
+                <div class="row">
+                    <div class="col-lg-12 col-sm-12 progressbar-label-bootstrap">
+                        <p> Путь №@path.PathNum (@path.Marks) </p>
+                        @if(isSort && !path.AnyTrain)
+                        {
+                            <SfButton IsPrimary="true" OnClick="(() => { FormationIsVisible = true; selectedPathItem = path; })">Накопительная ведомость</SfButton>
+                        }
+                    </div>
+                </div>
+                
+                var segments = path.AnyTrain ? 0 : path.Length;
+
+                <SfProgressBar Type="ProgressType.Linear" Height="60"
+                               SegmentCount="@segments" Value="@path.Occupation" Minimum="0" Maximum="@path.Length"
+                               Theme="@ProgressTheme.Bootstrap4" @key="path.Id">
+                    <ProgressBarAnimation Enable="false"/>
+                </SfProgressBar>
+            }
+        </div>
+        <style>
+            .progressbar-label-bootstrap {
+                text-align: left;
+                font-family: Roboto-Regular;
+                font-size: 14px;
+                color: #3D3E3C;
+                margin-left: 10px;
+                padding: 0px;
+            }
+        </style>
+    }
+}
+
+@code {
+
+    [Parameter] public string Area { get; set; }
+    FormationSheet formationSheet;
+    public List<PathModel> paths { get; set; }
+    private PathModel selectedPathItem = null;
+    private bool PathsHided { get; set; } = true;
+    private bool isSort = true;
+    private bool FormationIsVisible = false;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetPaths();
+
+        PathsHided = false;
+    }
+
+    private async Task OnFormTrain()
+    {
+        FormationIsVisible = false;
+        if (!formationSheet.selectedVagons.Any())
+        {
+            NotificationService.SetMessage(TypeNotification.Warning, "Не выделено ни одного вагона для формирования поезда");
+            return;
+        }
+        try
+        {
+            byte trainKind = formationSheet.GetSelectedTrainKind();
+            //if (trainKind == 0) trainKind = 20;
+            await StationData.FormTrain(formationSheet.selectedVagons, trainKind, formationSheet.PFclaimsOn);
+            NotificationService.SetMessage(TypeNotification.Success, $"Операция по формированию поезда проведена успешно");
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            if (e is HttpRequestException || e is ArgumentOutOfRangeException)
+            {
+                NotificationService.SetMessage(TypeNotification.Warning, e.Message);
+            }
+            else if (e is AggregateException)
+            {
+                foreach (Exception innerException in (e as AggregateException).InnerExceptions)
+                {
+                    NotificationService.SetMessage(TypeNotification.Warning, innerException.Message);
+                }
+            }
+            else
+            {
+                NotificationService.SetMessage(TypeNotification.Error, "Не удалось выполнить операцию");
+            }
+            return;
+        }
+    }
+
+    private async Task GetPaths()
+    {
+        paths = await StationData.GetPathsOnAreaAsync(Area, isSort);
+    }
+
+    public void UpdateState()
+    {
+        this.StateHasChanged();
+    }
+
+}

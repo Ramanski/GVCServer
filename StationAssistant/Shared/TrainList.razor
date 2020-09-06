@@ -1,0 +1,50 @@
+﻿@using Syncfusion.Blazor.Grids
+
+<SfGrid DataSource="@trainList" @ref="Grid" EnableVirtualization="false" AllowSelection="true" AllowSorting="true" Height="250">
+    <GridEditSettings AllowAdding="true" AllowDeleting="true"></GridEditSettings>
+    <GridColumns>
+        <GridColumn Field=@nameof(TrainModel.TrainNum) HeaderText="Номер" TextAlign="TextAlign.Left" IsPrimaryKey="true" Width="30"></GridColumn>
+        <GridColumn Field=@nameof(TrainModel.Index) HeaderText="Индекс" Width="60"></GridColumn>
+        <GridColumn Field=@nameof(TrainModel.Length) HeaderText="Длина" Width="30"></GridColumn>
+        <GridColumn Field=@nameof(TrainModel.WeightBrutto) HeaderText="Вес" Width="35"></GridColumn>
+        @if(ShowDislAndOper)
+        {
+            <GridColumn Field=@nameof(TrainModel.Dislocation) HeaderText="Дислокация" Width="50"></GridColumn>
+            <GridColumn Field=@nameof(TrainModel.LastOperation) HeaderText="Операция" Width="55"></GridColumn>
+        }
+        <GridColumn Field=@nameof(TrainModel.DateOper) Format="hh:mm" HeaderText="Время" Width="45"></GridColumn>
+        <GridColumn Field="Path.Area" HeaderText="Парк" Width="50"></GridColumn>
+        <GridColumn Field="Path.PathNum" HeaderText="Путь" Width="25"></GridColumn>
+    </GridColumns>
+    <GridEvents RowSelected="RecordSelected" RowDeselected="DeselectRow" TValue="TrainModel"></GridEvents>
+</SfGrid>
+
+@code {
+    [Parameter] public List<TrainModel> trainList { get; set; }
+    [Parameter] public bool ShowDislAndOper { get; set; } = false;
+    public TrainModel selectedTrain;
+    SfGrid<TrainModel> Grid;
+
+    public void RecordSelected(RowSelectEventArgs<TrainModel> args)
+    {
+        selectedTrain = trainList[(int)args.RowIndex];
+    }
+
+    public void DeselectRow()
+    {
+        selectedTrain = null;
+        Grid.ClearRowSelection();
+    }
+
+    public void AddTrain(TrainModel train)
+    {
+        //this.trainList.Add(train);
+        Grid.AddRecord(train);
+    }
+
+    public void DeleteTrain(TrainModel train)
+    {
+        //trainList.Remove(train);
+        Grid.DeleteRecord();
+    }
+}

@@ -1,0 +1,46 @@
+﻿@page "/login"
+@layout LoginLayout
+@inject NavigationManager navigationManager
+@inject IAccountsRepository accountsRepository
+@inject ILoginService loginService
+
+<h1 class="h2 font-weight-normal login-title">
+    АСУ "Станционный ассистент"
+</h1>
+
+<EditForm class="form-signin" OnValidSubmit="LoginUser" Model="userInfo">
+    <DataAnnotationsValidator />
+    <h4 class="font-weight-normal text-center">Войти в систему</h4>
+
+    <label for="inputUsername" class="sr-only">Логин</label>
+    <InputText id="inputUsername" class="form-control" @bind-Value="userInfo.Login" autofocus placeholder="Введите логин" />
+    <ValidationMessage For="@(() => userInfo.Login)" />
+
+    <label for="inputPassword" class="sr-only">Пароль</label>
+    <InputText type="password" id="inputPassword" class="form-control" placeholder="Введите пароль" @bind-Value="userInfo.Password" />
+    <ValidationMessage For="@(() => userInfo.Password)" />
+
+    <button class="btn btn-lg btn-primary btn-block" type="submit">Войти</button>
+
+    <label class="text-danger">@error</label>
+</EditForm>
+
+@code{
+    private UserInfo userInfo = new UserInfo();
+    string error { get; set; }
+
+    private async Task LoginUser()
+    {
+        error = null;
+        try
+        {
+            var userToken = await accountsRepository.Login(userInfo);
+            await loginService.Login(userToken.Token);
+            navigationManager.NavigateTo("");
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+    }
+}

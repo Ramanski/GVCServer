@@ -1,0 +1,114 @@
+﻿@page "/info"
+@using Syncfusion.Blazor.Charts
+@using Syncfusion.Blazor.Buttons
+@inject StationAssistant.Data.IStationDataService StationData
+@attribute [Authorize]
+
+@if (!dataLoaded)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="col-xs-12 col-sm-12 col-lg-6 col-md-6">
+        @foreach(string area in areas)
+        {
+            <SfButton OnClick="(async () => { currentArea = area; await GetPaths(currentArea); })">@area.Trim()</SfButton>
+        }
+        </div>
+    <div>
+        <label style="padding: 10px 70px 10px 0">Сортировочные пути</label>
+        <SfSwitch @bind-Checked="@isSort" TChecked="bool" ValueChange="(async () => await GetPaths(currentArea))"></SfSwitch>
+    </div>
+    <div class="control-section">
+        <SfChart Title=@currentArea Theme="ChartTheme.Bootstrap4">
+            <ChartArea><ChartAreaBorder Width="1"></ChartAreaBorder></ChartArea>
+            <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" Interval="1" LabelIntersectAction="LabelIntersectAction.Rotate45">
+                <ChartAxisMajorGridLines Width="0"></ChartAxisMajorGridLines>
+                <ChartAxisMinorGridLines Width="0"></ChartAxisMinorGridLines>
+                <ChartAxisMajorTickLines Width="0"></ChartAxisMajorTickLines>
+                <ChartAxisMinorTickLines Width="0"></ChartAxisMinorTickLines>
+                <ChartAxisLineStyle Width="0"></ChartAxisLineStyle>
+            </ChartPrimaryXAxis>
+            <ChartPrimaryYAxis Title="Вагоны" Minimum="0" Maximum="90" Interval="10" LabelFormat="{value}">
+                <ChartAxisLineStyle Width="0"></ChartAxisLineStyle>
+                <ChartAxisMajorGridLines Width="1"></ChartAxisMajorGridLines>
+                <ChartAxisMinorGridLines Width="1"></ChartAxisMinorGridLines>
+                <ChartAxisMajorTickLines Width="0"></ChartAxisMajorTickLines>
+                <ChartAxisMinorTickLines Width="0"></ChartAxisMinorTickLines>
+            </ChartPrimaryYAxis>
+            <ChartSeriesCollection>
+                <ChartSeries DataSource="@DataSource" XName="path" YName="kr" Width="2" Name="КР" Type="ChartSeriesType.StackingColumn">
+                </ChartSeries>
+                <ChartSeries DataSource="@DataSource" XName="path" YName="pl" Width="2" Name="ПЛ" Type="ChartSeriesType.StackingColumn">
+                </ChartSeries>
+                <ChartSeries DataSource="@DataSource" XName="path" YName="ps" Width="2" Name="ПАСС" Type="ChartSeriesType.StackingColumn">
+                </ChartSeries>
+                <ChartSeries DataSource="@DataSource" XName="path" YName="pv" Width="2" Name="ПВ" Type="ChartSeriesType.StackingColumn">
+                </ChartSeries>
+                <ChartSeries DataSource="@DataSource" XName="path" YName="cs" Width="2" Name="ЦС" Type="ChartSeriesType.StackingColumn">
+                </ChartSeries>
+                <ChartSeries DataSource="@DataSource" XName="path" YName="rf" Width="2" Name="РЕФ" Type="ChartSeriesType.StackingColumn">
+                </ChartSeries>
+                <ChartSeries DataSource="@DataSource" XName="path" YName="pr" Width="2" Name="ПР" Type="ChartSeriesType.StackingColumn">
+                </ChartSeries>
+            </ChartSeriesCollection>
+            <ChartTooltipSettings Enable="true"></ChartTooltipSettings>
+        </SfChart>
+    </div>
+}
+
+
+@code {
+    private string[] areas { get; set; }
+    private bool isSort = true;
+    public List<StackedColumnChartData> DataSource { get; set; }
+    public List<PathModel> paths { get; set; }
+    private bool dataLoaded { get; set; } = false;
+    public string currentArea;
+
+    public class StackedColumnChartData
+    {
+        public string path { get; set; }
+        public double ps { get; set; }
+        public double kr { get; set; }
+        public double pl { get; set; }
+        public double pv { get; set; }
+        public double cs { get; set; }
+        public double rf { get; set; }
+        public double pr { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        areas = await StationData.GetAreasAsync();
+        currentArea = areas[0];
+        await GetPaths(currentArea);
+        dataLoaded = true;
+    }
+
+    private async Task GetPaths(string area)
+    {
+        DataSource = new List<StackedColumnChartData>();
+        paths = await StationData.GetPathsOnAreaAsync(currentArea, isSort);
+        var vagonsOnArea = await StationData.GetVagonsOnArea(currentArea);
+        foreach (PathModel path in paths)
+        {
+            var vagonsOnPath = vagonsOnArea.Where(v => path.Id == v.PathId);
+
+            StackedColumnChartData data = new StackedColumnChartData()
+            {
+                path = $"{path.PathNum} {path.Marks}",
+                ps = vagonsOnPath.Where(v => v.Kind == 1).Count(),
+                kr = vagonsOnPath.Where(v => v.Kind == 20).Count(),
+                pl = vagonsOnPath.Where(v => v.Kind == 40).Count(),
+                pv = vagonsOnPath.Where(v => v.Kind == 60).Count(),
+                cs = vagonsOnPath.Where(v => v.Kind >= 70 && v.Kind <= 79).Count(),
+                rf = vagonsOnPath.Where(v => v.Kind >= 80 && v.Kind <= 89).Count()
+            };
+            data.pr = path.Occupation - (data.ps + data.kr + data.pl + data.pv + data.cs + data.rf);
+            DataSource.Add(data);
+        }
+        StateHasChanged();
+    }
+}

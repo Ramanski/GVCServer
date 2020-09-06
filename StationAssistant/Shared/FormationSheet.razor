@@ -1,0 +1,91 @@
+﻿@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.DropDowns
+@using StationAssistant.Data.Entities
+@inject StationAssistant.Data.IStationDataService StationData
+
+<div class="row">
+    <div class="col-6">
+        @if (path != null)
+        {
+            <p>Путь @path.PathNum (@path.Area) </p>
+            <p>Назначение: @path.Marks</p>
+        }
+    </div>
+    <div class="col-6">
+        <p>Длина : @vagCount</p>
+        <p>Общий вес : @weightSum</p>
+    </div>
+</div>
+<div class="row">
+    <div class="col-6">
+        <SfSwitch @bind-Checked="@PFclaimsOn"></SfSwitch>
+        <label style="padding: 10px 70px 10px 0">Проверка требований ПФ при формировании</label>
+    </div>
+    <div class="col-6">
+        <SfDropDownList @ref="trainKindList" TItem="TrainKind" TValue="byte" Placeholder="Выберите вид поезда" PopupHeight="auto" DataSource="@trainKinds">
+            <DropDownListFieldSettings Text="Mnemocode" Value="Code"></DropDownListFieldSettings>
+        </SfDropDownList>
+    </div>
+</div>
+<div class="col-lg-12 control-section">
+    <div class="content-wrapper">
+        <div class="row">
+            @if (dataLoaded)
+            {
+                <SfGrid @ref="Grid" DataSource="@vagons" Toolbar="@(new List<string>() { "Update", "Cancel", "Delete" })" AllowSelection="true" AllowPaging="false" Width="1250">
+                    <GridEditSettings AllowEditing="true" Mode="EditMode.Normal" AllowDeleting="true"></GridEditSettings>
+                    <GridSelectionSettings CheckboxOnly="false" PersistSelection="true" Type="SelectionType.Multiple"></GridSelectionSettings>
+                    <GridEvents RowSelected="GetSelectedRecords" TValue="Vagon"></GridEvents>
+                    <GridColumns>
+                        <GridColumn Type="ColumnType.CheckBox" Width="60"></GridColumn>
+                        <GridColumn Field=@nameof(Vagon.Num) HeaderText="Вагон" IsPrimaryKey="true" AllowAdding="false" Width="100"></GridColumn>
+                        <GridColumn Field=@nameof(Vagon.Ksob) HeaderText="Cобcтв" Width="70"></GridColumn>
+                        <GridColumn Field=@nameof(Vagon.WeightNetto) HeaderText="Вес" EditType="EditType.NumericEdit" ValidationRules="@(new ValidationRules { Required = true, Range = new double[] { 0, 2000 } })" Width="100"></GridColumn>
+                        <GridColumn Field=@nameof(Vagon.Kind) HeaderText="Род" AllowEditing="false" Width="70"></GridColumn>
+                        <GridColumn Field=@nameof(Vagon.Tvag) HeaderText="Тара" AllowEditing="false" Width="70"></GridColumn>
+                        <GridColumn Field=@nameof(Vagon.DateOper) AllowEditing="false" HeaderText="Расформирован" Width="180"></GridColumn>
+                        <GridColumn Field=@nameof(Vagon.Mark) HeaderText="Отметки" EditType="EditType.DefaultEdit" Width="40"></GridColumn>
+                    </GridColumns>
+                </SfGrid>
+            }
+        </div>
+    </div>
+</div>
+
+@code{
+    [Parameter] public PathModel path { get; set; }
+    [Parameter] public string trainIndex { get; set; }
+    SfGrid<Vagon> Grid;
+    SfDropDownList<byte, TrainKind> trainKindList;
+    public List<Vagon> vagons { get; set; }
+    public List<Vagon> selectedVagons { get; set; }
+    public List<TrainKind> trainKinds { get; set; }
+    public bool PFclaimsOn = true;
+    private int weightSum { get; set; }
+    private int vagCount { get; set; }
+    private bool dataLoaded = false;
+
+    protected async override Task OnInitializedAsync()
+    {
+        selectedVagons = new List<Vagon>();
+        if (path != null)
+            vagons = await StationData.GetVagonsOnPath(path.Id);
+        if (!string.IsNullOrEmpty(trainIndex))
+            vagons = await StationData.GetVagonsOfTrain(trainIndex);
+        weightSum = (int)vagons.Sum(v => v.WeightNetto) + vagons.Sum(v => v.Tvag);
+        vagCount = vagons.Count;
+        trainKinds = await StationData.GetTrainKinds();
+        dataLoaded = true;
+    }
+
+    public async Task GetSelectedRecords(RowSelectEventArgs<Vagon> args)
+    {
+        selectedVagons = await this.Grid.GetSelectedRecords();
+    }
+
+    public byte GetSelectedTrainKind()
+    {
+        return trainKindList.Value;
+    }
+}

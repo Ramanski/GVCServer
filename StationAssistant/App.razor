@@ -1,0 +1,27 @@
+﻿
+<Router AppAssembly="@typeof(Program).Assembly">
+    <Found Context="routeData">
+        <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+        <Authorizing>
+            <text>Идет авторизация...</text>
+        </Authorizing>
+        <NotAuthorized>
+            @if (context.User.Identity.IsAuthenticated)
+            {
+                <p>У вас нет прав для просмотра данной страницы</p>
+            }
+            else
+            {
+                <RedirectToLogin />
+            }
+        </NotAuthorized>
+        </AuthorizeRouteView>
+    </Found>
+    <NotFound>
+         <CascadingAuthenticationState>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <p>Указанного адреса не существует</p>
+            </LayoutView>
+         </CascadingAuthenticationState>
+    </NotFound>
+</Router>
