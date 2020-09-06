@@ -20,9 +20,9 @@ namespace StationAssistant.Data.Entities
         public int WeightBrutto { get; set; }
         public string Oversize { get; set; }
         public DateTime? DateOper { get; set; }
-        public int? ScheduleId { get; set; }
+        public DateTime? ScheduleTime { get; set; }
         public int? PathId { get; set; }
-        public byte? TrainKindId { get; set; }
+        public byte TrainKindId { get; set; }
 
         public virtual Station DestinationStationNavigation { get; set; }
         public virtual Path Path { get; set; }

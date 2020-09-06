@@ -33,7 +33,7 @@ namespace StationAssistant.Data
             List<Train> departedTrains = new List<Train>();
             List<Vagon> departedVagons = new List<Vagon>();
 
-            departedTrains = await _context.Train.Where(t => t.DateOper > DateTime.Now.AddMinutes(10) && t.ScheduleId != null).ToListAsync();
+            departedTrains = await _context.Train.Where(t => t.ScheduleTime > DateTime.Now.AddMinutes(10)).ToListAsync();
             foreach(Train train in departedTrains)
             {
                 departedVagons.AddRange(await _context.Vagon.Where(v => v.TrainIndex == train.TrainIndex).ToListAsync());
@@ -111,6 +111,17 @@ namespace StationAssistant.Data
             if (path.Pfdirection.HasValue)
                 path.Marks = _context.Direction.Where(d => d.DirectionId == path.Pfdirection).Select(d => d.Track).FirstOrDefault();
             return _imapper.Map<PathModel>(path);
+        }
+
+        public async Task<short> SetDepartureRoute(TrainModel trainModel)
+        {
+            Train train = await _context.FindAsync<Train>(trainModel.Index);
+            Direction dir = await _context.Direction.FindAsync(train.DestinationStation);
+            string[] route = await _igvcData.GetNearestScheduleRoute(dir.DirectionId, train.TrainKindId);
+            train.TrainNum = route[0];
+            train.ScheduleTime = DateTime.Parse(route[1]);
+            await _context.SaveChangesAsync();
+            return dir.DirectionId;
         }
 
         public async Task <List<PathModel>> GetPathsOnAreaAsync(string area, bool sort)
@@ -251,7 +262,7 @@ namespace StationAssistant.Data
             List<VagonModel> vagonModel = _imapper.Map<List<VagonModel>>(vagons);
             TrainModel TrainModel = _imapper.Map<TrainModel>(train);
             TrainModel.Vagons = vagonModel;
-            //await _gvcData.SendDeparturing();
+            await _igvcData.SendDeparting(train.TrainIndex, DateTime.Now);
             _context.Remove(vagons);
             _context.Remove(train);
             await _context.SaveChangesAsync();

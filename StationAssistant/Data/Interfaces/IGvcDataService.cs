@@ -23,7 +23,7 @@ namespace StationAssistant.Data
 
         public Task SendDeparting(string index, DateTime timeDeparted);
 
-        public Task<string[]> SetNearestScheduleRoute(int directionId, int trainKind, int minutesOffset = 30);
+        public Task<string[]> GetNearestScheduleRoute(int directionId, byte trainKind, int minutesOffset = 30);
 
         public Task<byte> GetTrainKind(string destination);
 

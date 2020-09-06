@@ -116,7 +116,7 @@ namespace StationAssistant.Data
             await PostToServer("Train", msgDepart);
         }
 
-        public async Task<string[]> SetNearestScheduleRoute(int directionId, int trainKind, int minutesOffset = 30)
+        public async Task<string[]> GetNearestScheduleRoute(int directionId, byte trainKind, int minutesOffset = 30)
         {
             return await GetFromServer<string[]>($"NSI/Closest-Departure?direction={directionId}&kind={trainKind}&minsOffset={minutesOffset}");
         }

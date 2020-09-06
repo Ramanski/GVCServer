@@ -43,6 +43,8 @@ namespace StationAssistant.Data
 
         public Task<List<PathModel>> GetAvailablePaths(TrainModel train, bool arriving, bool departing);
 
+        public Task<short> SetDepartureRoute(TrainModel trainModel);
+
         public Task<List<TrainModel>> GetArrivedTrainsAsync();
 
         public Task<List<TrainKind>> GetTrainKinds();

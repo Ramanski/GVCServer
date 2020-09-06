@@ -29,7 +29,7 @@ else
             <div class="col-xs-6 col-sm-6 col-lg-3 col-md-3">
                 <SfButton IsPrimary="true" OnClick="(async() => await Depart())">Отправить поезд</SfButton>
                 <SfButton IsPrimary="false" OnClick="(() => ShowDetails())">Натурный лист</SfButton>
-                <SfButton IsPrimary="false" OnClick="(() => onOpenPath())">Следующая нитка отправления</SfButton>
+                <SfButton IsPrimary="false" OnClick="(async () => await onGetDepartureRoute())">Следующая нитка отправления</SfButton>
                 <SfButton IsPrimary="false" OnClick="(() => onOpenPath())">Перестановка состава</SfButton>
             </div>
         </div>
@@ -93,11 +93,25 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        departingTrains = await StationData.GetDepartingTrains();
-        timer = new Timer();
-        timer.Interval = 30000;
-        timer.Elapsed += onTimeElapsed;
-        timer.Start();
+        try
+        {
+            departingTrains = await StationData.GetDepartingTrains();
+            timer = new Timer();
+            timer.Interval = 30000;
+            timer.Elapsed += onTimeElapsed;
+            timer.Start();
+        }
+        catch (Exception e)
+        {
+            if (e is HttpRequestException)
+            {
+                NotificationService.SetMessage(TypeNotification.Warning, e.Message);
+            }
+            else
+            {
+                NotificationService.SetMessage(TypeNotification.Error, $"Не удалось загрузить поезда");
+            }
+        }
     }
 
     private async void onTimeElapsed(object sender, EventArgs e)
@@ -112,7 +126,6 @@ else
             NotificationService.SetMessage(TypeNotification.Info, "Выберите поезд из списка");
             return;
         }
-        //selectedTrain = departingList.selectedTrain;
         onOpenList();
         StateHasChanged();
     }
@@ -125,7 +138,7 @@ else
 
     void onOpenList()
     {
-        TitleModal = "Телеграмма-натурный лист поезда " + departingList.selectedTrain.TrainNum;
+        TitleModal = "Телеграмма-натурный лист поезда " + departingList.selectedTrain.Index;
         TrainListVisible = true;
     }
 
@@ -134,8 +147,22 @@ else
         if (PathSelectorVisible && pathSelector != null)
         {
             //departingList.selectedTrain.Path = await StationData.GetPathAsync(pathSelector.PathId);
+            try 
+            {
             PathModel newPathModel = await StationData.GetPathAsync(pathSelector.PathId);
             await StationData.RelocateTrain(departingList.selectedTrain.Index, newPathModel.Id);
+            }
+            catch (Exception e)
+            {
+                if (e is HttpRequestException)
+                {
+                    NotificationService.SetMessage(TypeNotification.Warning, e.Message);
+                }
+                else
+                {
+                    NotificationService.SetMessage(TypeNotification.Error, $"Не удалось загрузить поезда");
+                }
+            }
         }
         onCloseModal();
     }
@@ -145,39 +172,71 @@ else
         var train = departingList.selectedTrain;
         if (train != null)
         {
-            TitleModal = "Выбор пути приема отправления " + (train.TrainNum == null ? train.TrainNum : train.Index) ;
+            TitleModal = "Выбор пути отправления поезда" + (train.TrainNum == null ? train.TrainNum : train.Index) ;
             PathSelectorVisible = true;
         }
     }
 
-    void onGetDepartureTime()
+    async Task onGetDepartureRoute()
     {
+        var train = departingList.selectedTrain;
 
+        short i = await StationData.SetDepartureRoute(train);
     }
 
     private async Task Depart()
     {
-        if (departingList.selectedTrain == null)
+        try
+        {
+
+        }
+        catch (Exception e)
+        {
+            if (e is HttpRequestException)
+            {
+                NotificationService.SetMessage(TypeNotification.Warning, e.Message);
+            }
+            else
+            {
+                NotificationService.SetMessage(TypeNotification.Error, $"Не удалось отправить поезд");
+            }
+        }
+        //todo
+        @*if (departingList.selectedTrain == null)
             return;
         await GvcDataFetch.SendDeparting(departingList.selectedTrain.Index, DateTime.Now);
         departedTrains.Add(departingList.selectedTrain);
         departingTrains.Remove(departingList.selectedTrain);
-        StateHasChanged();
-    }
+        *@StateHasChanged();
+}
 
-    void onCancel()
-    {
-        Title = "Отмена отправления поезда";
-        Body = $"Отменить ранее переданное сообщение об отправлении поезда {departedList.selectedTrain.TrainNum}?";
-        CancelConfirmVisible = true;
-    }
+void onCancel()
+{
+    Title = "Отмена отправления поезда";
+    Body = $"Отменить ранее переданное сообщение об отправлении поезда {departedList.selectedTrain.TrainNum}?";
+    CancelConfirmVisible = true;
+}
 
-    private async Task CancelDeparting()
+private async Task CancelDeparting()
+{
+    CancelConfirmVisible = false;
+    try
     {
-        CancelConfirmVisible = false;
         await GvcDataFetch.CancelOperation(departedList.selectedTrain.Index, "200");
-        departedTrains.Remove(departedList.selectedTrain);
-        StateHasChanged();
     }
+    catch (Exception e)
+    {
+        if (e is HttpRequestException)
+        {
+            NotificationService.SetMessage(TypeNotification.Warning, e.Message);
+        }
+        else
+        {
+            NotificationService.SetMessage(TypeNotification.Error, $"Не удалось отменить отправление");
+        }
+    }
+    departedTrains.Remove(departedList.selectedTrain);
+    StateHasChanged();
+}
 
 }
