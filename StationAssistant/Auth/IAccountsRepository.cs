@@ -5,7 +5,7 @@ namespace StationAssistant.Auth
 {
     interface IAccountsRepository
     {
-        public Task<UserToken> Regiser(UserInfo userInfo);
-        public Task<UserToken> Login(UserInfo userInfo);
+        public Task<UserToken> Regiser(User userInfo);
+        public Task<UserToken> Login(User userInfo);
     }
 }

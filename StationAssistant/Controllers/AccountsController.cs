@@ -39,7 +39,7 @@ namespace StationAssistant.Controllers
             }
 
             [HttpPost("login")]
-            public async Task<ActionResult<UserToken>> Login([FromBody] UserInfo userInfo)
+            public async Task<ActionResult<UserToken>> Login([FromBody] User userInfo)
             {
                 var user = await _userManager.FindByNameAsync(userInfo.Login);
                 if (user == null) 
@@ -75,7 +75,7 @@ namespace StationAssistant.Controllers
 
 
             [HttpPost("create")]
-            public async Task<ActionResult<UserToken>> CreateUser([FromBody] UserInfo model)
+            public async Task<ActionResult<UserToken>> CreateUser([FromBody] User model)
             {
                 var user = new IdentityUser() { UserName = model.Login };
                 var result = await _userManager.CreateAsync(user, model.Password);
@@ -94,7 +94,7 @@ namespace StationAssistant.Controllers
                 }
             }
 
-            private UserToken BuildToken(UserInfo userInfo)
+            private UserToken BuildToken(User userInfo)
             {
                 var claims = new List<Claim>()
                     {

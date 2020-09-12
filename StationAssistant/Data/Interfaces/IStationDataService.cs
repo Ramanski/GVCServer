@@ -11,8 +11,6 @@ namespace StationAssistant.Data
     {
         public Task<List<TrainModel>> GetDepartingTrains();
 
-        public Task DeleteDepartedTrains();
-
         public Task UpdatePathOccupation(int pathId);
 
         public Task UpdatePaths(string area);
@@ -25,9 +23,15 @@ namespace StationAssistant.Data
 
         public Task<PathModel> GetPathAsync(int pathId);
 
+        public Task<List<PathModel>> GetPaths();
+
+        public Task<Direction[]> GetDirections();
+
         public Task<List<PathModel>> GetPathsOnAreaAsync(string area, bool sort);
 
         public Task<TrainModel> GetTrainOnPath(int pathId);
+
+        public Task<List<Vagon>> GetVagons();
 
         public Task<Vagon[]> GetVagonsOnArea(string Area);
 
@@ -39,7 +43,7 @@ namespace StationAssistant.Data
 
         public Task RelocateTrain(string trainIndex, int pathId);
 
-        public Task TrainDeparture(Train train);
+        public Task TrainDeparture(string index);
 
         public Task<List<PathModel>> GetAvailablePaths(TrainModel train, bool arriving, bool departing);
 

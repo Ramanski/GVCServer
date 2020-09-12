@@ -16,6 +16,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore.SqlServer;
 using GVCServer.Data;
+using GVCServer.Helpers;
+using GVCServer.Services;
 
 namespace GVCServer
 {
@@ -37,11 +39,13 @@ namespace GVCServer
                         options.JsonSerializerOptions.IgnoreNullValues = true;
                         options.JsonSerializerOptions.Converters.Add(new TimeSpanJsonConverter());
                     });
+            services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
             services.AddAutoMapper(typeof(Startup));
             services.AddScoped<ITrainRepository, TrainRepository>();
             services.AddScoped<IGuideRepository, GuideRepository>();
             services.AddDbContext<IVCStorageContext>(options =>
                     options.UseSqlServer(Configuration.GetConnectionString("IVCStorage")));
+            services.AddScoped<IUserService, UserService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -60,7 +64,7 @@ namespace GVCServer
 
             app.UseRouting();
 
-            app.UseAuthorization();
+            app.UseMiddleware<JwtMiddleware>();
 
             app.UseEndpoints(endpoints =>
             {

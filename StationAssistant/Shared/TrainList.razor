@@ -22,18 +22,22 @@
 @code {
     [Parameter] public List<TrainModel> trainList { get; set; }
     [Parameter] public bool ShowDislAndOper { get; set; } = false;
+    [Parameter] public EventCallback IsSelected { get; set; }
+    [Parameter] public EventCallback IsDeselected { get; set; }
     public TrainModel selectedTrain;
     SfGrid<TrainModel> Grid;
 
-    public void RecordSelected(RowSelectEventArgs<TrainModel> args)
+    public async Task RecordSelected(RowSelectEventArgs<TrainModel> args)
     {
         selectedTrain = trainList[(int)args.RowIndex];
+        await IsSelected.InvokeAsync(args);
     }
 
-    public void DeselectRow()
+    public async Task DeselectRow()
     {
         selectedTrain = null;
-        Grid.ClearRowSelection();
+        await Grid.ClearRowSelection();
+        await IsDeselected.InvokeAsync(null);
     }
 
     public void AddTrain(TrainModel train)

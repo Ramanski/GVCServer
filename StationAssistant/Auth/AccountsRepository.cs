@@ -23,7 +23,7 @@ namespace StationAssistant.Auth
             _client = new HttpClient() { BaseAddress = new Uri(appBaseUrl) }; /*(HttpClient)provider.GetService(typeof(HttpClient));*/
         }
 
-        public async Task<UserToken> Regiser(UserInfo userInfo)
+        public async Task<UserToken> Regiser(User userInfo)
         {
             var response = await _client.PostAsJsonAsync($"{baseURL}/create", userInfo);
 
@@ -35,7 +35,7 @@ namespace StationAssistant.Auth
             return await response.Content.ReadFromJsonAsync<UserToken>();
         }
 
-        public async Task<UserToken> Login(UserInfo userInfo)
+        public async Task<UserToken> Login(User userInfo)
         {
             var response = await _client.PostAsJsonAsync($"{baseURL}/login", userInfo);
             
