@@ -5,6 +5,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using static GVCServer.Services.UserService;
 using Microsoft.Extensions.Options;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
+using GVCServer.Services;
 
 namespace GVCServer.Helpers
 {

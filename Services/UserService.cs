@@ -1,16 +1,17 @@
 ﻿using GVCServer.Helpers;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using ModelsLibrary;
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace GVCServer.Services
 {
-    public class UserService
-    {
         public interface IUserService
         {
             AuthenticateResponse Authenticate(AuthenticateRequest model);
@@ -22,9 +23,9 @@ namespace GVCServer.Services
         {
             // users hardcoded for simplicity, store in a db with hashed passwords in production applications
             private List<User> _users = new List<User>
-        {
-            new User { Id = 1, Name = "Test", Login = "test", Password = "test", Role = "Admin" }
-        };
+            {
+                new User { Id = 1, Name = "Test", Login = "test", Password = "test", Role = "Admin" }
+            };
 
             private readonly AppSettings _appSettings;
 
@@ -72,6 +73,5 @@ namespace GVCServer.Services
                 var token = tokenHandler.CreateToken(tokenDescriptor);
                 return tokenHandler.WriteToken(token);
             }
-        }
         }
 }

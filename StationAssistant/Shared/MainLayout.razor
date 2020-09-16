@@ -9,7 +9,7 @@
 
 <div class="main">
     <div class="col-lg-4 control-section">
-        <SfToast @ref="ToastObj" ID="toast_type" ShowCloseButton="true" TimeOut="1000" Width="200">
+        <SfToast @ref="ToastObj" ID="toast_type" ShowCloseButton="true" TimeOut="10000" Width="200">
             <ToastPosition X="Right"></ToastPosition>
         </SfToast>
     </div>
@@ -110,7 +110,7 @@
                         Content = NotificationService.Message,
                         CssClass = "e-toast-success",
                         Icon = "e-success toast-icons",
-                        TimeOut = 500
+                        TimeOut = 10000
                     };
                     await this.ToastObj.Show(toastModel);
                 }
@@ -123,7 +123,7 @@
                         Content = NotificationService.Message,
                         CssClass = "e-toast-warning",
                         Icon = "e-warning toast-icons",
-                        TimeOut = 1500
+                        TimeOut = 15000
                     };
                     await this.ToastObj.Show(toastModel);
                 }
@@ -136,7 +136,7 @@
                         Content = NotificationService.Message,
                         CssClass = "e-toast-danger",
                         Icon = "e-error toast-icons",
-                        TimeOut = 1000
+                        TimeOut = 20000
                     };
                     await this.ToastObj.Show(toastModel);
                 }
