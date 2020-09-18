@@ -368,21 +368,12 @@ namespace StationAssistant.Data
 
         public async Task FormTrain(List<Vagon> vagons, byte trainKind, bool checkPFclaims = true)
         {
-            Exception warning;
-
             string destination = vagons[0].PlanForm;
 
             // Проверка требований к составу Плана формирования
             if (checkPFclaims)
             {
-                try
-                {
-                    CheckPFclaimsAsync(destination, ref vagons);
-                }
-                catch (ArgumentOutOfRangeException exc)
-                {
-                    warning = exc;
-                }
+                CheckPFclaimsAsync(destination, ref vagons);
             }
 
             Train train = new Train()

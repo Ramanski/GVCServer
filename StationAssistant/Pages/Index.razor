@@ -14,7 +14,7 @@
 </AuthorizeView>
 
 <div class="row">
-    <div class="col-6 m-5">
+    <div class="col-6 p-2">
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Прибытие поездов</h5>
@@ -27,7 +27,7 @@
             </div>
         </div>
     </div>
-    <div class="col-6 m-5">
+    <div class="col-6 p-2">
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Отправление поездов</h5>
@@ -42,7 +42,7 @@
     </div>
 </div>
 <div class="row">
-    <div class="col-6 m-5">
+    <div class="col-6 p-2">
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Парки путей</h5>
@@ -52,13 +52,13 @@
                         <p class="card-text">@area.Trim(): @paths.Where(p => p.AnyTrain && p.Area == area).Count() путей из @paths.Where(p => p.Area == area).Count() занято </p>
                     }
 
-                <NavLink class="btn btn-primary" href="path">
+                <NavLink class="btn btn-primary" href="paths">
                     Перейти к вагонам на путях
                 </NavLink>
             </div>
         </div>
     </div>
-    <div class="col-6 m-5">
+    <div class="col-6 p-2">
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Накопление</h5>
@@ -72,7 +72,7 @@
                         <p class="card-text">@track: @(vagonsToDirection == null? 0: vagonsToDirection.Count()) (порожних @(vagonsToDirection == null? 0: vagonsToDirection.Where(v => v.WeightNetto == 0).Count())) </p>
                     }
                 }
-                <NavLink class="btn btn-primary" href="path">
+                <NavLink class="btn btn-primary" href="paths">
                     Перейти накоплению на путях
                 </NavLink>
             </div>

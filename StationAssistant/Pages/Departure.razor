@@ -158,8 +158,8 @@ else
     async Task onGetDepartureRoute()
     {
         var train = departingList.selectedTrain;
-
         short i = await StationData.SetDepartureRoute(train);
+        StateHasChanged();
     }
 
     private async Task Depart()

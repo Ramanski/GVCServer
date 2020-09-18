@@ -19,32 +19,45 @@ else
     {
         <div>
             <div class="row">
-                <div class="col-6">
+                <div class="col-6 ml-1">
                     <label style="padding: 10px 70px 10px 0">Только сортировочные пути</label>
                     <SfSwitch @bind-Checked="@isSort" TChecked="bool" ValueChange="(async () => await GetPaths())"></SfSwitch>
                 </div>
             </div>
             @foreach (PathModel path in paths)
             {
-                if (!isSort && path.Sort)
-                    continue;
+                 <h6 class="ml-1"> Путь №@path.PathNum @path.Marks </h6>
                 <div class="row">
-                    <div class="col-lg-12 col-sm-12 progressbar-label-bootstrap">
-                        <p> Путь №@path.PathNum (@path.Marks) </p>
-                        @if(isSort && !path.AnyTrain)
+                        @if (path.AnyTrain)
                         {
-                            <SfButton IsPrimary="true" OnClick="(() => { FormationIsVisible = true; selectedPathItem = path; })">Накопительная ведомость</SfButton>
+                            <div class="col-2 align-content-start">
+                                <SfButton>Перестановка</SfButton>
+                            </div>
+                             <div class="col-2 align-content-start">
+                                <SfButton>Отправление</SfButton>
+                            </div>
                         }
-                    </div>
+                        @if (path.Occupation != 0)
+                        {
+                            <div class="col-2">
+                                <SfButton OnClick="(() => { FormationIsVisible = true; selectedPathItem = path; })">@(path.Sort ? "Накопительная ведомость" : "Ведомость вагонов")</SfButton>
+                            </div>
+                        }
                 </div>
-                
-                var segments = path.AnyTrain ? 0 : path.Length;
 
-                <SfProgressBar Type="ProgressType.Linear" Height="60"
-                               SegmentCount="@segments" Value="@path.Occupation" Minimum="0" Maximum="@path.Length"
-                               Theme="@ProgressTheme.Bootstrap4" @key="path.Id">
-                    <ProgressBarAnimation Enable="false"/>
-                </SfProgressBar>
+                <div>
+                        @{ 
+                            <SfProgressBar Type="ProgressType.Linear" Height="38"
+                                           SegmentCount="@path.Length" Value="path.TrainLength" SecondaryProgress="@path.Occupation" Minimum="0" Maximum="@path.Length"
+                                           Theme="@ProgressTheme.Material"ProgressThickness="30" ProgressColor="#337ab7" TrackThickness="32" TrackColor="#94b4dd" @key="path.Id">
+                                <ProgressBarAnimation Enable="false" />
+                            </SfProgressBar>
+                        }
+
+             
+                </div>
+
+
             }
         </div>
         <style>
@@ -96,16 +109,14 @@ else
         }
         catch (Exception e)
         {
-            if (e is HttpRequestException || e is ArgumentOutOfRangeException)
+            if (e is ArgumentException)
             {
-                NotificationService.SetMessage(TypeNotification.Warning, e.Message);
+                NotificationService.SetMessage(TypeNotification.Warning, (e as ArgumentException).ParamName);
             }
-            else if (e is AggregateException)
+            else if (e is HttpRequestException)
             {
-                foreach (Exception innerException in (e as AggregateException).InnerExceptions)
-                {
-                    NotificationService.SetMessage(TypeNotification.Warning, innerException.Message);
-                }
+                var code = e.HResult;
+                NotificationService.SetMessage(TypeNotification.Warning, e.Message);
             }
             else
             {

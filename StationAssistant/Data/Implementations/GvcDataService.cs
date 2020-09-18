@@ -32,8 +32,15 @@ namespace StationAssistant.Data
         private async Task<T> GetFromServer<T>(string requestUri)
         {
             T result;
-
-            var response = await _client.GetAsync(requestUri);
+            HttpResponseMessage response;
+            try
+            {
+                response = await _client.GetAsync(requestUri);
+            }
+            catch(HttpRequestException)
+            {
+                throw new HttpRequestException("Возникла проблема связи с сервером ГВЦ");
+            }
             if (response.StatusCode != HttpStatusCode.OK)
             {
                 string exception = await response.Content.ReadAsStringAsync();

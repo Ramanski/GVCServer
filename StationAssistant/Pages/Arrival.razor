@@ -218,10 +218,10 @@ else
             arrivingList.DeleteTrain(train);
             train.DateOper = DateTime.Now;
             arrivedList.AddTrain(train);
-            arrivedList.DeselectRow();
-            arrivingList.DeselectRow();
+            await arrivedList.DeselectRow();
+            await arrivingList.DeselectRow();
             await StationData.UpdatePathOccupation(train.Path.Id);
-            NotificationService.SetMessage(TypeNotification.Success, $"Операция по отмене прибытия поезда №{train.TrainNum} проведена успешно");
+            NotificationService.SetMessage(TypeNotification.Success, $"Операция по прибытию поезда №{train.TrainNum} завершена");
         }
         catch (Exception e)
         {
@@ -261,8 +261,8 @@ else
             await StationData.DeleteTrainAsync(train.Index);
             arrivedList.DeleteTrain(train);
             arrivingList.AddTrain(train);
-            arrivedList.DeselectRow();
-            arrivingList.DeselectRow();
+            await arrivedList.DeselectRow();
+            await arrivingList.DeselectRow();
             await StationData.UpdatePathOccupation(train.Path.Id);
             NotificationService.SetMessage(TypeNotification.Success, $"Операция по отмене прибытия поезда №{train.TrainNum} проведена успешно");
         }
@@ -285,9 +285,8 @@ else
         {
             await GvcDataFetch.SendDisbanding(arrivedList.selectedTrain.Index, DateTime.Now);
             await StationData.DisbandTrain(arrivedList.selectedTrain);
-            NotificationService.SetMessage(TypeNotification.Success, $"Операция по отмене прибытия поезда №{arrivedList.selectedTrain.TrainNum} проведена успешно");
+            NotificationService.SetMessage(TypeNotification.Success, $"Операция по расформированию поезда №{arrivedList.selectedTrain.TrainNum} завершена");
             arrivedList.DeleteTrain(arrivedList.selectedTrain);
-            arrivedList.DeselectRow();
         }
         catch (Exception e)
         {
