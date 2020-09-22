@@ -1,7 +1,7 @@
 ﻿@using Syncfusion.Blazor.Grids
 
-<SfGrid DataSource="@trainList" @ref="Grid" EnableVirtualization="false" AllowSelection="true" AllowSorting="true" Height="250">
-    <GridEditSettings AllowAdding="true" AllowDeleting="true"></GridEditSettings>
+<SfGrid DataSource="@trainList" @ref="Grid" EnableVirtualization="false" AllowSelection="true" AllowSorting="true" EnablePersistence="true" Height="250">
+    <GridEditSettings AllowAdding="true" AllowDeleting="true" AllowEditing="AllowEditing"></GridEditSettings>
     <GridColumns>
         <GridColumn Field=@nameof(TrainModel.TrainNum) HeaderText="Номер" TextAlign="TextAlign.Left" IsPrimaryKey="true" Width="30"></GridColumn>
         <GridColumn Field=@nameof(TrainModel.Index) HeaderText="Индекс" Width="60"></GridColumn>
@@ -22,23 +22,34 @@
 @code {
     [Parameter] public List<TrainModel> trainList { get; set; }
     [Parameter] public bool ShowDislAndOper { get; set; } = false;
+    [Parameter] public bool AllowEditing { get; set; } = false;
     [Parameter] public EventCallback IsSelected { get; set; }
     [Parameter] public EventCallback IsDeselected { get; set; }
     public TrainModel selectedTrain;
+    private int selectedRow;
     SfGrid<TrainModel> Grid;
 
     public async Task RecordSelected(RowSelectEventArgs<TrainModel> args)
     {
-        selectedTrain = trainList[(int)args.RowIndex];
+        selectedRow = (int)args.RowIndex;
+        selectedTrain = trainList[selectedRow];
         await IsSelected.InvokeAsync(args);
+    }
+
+    public void UpdateSelectedRow(TrainModel trainModel)
+    {
+        Grid.UpdateRow(selectedRow, trainModel);
     }
 
     public async Task DeselectRow()
     {
         selectedTrain = null;
-        await Grid.ClearRowSelection();
+        //await Grid.ClearRowSelection();
+        await Grid.ClearSelection();
         await IsDeselected.InvokeAsync(null);
     }
+
+
 
     public void AddTrain(TrainModel train)
     {
