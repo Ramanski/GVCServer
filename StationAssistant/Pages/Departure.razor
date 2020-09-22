@@ -26,15 +26,23 @@ else
         <h3> Прогноз отправления поездов </h3>
         <div class="row">
             <div class="col-xs-6 col-sm-6 col-lg-3 col-md-3">
-                <SfButton Disabled="!TrainIsSelected" IsPrimary="true" OnClick="(async() => await Depart())">Отправить поезд</SfButton>
-                <SfButton Disabled="!TrainIsSelected" IsPrimary="false" OnClick="(() => ShowDetails())">Натурный лист</SfButton>
-                <SfButton Disabled="!TrainIsSelected" IsPrimary="false" OnClick="(async () => await onGetDepartureRoute())">Следующая нитка отправления</SfButton>
-                <SfButton Disabled="!TrainIsSelected" IsPrimary="false" OnClick="(() => onOpenPath())">Перестановка состава</SfButton>
+                <div col-2>
+                    <SfButton Disabled="!TrainIsSelected" IsPrimary="true" OnClick="(async() => await Depart())">Отправить поезд</SfButton>
+                </div>
+                <div class="col-2">
+                    <SfButton Disabled="!TrainIsSelected" IsPrimary="false" OnClick="(() => ShowDetails())">Натурный лист</SfButton>
+                </div>
+                <div class="col-2">
+                    <SfButton Disabled="!TrainIsSelected" IsPrimary="false" OnClick="(async () => await onGetDepartureRoute())">Следующая нитка отправления</SfButton>
+                </div>
+                <div class="col-2">
+                    <SfButton Disabled="!TrainIsSelected" IsPrimary="false" OnClick="(() => onOpenPath())">Перестановка состава</SfButton>
+                </div>
             </div>
         </div>
         <div class="content-wrapper">
             <div class="row">
-                <TrainList @ref="departingList" trainList="departingTrains" IsSelected="@(() => { TrainIsSelected = true; })" IsDeselected="@(() => { TrainIsSelected = false; })"/>   
+                <TrainList @ref="departingList" trainList="departingTrains"/> @*IsSelected="@(() => { TrainIsSelected = true; })" IsDeselected="@(() => { TrainIsSelected = false; })"*@  
             </div>
         </div>
     }
@@ -49,6 +57,14 @@ else
             {
                 <PathSelector @ref="pathSelector" selectedTrain="departingList.selectedTrain" isArriving="false" isDeparting="true"></PathSelector>
             }
+@*            else if (ConfirmMessageIsVisible)
+            {
+                @Body
+                <DialogButtons>
+                    <DialogButton Content="Yes" IsPrimary="true" OnClick="(async() => await Depart())" />
+                    <DialogButton Content="No" OnClick="(() => { ConfirmIsVisible = false; })" />
+                </DialogButtons>
+            }*@
         </ConfirmModal>
     }
 
@@ -157,9 +173,23 @@ else
 
     async Task onGetDepartureRoute()
     {
-        var train = departingList.selectedTrain;
-        short i = await StationData.SetDepartureRoute(train);
-        StateHasChanged();
+        try
+        {
+            var train = departingList.selectedTrain;
+            short i = await StationData.SetDepartureRoute(train);
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            if (e is HttpRequestException)
+            {
+                NotificationService.SetMessage(TypeNotification.Warning, e.Message);
+            }
+            else
+            {
+                NotificationService.SetMessage(TypeNotification.Error, $"Не удалось выполнить операцию");
+            }
+        }
     }
 
     private async Task Depart()

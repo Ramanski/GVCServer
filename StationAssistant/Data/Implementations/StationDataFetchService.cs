@@ -218,6 +218,8 @@ namespace StationAssistant.Data
             List<Vagon> vagons = await _context.Vagon
                                                .Where(v => v.PathId.Equals(pathId))
                                                .ToListAsync();
+            /*vagons.ForEach(v => v.Path = null);
+            vagons.ForEach(v => v.TrainIndexNavigation = null);*/
 
             return vagons;
         }
@@ -236,8 +238,10 @@ namespace StationAssistant.Data
 
         public async Task RelocateTrain(string trainIndex, int pathId)
         {
+            int newPath = pathId;
             Train train = _context.Train.Find(trainIndex);
-            Path path = _context.Path.Find(pathId);
+            int oldPath = (int)train.PathId;
+            Path path = _context.Path.Find(newPath);
             if (train.Length > (path.Length - path.Occupation))
                 throw new Exception("Длина состава превышает длину свободной части пути");
             train.Path = path;
@@ -245,6 +249,8 @@ namespace StationAssistant.Data
                           .Where(v => train == v.TrainIndexNavigation)
                           .ForEachAsync(v => v.Path = path);
             await _context.SaveChangesAsync();
+            await UpdatePathOccupation(oldPath);
+            await UpdatePathOccupation(newPath);
         }
 
         public async Task TrainDeparture(string index)
@@ -264,6 +270,7 @@ namespace StationAssistant.Data
             _context.RemoveRange(vagons);
             _context.Remove(train);
             await _context.SaveChangesAsync();
+            await UpdatePathOccupation((int)train.PathId);
         }
 
         public async Task<List<PathModel>> GetPaths()
@@ -287,7 +294,7 @@ namespace StationAssistant.Data
                 emptyPaths = emptyPaths.Where(p => p.Departure);
             }
 
-            if (!string.IsNullOrEmpty(train.TrainNum))
+            if ((arriving || departing) && !string.IsNullOrEmpty(train.TrainNum))
             {
                 if (int.Parse(train.TrainNum) % 2 == 0)
                     emptyPaths = emptyPaths.Where(p => p.Even);

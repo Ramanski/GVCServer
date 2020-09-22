@@ -26,7 +26,6 @@ namespace StationAssistant.Data.Entities
 
         public virtual Station DestinationStationNavigation { get; set; }
         public virtual Path Path { get; set; }
-        public virtual TrainKind TrainKind { get; set; }
         public virtual ICollection<Vagon> Vagon { get; set; }
     }
 }

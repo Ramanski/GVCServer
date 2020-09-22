@@ -126,11 +126,6 @@ namespace StationAssistant.Data.Entities
                     .WithMany(p => p.Train)
                     .HasForeignKey(d => d.PathId)
                     .HasConstraintName("FK_Train_Path");
-
-                entity.HasOne(d => d.TrainKind)
-                    .WithMany(p => p.Train)
-                    .HasForeignKey(d => d.TrainKindId)
-                    .HasConstraintName("FK_Train_TrainKind");
             });
 
             modelBuilder.Entity<TrainKind>(entity =>
