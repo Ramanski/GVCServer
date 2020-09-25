@@ -1,7 +1,7 @@
 ﻿@using Syncfusion.Blazor.Grids
 
 @{ 
-    var Tools = new List<string>() { "Update", "Cancel", "PdfPrint" };
+    var Tools = new List<string>() { "Update", "Cancel"};
 }
 
 <SfGrid DataSource="@trainList" @ref="Grid" EnableVirtualization="false" AllowSelection="true" AllowSorting="true" Height="250" Toolbar="@(ShowToolbar?Tools:null)">

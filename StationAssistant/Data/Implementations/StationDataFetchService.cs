@@ -146,15 +146,25 @@ namespace StationAssistant.Data
             return pathModels;
         }
 
-        public async Task<TrainModel> GetTrainOnPath(int pathId)
+        public async Task<TrainModel> GetTrainOnPath(int pathId, bool includeVagons)
         {
             Train train = await _context.Train
                                         .Where(t => pathId.Equals(t.PathId))
                                         .FirstOrDefaultAsync();
             if (train != null)
-                return _imapper.Map<TrainModel>(train);
+            {
+                TrainModel trainModel = _imapper.Map<TrainModel>(train);
+                if (includeVagons)
+                {
+                    List<Vagon> vagons = await GetVagonsOfTrain(trainModel.Index);
+                    trainModel.Vagons = _imapper.Map<List<VagonModel>>(vagons);
+                }
+                return trainModel;
+            }
             else
-                return null;     
+            {
+                return null;
+            }
         }
 
         public async Task<List<TrainModel>> GetDepartingTrains()

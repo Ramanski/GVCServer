@@ -1,5 +1,6 @@
 ﻿@using Syncfusion.Blazor.ProgressBar
 @using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Grids
 @inject StationAssistant.Data.IStationDataService StationData
 @inject NotificationService NotificationService
 @inject NavigationManager NavigationManager
@@ -22,6 +23,23 @@ else
             <FormationSheet @ref="formationSheet" path="selectedPathItem"></FormationSheet>
         </ConfirmModal>
     }
+    if (TrainListIsVisible)
+    {
+        <ConfirmModal Title="Натурный лист" DialogClose="(() => TrainListIsVisible = false)" OverlayClick="(() => TrainListIsVisible = false)" OKButtonName="ОК" OKClick="(() => TrainListIsVisible = false)">
+            <SfGrid DataSource="targetTrainModel.Vagons" EnableVirtualization="false" AllowSorting="true" TValue="VagonModel">
+                <GridColumns>
+                    <GridColumn Field=@nameof(VagonModel.SequenceNum) HeaderText="№" Width="25"></GridColumn>
+                    <GridColumn Field=@nameof(VagonModel.Num) HeaderText="Номер" TextAlign="TextAlign.Left" IsPrimaryKey="true" Width="50"></GridColumn>
+                    <GridColumn Field=@nameof(VagonModel.Kind) HeaderText="Род" Width="40"></GridColumn>
+                    <GridColumn Field=@nameof(VagonModel.Destination) HeaderText="Назначение" Width="60"></GridColumn>
+                    <GridColumn Field=@nameof(VagonModel.Ksob) HeaderText="Собственник" Width="70"></GridColumn>
+                    <GridColumn Field=@nameof(VagonModel.Tvag) HeaderText="Тара" Width="40"></GridColumn>
+                    <GridColumn Field=@nameof(VagonModel.WeightNetto) HeaderText="Вес" Width="40"></GridColumn>
+                    <GridColumn Field=@nameof(VagonModel.Mark) HeaderText="Отметки" Width="60"></GridColumn>
+                </GridColumns>
+            </SfGrid>
+        </ConfirmModal>
+    }
     <div>
         <div class="row">
             <div class="col-6 ml-1">
@@ -41,8 +59,11 @@ else
                     <div class="col-2 align-content-start">
                         <SfButton OnClick="@(() => {NavigationManager.NavigateTo("departure");})">Отправление</SfButton>
                     </div>
+                    <div class="col-2">
+                        <SfButton OnClick="(async() => await OnTrainListCall(path.Id))">Натурный лист</SfButton>
+                    </div>
                 }
-                @if (path.Occupation != 0)
+                else if (path.Occupation != 0)
                 {
                     <div class="col-2">
                         <SfButton OnClick="(() => { FormationIsVisible = true; selectedPathItem = path; })">@(path.Sort ? "Накопительная ведомость" : "Ведомость вагонов")</SfButton>
@@ -83,12 +104,15 @@ else
     FormationSheet formationSheet;
     SfProgressBar sfProgress;
     PathSelector pathSelector;
+    SfGrid<VagonModel> TrainGrid;
     TrainModel targetTrainModel;
     public List<PathModel> paths { get; set; }
+    private List<VagonModel> vagonsOfTrain;
     private PathModel selectedPathItem = null;
     private bool PathsHided { get; set; } = true;
     private bool isSort = true;
     private bool FormationIsVisible = false;
+    private bool TrainListIsVisible = false;
     private bool PathSelectorVisible { get; set; } = false;
 
 
@@ -103,6 +127,12 @@ else
     {
         targetTrainModel = await StationData.GetTrainOnPath(pathId);
         PathSelectorVisible = true;
+    }
+
+    private async Task OnTrainListCall(int pathId)
+    {
+        targetTrainModel = await StationData.GetTrainOnPath(pathId, true);
+        TrainListIsVisible = true;
     }
 
     private async Task OnFormTrain()

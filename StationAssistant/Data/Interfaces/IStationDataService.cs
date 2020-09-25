@@ -29,7 +29,7 @@ namespace StationAssistant.Data
 
         public Task<List<PathModel>> GetPathsOnAreaAsync(string area, bool sort);
 
-        public Task<TrainModel> GetTrainOnPath(int pathId);
+        public Task<TrainModel> GetTrainOnPath(int pathId, bool includeVagons = false);
 
         public Task<List<Vagon>> GetVagons();
 
