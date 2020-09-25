@@ -21,12 +21,10 @@ else
         </DialogButtons>
     </SfDialog>
 
-    if (TrainListIsVisible)
-    {
+
         <h3> Прогноз отправления поездов </h3>
         <div class="row">
-            <div class="col-xs-6 col-sm-6 col-lg-3 col-md-3">
-                <div col-2>
+                <div class="col-2">
                     <SfButton Disabled="!TrainIsSelected" IsPrimary="true" OnClick="(async() => await Depart())">Отправить поезд</SfButton>
                 </div>
                 <div class="col-2">
@@ -38,15 +36,13 @@ else
                 <div class="col-2">
                     <SfButton Disabled="!TrainIsSelected" IsPrimary="false" OnClick="(() => onOpenPath())">Перестановка состава</SfButton>
                 </div>
-            </div>
         </div>
         <div class="content-wrapper">
-            <div class="row">
-                <TrainList @ref="departingList" trainList="departingTrains"/> @*IsSelected="@(() => { TrainIsSelected = true; })" IsDeselected="@(() => { TrainIsSelected = false; })"*@  
-            </div>
+                <TrainList @ref="departingList" trainList="departingTrains"IsSelected="@(() => { TrainIsSelected = true; })" 
+                           IsDeselected="@(() => { TrainIsSelected = false; })" AllowEditing="true" TrainParamsUpdated="@TrainParamsUpdated"/> 
         </div>
-    }
-    else
+
+    @if(FormationSheetIsVisible || PathSelectorIsVisible)
     {
         <ConfirmModal Title="@Title" DialogClose="onCloseModal" OverlayClick="onCloseModal" OKClick="onOK">
             @if (FormationSheetIsVisible)
@@ -57,14 +53,6 @@ else
             {
                 <PathSelector @ref="pathSelector" selectedTrain="departingList.selectedTrain" isArriving="false" isDeparting="true"></PathSelector>
             }
-@*            else if (ConfirmMessageIsVisible)
-            {
-                @Body
-                <DialogButtons>
-                    <DialogButton Content="Yes" IsPrimary="true" OnClick="(async() => await Depart())" />
-                    <DialogButton Content="No" OnClick="(() => { ConfirmIsVisible = false; })" />
-                </DialogButtons>
-            }*@
         </ConfirmModal>
     }
 
@@ -78,8 +66,8 @@ else
 
 @code {
 
-    PathSelector pathSelector;
-    TrainList departingList;
+        PathSelector pathSelector;
+        TrainList departingList;
     private List<TrainModel> departingTrains { get; set; }
     private List<PathModel> paths { get; set; }
     public bool TrainIsSelected { get; set; } = false;
@@ -131,6 +119,19 @@ else
         TrainListIsVisible = true;
     }
 
+    public async Task TrainParamsUpdated(TrainModel updatedModel)
+    {
+        try
+        {
+            await StationData.UpdateTrain(updatedModel);
+            NotificationService.SetMessage(TypeNotification.Success, $"Для поезда №{updatedModel.TrainNum} внесены корректировки");
+        }
+        catch (Exception e)
+        {
+                NotificationService.SetMessage(TypeNotification.Error, $"Не удалось сохранить изменения");
+        }
+    }
+
     async Task onOK()
     {
         if (PathSelectorIsVisible && pathSelector != null)
@@ -138,8 +139,12 @@ else
             //departingList.selectedTrain.Path = await StationData.GetPathAsync(pathSelector.PathId);
             try
             {
-                PathModel newPathModel = await StationData.GetPathAsync(pathSelector.PathId);
-                await StationData.RelocateTrain(departingList.selectedTrain.Index, newPathModel.Id);
+                var train = departingList.selectedTrain;
+                await StationData.RelocateTrain(train.Index, pathSelector.PathId);
+                train.Path = await StationData.GetPathAsync(pathSelector.PathId);
+                departingList.UpdateSelectedRow(train);
+                NotificationService.SetMessage(TypeNotification.Success, $"Перестановка поезда №{train.TrainNum} на другой путь завершена");
+
             }
             catch (Exception e)
             {

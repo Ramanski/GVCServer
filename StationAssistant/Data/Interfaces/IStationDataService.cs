@@ -53,6 +53,8 @@ namespace StationAssistant.Data
 
         public Task<List<TrainKind>> GetTrainKinds();
 
+        public Task UpdateTrain(TrainModel trainModel);
+
         public Task<List<Vagon>> DisbandTrain(TrainModel train);
 
         public Task FormTrain(List<Vagon> vagons, byte trainKind, bool checkPFclaims);

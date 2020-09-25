@@ -1,22 +1,26 @@
 ﻿@using Syncfusion.Blazor.Grids
 
-<SfGrid DataSource="@trainList" @ref="Grid" EnableVirtualization="false" AllowSelection="true" AllowSorting="true" EnablePersistence="true" Height="250">
+@{ 
+    var Tools = new List<string>() { "Update", "Cancel", "PdfPrint" };
+}
+
+<SfGrid DataSource="@trainList" @ref="Grid" EnableVirtualization="false" AllowSelection="true" AllowSorting="true" Height="250" Toolbar="@(ShowToolbar?Tools:null)">
     <GridEditSettings AllowAdding="true" AllowDeleting="true" AllowEditing="AllowEditing"></GridEditSettings>
+    <GridEvents OnBeginEdit="()=> { ShowToolbar = true; }" OnActionComplete="ActionCompleted" RowSelected="RecordSelected" RowDeselected="DeselectRow" TValue="TrainModel" ></GridEvents>
     <GridColumns>
-        <GridColumn Field=@nameof(TrainModel.TrainNum) HeaderText="Номер" TextAlign="TextAlign.Left" IsPrimaryKey="true" Width="30"></GridColumn>
-        <GridColumn Field=@nameof(TrainModel.Index) HeaderText="Индекс" Width="60"></GridColumn>
-        <GridColumn Field=@nameof(TrainModel.Length) HeaderText="Длина" Width="30"></GridColumn>
-        <GridColumn Field=@nameof(TrainModel.WeightBrutto) HeaderText="Вес" Width="35"></GridColumn>
+        <GridColumn Field=@nameof(TrainModel.TrainNum) HeaderText="Номер" TextAlign="TextAlign.Left" Width="30" AllowEditing="true" ValidationRules="@(new ValidationRules { Number = true, Range = new double[] { 1, 9999 } })"></GridColumn>
+        <GridColumn Field=@nameof(TrainModel.Index) IsPrimaryKey="true" HeaderText="Индекс" Width="60" AllowEditing="false"></GridColumn>
+        <GridColumn Field=@nameof(TrainModel.Length) HeaderText="Длина" Width="30" AllowEditing="false"></GridColumn>
+        <GridColumn Field=@nameof(TrainModel.WeightBrutto) HeaderText="Вес" Width="35" AllowEditing="false"></GridColumn>
         @if(ShowDislAndOper)
         {
-            <GridColumn Field=@nameof(TrainModel.Dislocation) HeaderText="Дислокация" Width="50"></GridColumn>
-            <GridColumn Field=@nameof(TrainModel.LastOperation) HeaderText="Операция" Width="55"></GridColumn>
+            <GridColumn Field=@nameof(TrainModel.Dislocation) HeaderText="Дислокация" Width="50" AllowEditing="false"></GridColumn>
+            <GridColumn Field=@nameof(TrainModel.LastOperation) HeaderText="Операция" Width="55" AllowEditing="false"></GridColumn>
         }
-        <GridColumn Field=@nameof(TrainModel.DateOper) Format="hh:mm" HeaderText="Время" Width="45"></GridColumn>
-        <GridColumn Field="Path.Area" HeaderText="Парк" Width="50"></GridColumn>
-        <GridColumn Field="Path.PathNum" HeaderText="Путь" Width="25"></GridColumn>
+        <GridColumn Field=@nameof(TrainModel.DateOper) Format="hh:mm" HeaderText="Время" Width="45" AllowEditing="true" EditType="EditType.DateTimePickerEdit"></GridColumn>
+        <GridColumn Field="Path.Area" HeaderText="Парк" Width="50" AllowEditing="false"></GridColumn>
+        <GridColumn Field="Path.PathNum" HeaderText="Путь" Width="25" AllowEditing="false"></GridColumn>
     </GridColumns>
-    <GridEvents RowSelected="RecordSelected" RowDeselected="DeselectRow" TValue="TrainModel"></GridEvents>
 </SfGrid>
 
 @code {
@@ -25,6 +29,8 @@
     [Parameter] public bool AllowEditing { get; set; } = false;
     [Parameter] public EventCallback IsSelected { get; set; }
     [Parameter] public EventCallback IsDeselected { get; set; }
+    [Parameter] public EventCallback<TrainModel> TrainParamsUpdated { get; set; }
+    private bool ShowToolbar = false;
     public TrainModel selectedTrain;
     private int selectedRow;
     SfGrid<TrainModel> Grid;
@@ -49,7 +55,14 @@
         await IsDeselected.InvokeAsync(null);
     }
 
-
+    public void ActionCompleted(ActionEventArgs<TrainModel> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            TrainParamsUpdated.InvokeAsync(args.Data);
+            ShowToolbar = false;
+        }
+    }
 
     public void AddTrain(TrainModel train)
     {

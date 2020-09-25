@@ -2,6 +2,7 @@
 @using Syncfusion.Blazor.Buttons
 @inject StationAssistant.Data.IStationDataService StationData
 @inject NotificationService NotificationService
+@inject NavigationManager NavigationManager
 
 @if (PathsHided)
 {
@@ -9,79 +10,86 @@
 }
 else
 {
+    if (PathSelectorVisible)
+    {
+        <ConfirmModal Title="Путь перестановки" DialogClose="() => { PathSelectorVisible = false; }" OverlayClick="() => { PathSelectorVisible = false; }" OKClick="(async () => { PathSelectorVisible = false; await OnRelocateTrain(); })" Width="450" Height="180">
+            <PathSelector @ref="pathSelector" selectedTrain="targetTrainModel" />
+        </ConfirmModal>
+    }
     if (FormationIsVisible)
     {
         <ConfirmModal Title="Накопительная ведомость" DialogClose="(() => FormationIsVisible = false)" OverlayClick="(() => FormationIsVisible = false)" OKButtonName="Сформировать" OKClick="OnFormTrain">
             <FormationSheet @ref="formationSheet" path="selectedPathItem"></FormationSheet>
         </ConfirmModal>
     }
-    else
-    {
-        <div>
-            <div class="row">
-                <div class="col-6 ml-1">
-                    <label style="padding: 10px 70px 10px 0">Только сортировочные пути</label>
-                    <SfSwitch @bind-Checked="@isSort" TChecked="bool" ValueChange="(async () => await GetPaths())"></SfSwitch>
-                </div>
+    <div>
+        <div class="row">
+            <div class="col-6 ml-1">
+                <label style="padding: 10px 70px 10px 0">Только сортировочные пути</label>
+                <SfSwitch @bind-Checked="@isSort" TChecked="bool" ValueChange="(async () => await GetPaths())"></SfSwitch>
             </div>
-            @foreach (PathModel path in paths)
-            {
-                 <h6 class="ml-1"> Путь №@path.PathNum @path.Marks </h6>
-                <div class="row">
-                        @if (path.AnyTrain)
-                        {
-                            <div class="col-2 align-content-start">
-                                <SfButton>Перестановка</SfButton>
-                            </div>
-                             <div class="col-2 align-content-start">
-                                <SfButton>Отправление</SfButton>
-                            </div>
-                        }
-                        @if (path.Occupation != 0)
-                        {
-                            <div class="col-2">
-                                <SfButton OnClick="(() => { FormationIsVisible = true; selectedPathItem = path; })">@(path.Sort ? "Накопительная ведомость" : "Ведомость вагонов")</SfButton>
-                            </div>
-                        }
-                </div>
-
-                <div>
-                        @{ 
-                            <SfProgressBar Type="ProgressType.Linear" Height="38"
-                                           SegmentCount="@path.Length" Value="path.TrainLength" SecondaryProgress="@path.Occupation" Minimum="0" Maximum="@path.Length"
-                                           Theme="@ProgressTheme.Material"ProgressThickness="30" ProgressColor="#337ab7" TrackThickness="32" TrackColor="#94b4dd" @key="path.Id">
-                                <ProgressBarAnimation Enable="false" />
-                            </SfProgressBar>
-                        }
-
-             
-                </div>
-
-
-            }
         </div>
-        <style>
-            .progressbar-label-bootstrap {
-                text-align: left;
-                font-family: Roboto-Regular;
-                font-size: 14px;
-                color: #3D3E3C;
-                margin-left: 10px;
-                padding: 0px;
-            }
-        </style>
-    }
+        @foreach (PathModel path in paths)
+        {
+            <h6 class="ml-1"> Путь №@path.PathNum @path.Marks </h6>
+            <div class="row">
+                @if (path.AnyTrain)
+                {
+                    <div class="col-2 align-content-start">
+                        <SfButton OnClick="async () => await OnPathSelect(path.Id)">Перестановка</SfButton>
+                    </div>
+                    <div class="col-2 align-content-start">
+                        <SfButton OnClick="@(() => {NavigationManager.NavigateTo("departure");})">Отправление</SfButton>
+                    </div>
+                }
+                @if (path.Occupation != 0)
+                {
+                    <div class="col-2">
+                        <SfButton OnClick="(() => { FormationIsVisible = true; selectedPathItem = path; })">@(path.Sort ? "Накопительная ведомость" : "Ведомость вагонов")</SfButton>
+                    </div>
+                }
+            </div>
+
+            <div>
+                @{
+                    <SfProgressBar Type="ProgressType.Linear" Height="38" @ref="sfProgress" IsStriped="true"
+                                   SegmentCount="@path.Length" Value="path.TrainLength" SecondaryProgress="@path.Occupation" Minimum="0" Maximum="@path.Length"
+                                   Theme="@ProgressTheme.Material" ProgressThickness="30" ProgressColor="#337ab7" TrackThickness="32" TrackColor="#94b4dd" @key="path.Id">
+                        <ProgressBarAnimation Enable="false" />
+                    </SfProgressBar>
+                }
+
+
+            </div>
+
+
+        }
+    </div>
+    <style>
+        .progressbar-label-bootstrap {
+            text-align: left;
+            font-family: Roboto-Regular;
+            font-size: 14px;
+            color: #3D3E3C;
+            margin-left: 10px;
+            padding: 0px;
+        }
+    </style>
 }
 
 @code {
 
     [Parameter] public string Area { get; set; }
     FormationSheet formationSheet;
+    SfProgressBar sfProgress;
+    PathSelector pathSelector;
+    TrainModel targetTrainModel;
     public List<PathModel> paths { get; set; }
     private PathModel selectedPathItem = null;
     private bool PathsHided { get; set; } = true;
     private bool isSort = true;
     private bool FormationIsVisible = false;
+    private bool PathSelectorVisible { get; set; } = false;
 
 
     protected override async Task OnInitializedAsync()
@@ -89,6 +97,12 @@ else
         await GetPaths();
 
         PathsHided = false;
+    }
+
+    private async Task OnPathSelect(int pathId)
+    {
+        targetTrainModel = await StationData.GetTrainOnPath(pathId);
+        PathSelectorVisible = true;
     }
 
     private async Task OnFormTrain()
@@ -105,7 +119,7 @@ else
             //if (trainKind == 0) trainKind = 20;
             await StationData.FormTrain(formationSheet.selectedVagons, trainKind, formationSheet.PFclaimsOn);
             NotificationService.SetMessage(TypeNotification.Success, $"Операция по формированию поезда проведена успешно");
-            StateHasChanged();
+            NavigationManager.NavigateTo("paths", true);
         }
         catch (Exception e)
         {
@@ -134,6 +148,13 @@ else
     public void UpdateState()
     {
         this.StateHasChanged();
+    }
+
+    public async Task OnRelocateTrain()
+    {
+        await StationData.RelocateTrain(targetTrainModel.Index, pathSelector.PathId);
+        NotificationService.SetMessage(TypeNotification.Success, $"Перестановка поезда №{targetTrainModel.TrainNum} на другой путь завершена");
+        NavigationManager.NavigateTo("paths", true);
     }
 
 }

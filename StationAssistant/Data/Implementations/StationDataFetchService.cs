@@ -74,6 +74,14 @@ namespace StationAssistant.Data
             await _context.SaveChangesAsync();
         }
 
+        public async Task UpdateTrain(TrainModel updatedModel)
+        {
+            Train train = _context.Train.Find(updatedModel.Index);
+            train.TrainNum = updatedModel.TrainNum;
+            train.ScheduleTime = updatedModel.DateOper;
+            await _context.SaveChangesAsync();
+        }
+
         public async Task DeleteTrainAsync(string index)
         {
             Train train = await _context.Train
