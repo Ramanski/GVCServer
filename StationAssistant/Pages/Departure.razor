@@ -126,7 +126,7 @@ else
             await StationData.UpdateTrain(updatedModel);
             NotificationService.SetMessage(TypeNotification.Success, $"Для поезда №{updatedModel.TrainNum} внесены корректировки");
         }
-        catch (Exception e)
+        catch (Exception)
         {
                 NotificationService.SetMessage(TypeNotification.Error, $"Не удалось сохранить изменения");
         }

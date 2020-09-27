@@ -82,6 +82,20 @@ namespace StationAssistant.Data
             await _context.SaveChangesAsync();
         }
 
+        public async Task UpdateVagon(Vagon updatedVagon)
+        {
+            Vagon vagon = _context.Vagon
+                                  .Find(updatedVagon.Num);
+            Path path = vagon.Path;
+            vagon.WeightNetto = updatedVagon.WeightNetto;
+            vagon.Mark = updatedVagon.Mark;
+            vagon.Ksob = updatedVagon.Ksob;
+            vagon.Path = null;
+            await _context.SaveChangesAsync();
+            vagon.PathId = path.Id;
+            await _context.SaveChangesAsync();
+        }
+
         public async Task DeleteTrainAsync(string index)
         {
             Train train = await _context.Train

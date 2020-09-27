@@ -1,6 +1,8 @@
 ﻿@using Syncfusion.Blazor.ProgressBar
 @using Syncfusion.Blazor.Buttons
 @using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Navigations
+@using StationAssistant.Data.Entities;
 @inject StationAssistant.Data.IStationDataService StationData
 @inject NotificationService NotificationService
 @inject NavigationManager NavigationManager
@@ -20,7 +22,7 @@ else
     if (FormationIsVisible)
     {
         <ConfirmModal Title="Накопительная ведомость" DialogClose="(() => FormationIsVisible = false)" OverlayClick="(() => FormationIsVisible = false)" OKButtonName="Сформировать" OKClick="OnFormTrain">
-            <FormationSheet @ref="formationSheet" path="selectedPathItem"></FormationSheet>
+            <FormationSheet @ref="formationSheet" path="selectedPathItem" onUpdateVagon="onUpdateVagon"></FormationSheet>
         </ConfirmModal>
     }
     if (TrainListIsVisible)
@@ -40,7 +42,59 @@ else
             </SfGrid>
         </ConfirmModal>
     }
-    <div>
+    <div class="control-section">
+        <div class="control_wrapper accordion-control-section">
+            @if(!AccordionStateChanged)
+             {
+             <SfAccordion @ref="Accordion" @key="Area">
+                <AccordionItems @ref="AccordionItemRef" @key="Area">
+                    @foreach (PathModel path in paths)
+                    {
+                        <AccordionItem Expanded="@(path.Occupation!=0)" Visible="@(!isEmpty?true:path.Occupation!=0)" @key="path.Id">
+                            <HeaderTemplate>
+                                <h6 class="ml-1"> Путь №@path.PathNum @path.Marks </h6>
+                            </HeaderTemplate>
+                            <ContentTemplate>
+                                <div class="container">
+                                    <div class="row">
+                                        @if (path.AnyTrain)
+                                        {
+                                            <div class="col-2 align-content-start">
+                                                <SfButton OnClick="async () => await OnPathSelect(path.Id)">Перестановка</SfButton>
+                                            </div>
+                                            <div class="col-2 align-content-start">
+                                                <SfButton OnClick="@(() => {NavigationManager.NavigateTo("departure");})">Отправление</SfButton>
+                                            </div>
+                                            <div class="col-2">
+                                                <SfButton OnClick="(async() => await OnTrainListCall(path.Id))">Натурный лист</SfButton>
+                                            </div>
+                                        }
+                                        else if (path.Occupation != 0)
+                                        {
+                                            <div class="col-2">
+                                                <SfButton OnClick="(() => { FormationIsVisible = true; selectedPathItem = path; })">@(path.Sort ? "Накопительная ведомость" : "Ведомость вагонов")</SfButton>
+                                            </div>
+                                        }
+                                    </div>
+                                    <div>
+                                        @{
+                                            <SfProgressBar Type="ProgressType.Linear" Height="38" @ref="sfProgress" IsStriped="true"
+                                                           SegmentCount="@path.Length" Value="path.TrainLength" SecondaryProgress="@path.Occupation" Minimum="0" Maximum="@path.Length"
+                                                           Theme="@ProgressTheme.Material" ProgressThickness="30" ProgressColor="#337ab7" TrackThickness="32" TrackColor="#94b4dd" @key="path.Id">
+                                                <ProgressBarAnimation Enable="false" />
+                                            </SfProgressBar>
+                                        }
+                                    </div>
+                                </div>
+                            </ContentTemplate>
+                        </AccordionItem>
+                    }
+                </AccordionItems>
+            </SfAccordion>
+            }
+        </div>
+    </div>
+@*    <div>
         <div class="row">
             <div class="col-6 ml-1">
                 <label style="padding: 10px 70px 10px 0">Только сортировочные пути</label>
@@ -79,13 +133,9 @@ else
                         <ProgressBarAnimation Enable="false" />
                     </SfProgressBar>
                 }
-
-
             </div>
-
-
         }
-    </div>
+    </div>*@
     <style>
         .progressbar-label-bootstrap {
             text-align: left;
@@ -96,12 +146,14 @@ else
             padding: 0px;
         }
     </style>
-}
+                                            }
 
 @code {
 
     [Parameter] public string Area { get; set; }
     FormationSheet formationSheet;
+    SfAccordion Accordion;
+    AccordionItems AccordionItemRef;
     SfProgressBar sfProgress;
     PathSelector pathSelector;
     SfGrid<VagonModel> TrainGrid;
@@ -110,7 +162,9 @@ else
     private List<VagonModel> vagonsOfTrain;
     private PathModel selectedPathItem = null;
     private bool PathsHided { get; set; } = true;
-    private bool isSort = true;
+    private bool AccordionStateChanged { get; set; } = false;
+    [Parameter] public bool isSort { get; set; }
+    [Parameter] public bool isEmpty { get; set; }
     private bool FormationIsVisible = false;
     private bool TrainListIsVisible = false;
     private bool PathSelectorVisible { get; set; } = false;
@@ -118,8 +172,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        await GetPaths();
-
+        paths = await StationData.GetPathsOnAreaAsync(Area, isSort);
         PathsHided = false;
     }
 
@@ -170,21 +223,39 @@ else
         }
     }
 
-    private async Task GetPaths()
+    private async Task onUpdateVagon(Vagon updatedVagon)
     {
+        try
+        {
+            await StationData.UpdateVagon(updatedVagon);
+            NotificationService.SetMessage(TypeNotification.Success, $"Для вагона №{updatedVagon.Num} внесены корректировки");
+        }
+        catch (Exception e)
+        {
+            NotificationService.SetMessage(TypeNotification.Error, $"Не удалось сохранить изменения");
+        }
+    }
+
+    public async Task GetPaths(bool isSort, bool isEmpty)
+    {
+        this.isEmpty = isEmpty;
+        AccordionStateChanged = true;
+        StateHasChanged();
         paths = await StationData.GetPathsOnAreaAsync(Area, isSort);
+        AccordionStateChanged = false;
+        StateHasChanged();
     }
 
     public void UpdateState()
     {
-        this.StateHasChanged();
+        NavigationManager.NavigateTo("paths", true);
     }
 
     public async Task OnRelocateTrain()
     {
         await StationData.RelocateTrain(targetTrainModel.Index, pathSelector.PathId);
         NotificationService.SetMessage(TypeNotification.Success, $"Перестановка поезда №{targetTrainModel.TrainNum} на другой путь завершена");
-        NavigationManager.NavigateTo("paths", true);
+        this.UpdateState();
     }
 
 }

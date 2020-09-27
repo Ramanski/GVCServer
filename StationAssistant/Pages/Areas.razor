@@ -1,5 +1,6 @@
 ﻿@page "/paths"
 @using Syncfusion.Blazor.Navigations
+@using Syncfusion.Blazor.Buttons
 @inject StationAssistant.Data.IStationDataService StationData
 @attribute [Authorize]
 
@@ -9,7 +10,17 @@
 }
 else
 {
-    <SfTab>
+<div class="row">
+    <div class="col-6 ml-1">
+        <label>Только сортировочные пути</label>
+        <SfSwitch @bind-Checked="@isSort" TChecked="bool" EnablePersistence="true" ValueChange="(async () => await onPathSortChange())"></SfSwitch>
+    </div>
+    <div class="col-6 ml-1">
+        <label>Только занятые пути</label>
+        <SfSwitch @bind-Checked="@isEmpty" TChecked="bool" EnablePersistence="true" ValueChange="(async () => await onPathSortChange())"></SfSwitch>
+    </div>
+</div>
+    <SfTab @ref="Tab">
         <TabItems>
             @foreach (string area in areas)
             {
@@ -18,7 +29,7 @@ else
                         <TabHeader Text="@area"></TabHeader>
                     </ChildContent>
                     <ContentTemplate>
-                        <Paths Area="@area" @ref="pathsComoponent" @key="@area"></Paths>
+                        <Paths Area="@area" @ref="pathsComoponent" @key="@area" isSort="isSort" isEmpty="isEmpty"></Paths>
                     </ContentTemplate>
                 </TabItem>
             }
@@ -30,14 +41,22 @@ else
 
 @code {
     Paths pathsComoponent;
+    SfTab Tab;
+    public bool isSort { get; set; } = false;
+    public bool isEmpty { get; set; } = false;
     private string[] areas { get; set; }
     private string currentArea { get; set; }
     bool dataIsLoaded = false;
 
     protected override async Task OnInitializedAsync()
     {
-            areas = await StationData.GetAreasAsync();
-            currentArea = areas[0];
-            dataIsLoaded = true;
+        areas = await StationData.GetAreasAsync();
+        currentArea = areas[0];
+        dataIsLoaded = true;
+    }
+
+    private async Task onPathSortChange()
+    {
+        await pathsComoponent.GetPaths(isSort, isEmpty);
     }
 }

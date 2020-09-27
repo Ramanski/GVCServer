@@ -20,7 +20,7 @@
 <div class="row">
     <div class="col-6">
         <SfSwitch @bind-Checked="@PFclaimsOn"></SfSwitch>
-        <label style="padding: 10px 70px 10px 0">Проверка требований ПФ при формировании</label>
+        <label>Проверка требований ПФ при формировании</label>
     </div>
     <div class="col-6">
         <SfDropDownList @ref="trainKindList" TItem="TrainKind" TValue="byte" Placeholder="Выберите вид поезда" PopupHeight="auto" DataSource="@trainKinds">
@@ -33,10 +33,10 @@
         <div class="row">
             @if (dataLoaded)
             {
-                <SfGrid @ref="Grid" DataSource="@vagons" Toolbar="@(new List<string>() { "Update", "Cancel", "Delete" })" AllowSelection="true" AllowPaging="false" Width="750">
-                    <GridEditSettings AllowEditing="true" Mode="EditMode.Normal" AllowDeleting="true"></GridEditSettings>
+                <SfGrid @ref="Grid" DataSource="@vagons" Toolbar="@(new List<string>() { "Update", "Cancel" })" AllowSelection="true" AllowPaging="false" Width="750">
+                    <GridEditSettings AllowEditing="true" Mode="EditMode.Normal"></GridEditSettings>
                     <GridSelectionSettings CheckboxOnly="false" PersistSelection="true" Type="SelectionType.Multiple"></GridSelectionSettings>
-                    <GridEvents RowSelected="GetSelectedRecords" TValue="Vagon"></GridEvents>
+                    <GridEvents RowSelected="GetSelectedRecords" OnActionComplete="ActionCompleted" TValue="Vagon"></GridEvents>
                     <GridColumns>
                         <GridColumn Type="ColumnType.CheckBox" Width="40"></GridColumn>
                         <GridColumn Field=@nameof(Vagon.Num) HeaderText="Вагон" IsPrimaryKey="true" AllowAdding="false" Width="90"></GridColumn>
@@ -56,6 +56,7 @@
 @code{
     [Parameter] public PathModel path { get; set; }
     [Parameter] public string trainIndex { get; set; }
+    [Parameter] public EventCallback<Vagon> onUpdateVagon { get; set; }
     SfGrid<Vagon> Grid;
     SfDropDownList<byte, TrainKind> trainKindList;
     public List<Vagon> vagons { get; set; }
@@ -77,6 +78,14 @@
         vagCount = vagons.Count;
         trainKinds = await StationData.GetTrainKinds();
         dataLoaded = true;
+    }
+
+    public void ActionCompleted(ActionEventArgs<Vagon> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            onUpdateVagon.InvokeAsync(args.Data);
+        }
     }
 
     public async Task GetSelectedRecords(RowSelectEventArgs<Vagon> args)

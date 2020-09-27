@@ -30,7 +30,7 @@ else
                 <ChartAxisMinorTickLines Width="0"></ChartAxisMinorTickLines>
                 <ChartAxisLineStyle Width="0"></ChartAxisLineStyle>
             </ChartPrimaryXAxis>
-            <ChartPrimaryYAxis Title="Вагоны" Minimum="0" Maximum="90" Interval="10" LabelFormat="{value}">
+            <ChartPrimaryYAxis Title="Вагоны" Minimum="0" Maximum="70" Interval="10" LabelFormat="{value}">
                 <ChartAxisLineStyle Width="0"></ChartAxisLineStyle>
                 <ChartAxisMajorGridLines Width="1"></ChartAxisMajorGridLines>
                 <ChartAxisMinorGridLines Width="1"></ChartAxisMinorGridLines>
@@ -95,10 +95,15 @@ else
         foreach (PathModel path in paths)
         {
             var vagonsOnPath = vagonsOnArea.Where(v => path.Id == v.PathId);
+            string Mark = path.Marks?.Trim();
+            if (!string.IsNullOrEmpty(path.Marks) && path.Marks?.Length > 16)
+            {
+                Mark = shortenString(Mark);
+            }
 
             StackedColumnChartData data = new StackedColumnChartData()
             {
-                path = $"{path.PathNum} {path.Marks}",
+                path = $"{path.PathNum} {Mark}",
                 ps = vagonsOnPath.Where(v => v.Kind == 1).Count(),
                 kr = vagonsOnPath.Where(v => v.Kind == 20).Count(),
                 pl = vagonsOnPath.Where(v => v.Kind == 40).Count(),
@@ -110,5 +115,16 @@ else
             DataSource.Add(data);
         }
         StateHasChanged();
+    }
+
+    private string shortenString(string originalStr)
+    {
+        var words = originalStr.Split(' ');
+        for (int i = 0; i < words.Count(); i++)
+        {
+            if (words[i].Length > 4 && !words[i].Contains("Полоцк-"))
+                words[i] = words[i].Substring(0, 4);
+        }
+        return string.Join(' ', words);
     }
 }
