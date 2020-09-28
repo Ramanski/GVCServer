@@ -10,15 +10,25 @@
 }
 else
 {
-<div class="row">
-    <div class="col-6 ml-1">
+<div class="container my-1">
+    <table>
+        <tr>
+            <td>Только сортировочные пути</td>
+            <td><SfSwitch @bind-Checked="@isSort" TChecked="bool" EnablePersistence="true" ValueChange="(async () => await onPathSortChange())"></SfSwitch></td>
+        </tr>
+        <tr>
+            <td>Только занятые пути</td>
+            <td><SfSwitch @bind-Checked="@isEmpty" TChecked="bool" EnablePersistence="true" ValueChange="(async () => await onPathSortChange())"></SfSwitch></td>
+        </tr>
+    </table>
+    @*<div class="col-6 ml-1">
         <label>Только сортировочные пути</label>
         <SfSwitch @bind-Checked="@isSort" TChecked="bool" EnablePersistence="true" ValueChange="(async () => await onPathSortChange())"></SfSwitch>
     </div>
     <div class="col-6 ml-1">
         <label>Только занятые пути</label>
         <SfSwitch @bind-Checked="@isEmpty" TChecked="bool" EnablePersistence="true" ValueChange="(async () => await onPathSortChange())"></SfSwitch>
-    </div>
+    </div>*@
 </div>
     <SfTab @ref="Tab">
         <TabItems>

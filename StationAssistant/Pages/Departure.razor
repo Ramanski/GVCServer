@@ -8,12 +8,6 @@
 @inject StationAssistant.Data.IStationDataService StationData
 @attribute [Authorize]
 
-@if (!DataIsLoaded)
-{
-    <img src="/Eclipse-load.gif" alt="Loading..." />
-}
-else
-{
     <SfDialog @bind-Visible="@ConfirmIsVisible" Width="400px" Target="#target" ShowCloseIcon="true" Header="@Title" Content="@Body">
         <DialogButtons>
             <DialogButton Content="Yes" IsPrimary="true" OnClick="(async() => await Depart())" />
@@ -62,7 +56,7 @@ else
             font-size: 12px;
         }
     </style>
-}
+
 
 @code {
 
@@ -71,7 +65,6 @@ else
     private List<TrainModel> departingTrains { get; set; }
     private List<PathModel> paths { get; set; }
     public bool TrainIsSelected { get; set; } = false;
-    private bool DataIsLoaded { get; set; } = false;
     private bool TrainListIsVisible { get; set; } = false;
     private bool PathSelectorIsVisible { get; set; } = false;
     private bool FormationSheetIsVisible { get; set; } = false;
@@ -85,7 +78,6 @@ else
         {
             departingTrains = await StationData.GetDepartingTrains();
             TrainListIsVisible = true;
-            DataIsLoaded = true;
         }
         catch (Exception e)
         {

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <BlazorLinkOnBuild  Condition="'$(Configuration)'!='Release'">false</BlazorLinkOnBuild>
+    <BlazorLinkOnBuild Condition="'$(Configuration)'!='Release'">false</BlazorLinkOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,6 +28,24 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\ModelsLibrary\ModelsLibrary.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Resources\SfResources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>SfResources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\SfResources.ru.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\SfResources.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>SfResources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>

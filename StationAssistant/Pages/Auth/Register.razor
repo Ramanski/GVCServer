@@ -9,7 +9,7 @@
 
 <EditForm class="form-signin" OnValidSubmit="CreateUser" Model="userInfo">
     <DataAnnotationsValidator />
-    <h4 class="font-weight-normal text-center">Регистрация нового пользователя</h4>
+    <h4 class="font-weight-normal text-center mb-3">Регистрация нового пользователя</h4>
 
     <label for="inputName" class="sr-only">Имя пользователя</label>
     <InputText id="inputName" class="form-control" placeholder="Name" @bind-Value="@userInfo.Name" />
@@ -23,13 +23,11 @@
     <InputText id="inputPassword" class="form-control" placeholder="Password" @bind-Value="@userInfo.Password" />
     <ValidationMessage For="@(() => userInfo.Password)" />
 
-    <div class="row">
-        <SfDropDownList TItem="Roles" TValue="int" PopupHeight="200px" Placeholder="Выберите роль" @bind-Value="DropVal" DataSource="@RolesList">
-            <DropDownListFieldSettings Text="Name" Value="ID"></DropDownListFieldSettings>
-        </SfDropDownList>
-    </div>
+    <SfDropDownList TItem="Roles" TValue="int" PopupHeight="500px" Placeholder="Выберите роль" @bind-Value="DropVal" DataSource="@RolesList">
+        <DropDownListFieldSettings Text="Name" Value="ID"></DropDownListFieldSettings>
+    </SfDropDownList>
 
-    <button class="btn btn-lg btn-primary btn-block" type="submit">Зарегистрировать</button>
+    <button class="btn btn-lg btn-primary btn-block mt-2" type="submit">Зарегистрировать</button>
     <label class="text-danger">@error</label>
 </EditForm>
 

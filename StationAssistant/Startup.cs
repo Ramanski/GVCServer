@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -13,14 +14,17 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using StationAssistant.Auth;
 using StationAssistant.Data;
 using StationAssistant.Data.Entities;
+using StationAssistant.Shared;
 using Syncfusion.Blazor;
 
 namespace StationAssistant
@@ -46,7 +50,21 @@ namespace StationAssistant
                     });
             services.AddControllers();
             services.AddServerSideBlazor();
+            services.AddLocalization(opt => opt.ResourcesPath = "Resources");
             services.AddSyncfusionBlazor();
+            services.AddSingleton(typeof(ISyncfusionStringLocalizer), typeof(SyncfusionLocalizer));
+            services.Configure<RequestLocalizationOptions>(options =>
+            {
+                var supportedCultures = new List<CultureInfo>()
+                {
+                    new CultureInfo("ru")
+                };
+                options.DefaultRequestCulture = new RequestCulture("ru");
+                options.SupportedCultures = supportedCultures;
+                options.SupportedUICultures = supportedCultures;
+            }
+
+            );
             services.AddTransient(sp => new HttpClient { BaseAddress = new Uri($"{Configuration["IVCaddress"]}/{Configuration["StationCode"]}/") });
             services.AddScoped<INSIUpdateService, NsiUpdateService>();
             services.AddScoped<IGvcDataService, GvcDataService>();
@@ -95,6 +113,8 @@ namespace StationAssistant
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("Mjk4MzI5QDMxMzgyZTMyMmUzMGxSRGpya1djRG9mYlJ4MThOaUJxc0l2aktUNGs4M3NkSEtkV1kzSVE1U2M9");
+
+            app.UseRequestLocalization(app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>().Value);
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
