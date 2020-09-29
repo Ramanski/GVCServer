@@ -18,6 +18,8 @@ using Microsoft.EntityFrameworkCore.SqlServer;
 using GVCServer.Data;
 using GVCServer.Helpers;
 using GVCServer.Services;
+using Microsoft.AspNetCore.Localization;
+using System.Globalization;
 
 namespace GVCServer
 {
@@ -39,7 +41,9 @@ namespace GVCServer
                         options.JsonSerializerOptions.IgnoreNullValues = true;
                         options.JsonSerializerOptions.Converters.Add(new TimeSpanJsonConverter());
                     });
-            services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
+            services.AddLocalization();
+
+ services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
             services.AddAutoMapper(typeof(Startup));
             services.AddScoped<ITrainRepository, TrainRepository>();
             services.AddScoped<IGuideRepository, GuideRepository>();
@@ -51,10 +55,20 @@ namespace GVCServer
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-/*            if (env.IsDevelopment())
+            var supportedCultures = new[]{
+    new CultureInfo("ru")
+};
+            app.UseRequestLocalization(new RequestLocalizationOptions
             {
-                app.UseExceptionHandler("/error-local-development");
-            }*/
+                DefaultRequestCulture = new RequestCulture("ru"),
+                SupportedCultures = supportedCultures,
+                FallBackToParentCultures = false
+            });
+            CultureInfo.DefaultThreadCurrentCulture = CultureInfo.CreateSpecificCulture("ru");
+            /*            if (env.IsDevelopment())
+                        {
+                            app.UseExceptionHandler("/error-local-development");
+                        }*/
 
             //app.ConfigureExceptionHandler(logger);
 

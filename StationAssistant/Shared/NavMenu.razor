@@ -16,31 +16,31 @@
         </li>
         <li class="nav-item px-3">
             <NavLink class="nav-link" href="arrival">
-                <span class="oi oi-list-rich" aria-hidden="true"></span> Прибытие
+                <span class="oi oi-cloud-upload" aria-hidden="true"></span> Прибытие
             </NavLink>
         </li>
         <li class="nav-item px-3">
             <NavLink class="nav-link" href="departure">
-                <span class="oi oi-list-rich" aria-hidden="true"></span> Отправление
+                <span class="oi oi-cloud-upload" aria-hidden="true"></span> Отправление
             </NavLink>
         </li>
         <li class="nav-item px-3">
             <NavLink class="nav-link" href="paths">
-                <span class="oi oi-eye" aria-hidden="true"></span> Пути
+                <span class="oi oi-menu" aria-hidden="true"></span> Пути
             </NavLink>
         </li>
         <li class="nav-item px-3">
             <NavLink class="nav-link" href="info">
-                <span class="oi oi-cloud-upload" aria-hidden="true"></span> Справка
+                <span class="oi oi-project" aria-hidden="true"></span> Справка
             </NavLink>
         </li>
         <AuthorizeView Roles=@Role.Admin>
             <Authorized>
-                <li class="nav-item px-3">
+                @*<li class="nav-item px-3">
                     <NavLink class="nav-link" href="updater">
                         <span class="oi oi-plus" aria-hidden="true"></span> Обновление НСИ
                     </NavLink>
-                </li>
+                </li>*@
                 <li class="nav-item px-3">
                     <NavLink class="nav-link" href="register">
                         <span class="oi oi-person" aria-hidden="true"></span> Новый пользователь

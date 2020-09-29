@@ -50,7 +50,7 @@ else
                 <AccordionItems @ref="AccordionItemRef" @key="Area">
                     @foreach (PathModel path in paths)
                     {
-                        <AccordionItem Expanded="@(path.Occupation!=0)" Visible="@(!isEmpty?true:path.Occupation!=0)" @key="path.Id">
+                        <AccordionItem Expanded="@(path.Occupation!=0)" CssClass="border-1" Visible="@(!isEmpty?true:path.Occupation!=0)" @key="path.Id">
                             <HeaderTemplate>
                                 <h6 class="ml-1"> Путь №@path.PathNum @path.Marks </h6>
                             </HeaderTemplate>

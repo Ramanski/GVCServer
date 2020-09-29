@@ -110,7 +110,8 @@
                         Content = NotificationService.Message,
                         CssClass = "e-toast-success",
                         Icon = "e-success toast-icons",
-                        TimeOut = 10000
+                        TimeOut = 10000,
+                        ShowCloseButton = true
                     };
                     await this.ToastObj.Show(toastModel);
                 }

@@ -18,18 +18,16 @@
 
         <h3> Прогноз отправления поездов </h3>
         <div class="row">
-                <div class="col-2">
-                    <SfButton Disabled="!TrainIsSelected" IsPrimary="true" OnClick="(async() => await Depart())">Отправить поезд</SfButton>
-                </div>
-                <div class="col-2">
-                    <SfButton Disabled="!TrainIsSelected" IsPrimary="false" OnClick="(() => ShowDetails())">Натурный лист</SfButton>
-                </div>
-                <div class="col-2">
-                    <SfButton Disabled="!TrainIsSelected" IsPrimary="false" OnClick="(async () => await onGetDepartureRoute())">Следующая нитка отправления</SfButton>
-                </div>
-                <div class="col-2">
-                    <SfButton Disabled="!TrainIsSelected" IsPrimary="false" OnClick="(() => onOpenPath())">Перестановка состава</SfButton>
-                </div>
+
+            <div class="col-xs-6 col-sm-6 col-lg-12 col-md-12">
+                <SfButton Disabled="!TrainIsSelected" IsPrimary="true" OnClick="(async() => await Depart())">Отправить поезд</SfButton>
+
+                <SfButton Disabled="!TrainIsSelected" IsPrimary="false" OnClick="(() => ShowDetails())">Натурный лист</SfButton>
+
+                <SfButton Disabled="!TrainIsSelected" IsPrimary="false" OnClick="(async () => await onGetDepartureRoute())">Следующая нитка отправления</SfButton>
+
+                <SfButton Disabled="!TrainIsSelected" IsPrimary="false" OnClick="(() => onOpenPath())">Перестановка состава</SfButton>
+            </div>
         </div>
         <div class="content-wrapper">
                 <TrainList @ref="departingList" trainList="departingTrains"IsSelected="@(() => { TrainIsSelected = true; })" 
@@ -60,8 +58,8 @@
 
 @code {
 
-        PathSelector pathSelector;
-        TrainList departingList;
+    PathSelector pathSelector;
+    TrainList departingList;
     private List<TrainModel> departingTrains { get; set; }
     private List<PathModel> paths { get; set; }
     public bool TrainIsSelected { get; set; } = false;
@@ -120,7 +118,7 @@
         }
         catch (Exception)
         {
-                NotificationService.SetMessage(TypeNotification.Error, $"Не удалось сохранить изменения");
+            NotificationService.SetMessage(TypeNotification.Error, $"Не удалось сохранить изменения");
         }
     }
 
@@ -173,8 +171,9 @@
         try
         {
             var train = departingList.selectedTrain;
-            short i = await StationData.SetDepartureRoute(train);
-            StateHasChanged();
+            TrainModel trainModel = await StationData.SetDepartureRoute(train);
+            departingList.UpdateSelectedRow(trainModel);
+            NotificationService.SetMessage(TypeNotification.Success, $"Для поезда {trainModel.Index} установлен №{trainModel.TrainNum} и время отправления {trainModel.DateOper?.ToShortTimeString()}");
         }
         catch (Exception e)
         {

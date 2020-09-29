@@ -26,7 +26,7 @@
     <SfDropDownList TItem="Roles" TValue="int" PopupHeight="500px" Placeholder="Выберите роль" @bind-Value="DropVal" DataSource="@RolesList">
         <DropDownListFieldSettings Text="Name" Value="ID"></DropDownListFieldSettings>
     </SfDropDownList>
-
+    
     <button class="btn btn-lg btn-primary btn-block mt-2" type="submit">Зарегистрировать</button>
     <label class="text-danger">@error</label>
 </EditForm>

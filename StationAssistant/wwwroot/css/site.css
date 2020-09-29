@@ -2,6 +2,10 @@
 
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background-image: url('../background-869586_1280.png');
+    background-color: aquamarine;
+    color: white;
+    font-size: 15px;
 }
 
 a, .btn-link {
@@ -47,12 +51,10 @@ app {
 }
 
 .sidebar {
-    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+    background-color: #075986;
+    opacity:.9;
 }
 
-    .sidebar .top-row {
-        background-color: rgba(0,0,0,0.4);
-    }
 
     .sidebar .navbar-brand {
         font-size: 1.1rem;
@@ -99,6 +101,16 @@ app {
 
 .content {
     padding-top: 1.1rem;
+}
+
+.e-grid .e-headercelldiv
+{
+    font-size: 14px;
+}
+
+.e-grid .e-rowcell {
+
+    font-size: 15px;
 }
 
 .navbar-toggler {
@@ -246,3 +258,73 @@ app {
             border-top-left-radius: 0;
             border-top-right-radius: 0;
         }
+.e-icons {
+    font-family: "e-icons";
+    font-style: normal;
+    font-variant: normal;
+    font-weight: normal;
+    line-height: 1;
+    color: black;
+    text-transform: none;
+}
+
+
+.e-arriving::before {
+    content: '\e304';
+}
+
+.e-refresh::before {
+    content: '\e606';
+}
+
+.e-disband::before {
+    content: '\e251';
+}
+
+.e-arriving-cancel::before {
+    content: '\e341';
+}
+
+.e-tgnl::before {
+    content: '\e193';
+}
+
+.e-formation-list::before {
+    content: '\e20a';
+}
+
+.e-relocate::before {
+    content: '\eb37';
+}
+
+.e-schedule::before {
+    content: '\e20c';
+}
+
+.e-arriving-path::before {
+    content: '\e22d';
+}
+
+.e-paths::before {
+    content: '\e334';
+}
+
+.e-reload::before {
+    content: '\e308';
+}
+
+.e-depart::before {
+    content: '\e35d';
+}
+
+.e-arrive::before {
+    content: '\e33f';
+}
+
+.e-departing::before {
+    content: '\e306';
+}
+
+.e-info::before {
+    content: '\e607';
+}

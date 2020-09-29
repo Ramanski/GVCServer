@@ -1,4 +1,4 @@
-@charset "UTF-8";
+﻿@charset "UTF-8";
 @import url("https://fonts.googleapis.com/css?family=Roboto:400,500");
 @font-face {
   font-family: 'e-icons';
@@ -3372,7 +3372,8 @@
   .e-control-wrapper.e-slider-container .e-range {
     border-radius: 2px;
     position: absolute;
-    transition: left 300ms ease-out, right 300ms ease-out, bottom 300ms ease-out, width 300ms ease-out, height 300ms ease-out; }
+    transition: left 300ms ease-out, right 300ms ease-out, bottom 300ms ease-out, width 300ms ease-out,
+ height 300ms ease-out; }
     .e-control-wrapper.e-slider-container .e-range.e-drag-horizontal {
       cursor: ew-resize; }
     .e-control-wrapper.e-slider-container .e-range.e-drag-vertical {
@@ -7864,7 +7865,7 @@ ejs-calendar {
   .e-grid .e-headercelldiv {
     border: 0 none;
     display: block;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
     height: 29px;
     line-height: 30px;

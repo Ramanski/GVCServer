@@ -121,7 +121,7 @@ namespace StationAssistant.Data
             return _imapper.Map<PathModel>(path);
         }
 
-        public async Task<short> SetDepartureRoute(TrainModel trainModel)
+        public async Task<TrainModel> SetDepartureRoute(TrainModel trainModel)
         {
             Train train = await _context.FindAsync<Train>(trainModel.Index);
             Direction dir = await _context.Direction.FindAsync(train.DestinationStation);
@@ -129,7 +129,7 @@ namespace StationAssistant.Data
             train.TrainNum = route[0];
             train.ScheduleTime = DateTime.Parse(route[1]);
             await _context.SaveChangesAsync();
-            return dir.DirectionId;
+            return _imapper.Map<TrainModel>(train);
         }
 
         public async Task <List<PathModel>> GetPathsOnAreaAsync(string area, bool sort)
