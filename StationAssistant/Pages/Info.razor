@@ -96,10 +96,10 @@ else
         {
             var vagonsOnPath = vagonsOnArea.Where(v => path.Id == v.PathId);
             string Mark = path.Marks?.Trim();
-            if (!string.IsNullOrEmpty(path.Marks) && path.Marks?.Length > 16)
+            @*if (!string.IsNullOrEmpty(path.Marks) && path.Marks?.Length > 16)
             {
                 Mark = shortenString(Mark);
-            }
+            }*@
 
             StackedColumnChartData data = new StackedColumnChartData()
             {

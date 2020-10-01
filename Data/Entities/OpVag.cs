@@ -16,7 +16,7 @@ namespace GVCServer.Data.Entities
         public string Destination { get; set; }
         public byte? SequenceNum { get; set; }
         public short? WeightNetto { get; set; }
-        public byte? Mark { get; set; }
+        public string Mark { get; set; }
         public bool? LastOper { get; set; }
 
         public virtual Operation CodeOperNavigation { get; set; }

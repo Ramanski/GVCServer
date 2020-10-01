@@ -9,25 +9,31 @@
         @if (path != null)
         {
             <p>Путь @path.PathNum (@path.Area) </p>
-            <p>Назначение: @path.Marks</p>
+            <p>Назначение: <strong>@path.Marks</strong></p>
         }
     </div>
     <div class="col-6">
         <p>Длина : @vagCount</p>
-        <p>Общий вес : @weightSum</p>
+        <p>Общий вес : @(weightSum/10)</p>
     </div>
 </div>
-<div class="row">
-    <div class="col-6">
-        <SfSwitch @bind-Checked="@PFclaimsOn"></SfSwitch>
-        <label>Проверка требований ПФ при формировании</label>
+@if(dataLoaded)
+{
+    if(vagons != null && vagons[0].TrainIndex == null)
+    {
+    <div class="row">
+        <div class="col-6">
+            <SfSwitch @bind-Checked="@PFclaimsOn"></SfSwitch>
+            <label>Контроль требований ПФ</label>
+        </div>
+        <div class="col-6">
+            <SfDropDownList @ref="trainKindList" TItem="TrainKind" TValue="byte" Placeholder="Выберите вид поезда" PopupHeight="auto" DataSource="@trainKinds">
+                <DropDownListFieldSettings Text="Mnemocode" Value="Code"></DropDownListFieldSettings>
+            </SfDropDownList>
+        </div>
     </div>
-    <div class="col-6">
-        <SfDropDownList @ref="trainKindList" TItem="TrainKind" TValue="byte" Placeholder="Выберите вид поезда" PopupHeight="auto" DataSource="@trainKinds">
-            <DropDownListFieldSettings Text="Mnemocode" Value="Code"></DropDownListFieldSettings>
-        </SfDropDownList>
-    </div>
-</div>
+    }
+}
 <div class="col-lg-12 control-section">
     <div class="content-wrapper">
         <div class="row">
@@ -41,17 +47,36 @@
                         <GridColumn Type="ColumnType.CheckBox" Width="40"></GridColumn>
                         <GridColumn Field=@nameof(Vagon.Num) HeaderText="Вагон" IsPrimaryKey="true" AllowAdding="false" Width="90"></GridColumn>
                         <GridColumn Field=@nameof(Vagon.Ksob) HeaderText="Cобcтв" Width="80"></GridColumn>
-                        <GridColumn Field=@nameof(Vagon.WeightNetto) HeaderText="Вес" EditType="EditType.NumericEdit" ValidationRules="@(new ValidationRules { Required = true, Range = new double[] { 0, 2000 } })" Width="110"></GridColumn>
+                        <GridColumn Field=@nameof(Vagon.WeightNetto) HeaderText="Вес" EditType="EditType.NumericEdit" ValidationRules="@(new ValidationRules { Required = true, Range = new double[] { 0, 2000 } })" Width="70"></GridColumn>
                         <GridColumn Field=@nameof(Vagon.Kind) HeaderText="Род" AllowEditing="false" Width="60"></GridColumn>
                         <GridColumn Field=@nameof(Vagon.Tvag) HeaderText="Тара" AllowEditing="false" Width="60"></GridColumn>
                         <GridColumn Field=@nameof(Vagon.DateOper) AllowEditing="false" Format="dd/MM HH:mm" HeaderText="Расформирован" Width="140"></GridColumn>
-                        <GridColumn Field=@nameof(Vagon.Mark) HeaderText="Отметки" EditType="EditType.DefaultEdit" Width="170"></GridColumn>
+                        <GridColumn Field=@nameof(Vagon.Mark) HeaderText="Отметки" EditType="EditType.DefaultEdit" Width="190"></GridColumn>
                     </GridColumns>
                 </SfGrid>
             }
         </div>
     </div>
 </div>
+
+<style>
+    .e-grid .e-rowcell {
+        padding: 8px 12px;
+    }
+    .e-grid .e-rowcell {
+        font-size: 14px;
+    }
+
+    .e-grid .e-headercell, .e-grid .e-detailheadercell {
+        padding: 0 12px 0;
+    }
+
+    .e-dialog .e-dlg-content {
+        font-size: 15px;
+        font-weight: normal;
+        line-height: normal;
+    }
+</style>
 
 @code{
     [Parameter] public PathModel path { get; set; }

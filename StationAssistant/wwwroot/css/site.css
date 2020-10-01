@@ -297,8 +297,8 @@ app {
     content: '\eb37';
 }
 
-.e-schedule::before {
-    content: '\e20c';
+.e-schedule-icon::before {
+    content: '\e313';
 }
 
 .e-arriving-path::before {

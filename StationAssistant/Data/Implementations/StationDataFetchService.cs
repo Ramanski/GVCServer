@@ -293,7 +293,7 @@ namespace StationAssistant.Data
                                                  .Select(p => p.Departure)
                                                  .SingleAsync();
             if (!pathIsDeparting)
-                throw new Exception("Поезд не на пути отправления");
+                throw new ArgumentException("Поезд не на пути отправления");
             List<Vagon> vagons = await _context.Vagon.Where(v => v.TrainIndex.Equals(train.TrainIndex)).ToListAsync();
             List<VagonModel> vagonModel = _imapper.Map<List<VagonModel>>(vagons);
             TrainModel TrainModel = _imapper.Map<TrainModel>(train);
@@ -408,6 +408,7 @@ namespace StationAssistant.Data
         public async Task FormTrain(List<Vagon> vagons, byte trainKind, bool checkPFclaims = true)
         {
             string destination = vagons[0].PlanForm;
+            byte sequenceNum = 1;
 
             // Проверка требований к составу Плана формирования
             if (checkPFclaims)
@@ -423,13 +424,14 @@ namespace StationAssistant.Data
                 FormStation = "161306",
                 FormTime = DateTime.Now,
                 Length = (short) vagons.Count(),
-                WeightBrutto = (short)(vagons.Sum(v => v.Tvag) + vagons.Sum(v => v.WeightNetto)),
+                WeightBrutto = (short)((vagons.Sum(v => v.Tvag) + vagons.Sum(v => v.WeightNetto))/10),
                 PathId = vagons[0].PathId,
                 TrainKindId = trainKind
             };
             train.TrainIndex = string.Format($"1613 { train.Ordinal.ToString().PadLeft(3,'0')} {destination.Substring(0, 4)}");
             foreach (Vagon vagon in vagons)
             {
+                vagon.SequenceNum = sequenceNum++;
                 vagon.TrainIndex = train.TrainIndex;
                 vagon.DateOper = DateTime.Now;
             }
@@ -458,7 +460,7 @@ namespace StationAssistant.Data
                 vagons = vagons.Take(direction.MaxLength).ToList();
                 throw new ArgumentOutOfRangeException($"Была превышена максимально допустимая длина состава ({length}>{direction.MaxLength} вагонов)");
             }
-            if (weightSum > direction.MaxWeight)
+            if (weightSum > direction.MaxWeight*10)
             {
                 throw new ArgumentOutOfRangeException($"Превышен максимально допустимый вес состава ({weightSum}>{direction.MaxWeight}).");
             }

@@ -15,7 +15,7 @@ namespace StationAssistant.Data.Entities
         public short Tvag { get; set; }
         public short Kind { get; set; }
         public short? WeightNetto { get; set; }
-        public byte? Mark { get; set; }
+        public string Mark { get; set; }
         public int? PathId { get; set; }
         public byte? VagonKindId { get; set; }
 

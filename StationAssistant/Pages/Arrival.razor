@@ -20,7 +20,7 @@
     <h3 class="text-center"> Прогноз прибытия поездов </h3>
     <div class="row">
         <div class="col-xs-4 col-sm-6 col-lg-12 col-md-12">
-            <SfButton Disabled="!ArrivingTrainIsSelected && selectedTrainModel?.Path == null" IsPrimary="true" IconCss="e-icons e-arriving" OnClick="(async() => await Arrived())">Прибытие поезда</SfButton>
+            <SfButton Disabled="!ArrivingTrainIsSelected" IsPrimary="true" IconCss="e-icons e-arriving" OnClick="(async() => await Arrived())">Прибытие поезда</SfButton>
             <SfButton Disabled="!ArrivingTrainIsSelected" IsPrimary="false" IconCss="e-icons e-tgnl" OnClick="(async() => await GetDetails())">Получить ТГНЛ</SfButton>
             <SfButton Disabled="!ArrivingTrainIsSelected" IsPrimary="false" IconCss="e-icons e-arriving-path" OnClick="(() => onOpenPathSelector(true))">Выбрать путь</SfButton>
             <SfProgressButton CssClass="float-right" IconCss="e-icons e-refresh" OnClick="(() => updateArrivingList(null, null))">
@@ -267,6 +267,7 @@
             arrivedList.AddTrain(selectedTrainModel);
             await StationData.UpdatePathOccupation(selectedTrainModel.Path.Id);
             NotificationService.SetMessage(TypeNotification.Success, $"Операция по прибытию поезда №{selectedTrainModel.TrainNum} завершена");
+            await arrivingList.DeselectRow();
             await arrivedList.DeselectRow();
         }
         catch (Exception e)

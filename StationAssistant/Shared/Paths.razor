@@ -9,7 +9,7 @@
 
 @if (PathsHided)
 {
-    <p>Loading...</p>
+    <p>Загрузка...</p>
 }
 else
 {
@@ -52,7 +52,7 @@ else
                     {
                         <AccordionItem Expanded="@(path.Occupation!=0)" CssClass="border-1" Visible="@(!isEmpty?true:path.Occupation!=0)" @key="path.Id">
                             <HeaderTemplate>
-                                <h6 class="ml-1"> Путь №@path.PathNum @path.Marks </h6>
+                                <h6 class="ml-1"> Путь №@path.PathNum (@path.Length)   @path.Marks </h6>
                             </HeaderTemplate>
                             <ContentTemplate>
                                 <div class="container">
@@ -94,48 +94,6 @@ else
             }
         </div>
     </div>
-@*    <div>
-        <div class="row">
-            <div class="col-6 ml-1">
-                <label style="padding: 10px 70px 10px 0">Только сортировочные пути</label>
-                <SfSwitch @bind-Checked="@isSort" TChecked="bool" ValueChange="(async () => await GetPaths())"></SfSwitch>
-            </div>
-        </div>
-        @foreach (PathModel path in paths)
-        {
-            <h6 class="ml-1"> Путь №@path.PathNum @path.Marks </h6>
-            <div class="row">
-                @if (path.AnyTrain)
-                {
-                    <div class="col-2 align-content-start">
-                        <SfButton OnClick="async () => await OnPathSelect(path.Id)">Перестановка</SfButton>
-                    </div>
-                    <div class="col-2 align-content-start">
-                        <SfButton OnClick="@(() => {NavigationManager.NavigateTo("departure");})">Отправление</SfButton>
-                    </div>
-                    <div class="col-2">
-                        <SfButton OnClick="(async() => await OnTrainListCall(path.Id))">Натурный лист</SfButton>
-                    </div>
-                }
-                else if (path.Occupation != 0)
-                {
-                    <div class="col-2">
-                        <SfButton OnClick="(() => { FormationIsVisible = true; selectedPathItem = path; })">@(path.Sort ? "Накопительная ведомость" : "Ведомость вагонов")</SfButton>
-                    </div>
-                }
-            </div>
-
-            <div>
-                @{
-                    <SfProgressBar Type="ProgressType.Linear" Height="38" @ref="sfProgress" IsStriped="true"
-                                   SegmentCount="@path.Length" Value="path.TrainLength" SecondaryProgress="@path.Occupation" Minimum="0" Maximum="@path.Length"
-                                   Theme="@ProgressTheme.Material" ProgressThickness="30" ProgressColor="#337ab7" TrackThickness="32" TrackColor="#94b4dd" @key="path.Id">
-                        <ProgressBarAnimation Enable="false" />
-                    </SfProgressBar>
-                }
-            </div>
-        }
-    </div>*@
     <style>
         .progressbar-label-bootstrap {
             text-align: left;
@@ -202,6 +160,7 @@ else
             //if (trainKind == 0) trainKind = 20;
             await StationData.FormTrain(formationSheet.selectedVagons, trainKind, formationSheet.PFclaimsOn);
             NotificationService.SetMessage(TypeNotification.Success, $"Операция по формированию поезда проведена успешно");
+            await Task.Delay(2500);
             NavigationManager.NavigateTo("paths", true);
         }
         catch (Exception e)
