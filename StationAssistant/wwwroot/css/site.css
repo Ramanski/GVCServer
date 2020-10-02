@@ -50,6 +50,10 @@ app {
     text-overflow: ellipsis;
 }
 
+.e-grid .e-gridheader .e-sortfilter .e-headercelldiv, .e-grid .e-gridheader .e-stackedheadercelldiv, .e-grid .e-gridheader .e-headercell .e-headercelldiv.e-headerchkcelldiv {
+    padding: 0 1.0em 0 0.6em;
+}
+
 .sidebar {
     background-color: #075986;
     opacity:.9;
@@ -81,7 +85,8 @@ app {
         }
 
         .sidebar .nav-item a {
-            color: #d7d7d7;
+            color:white;
+            font-weight: bold;
             border-radius: 4px;
             height: 3rem;
             display: flex;

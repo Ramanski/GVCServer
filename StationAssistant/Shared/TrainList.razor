@@ -9,17 +9,17 @@
         <GridEditSettings AllowAdding="true" AllowDeleting="true" AllowEditing="AllowEditing"></GridEditSettings>
         <GridEvents OnLoad="DataBoundHandler" OnDataBound="OnDataBoundHandler" DataBound="DataBoundHandler" OnBeginEdit="()=> { ShowToolbar = true; }" OnActionComplete="ActionCompleted" RowSelected="RecordSelected" RowDeselected="DeselectRow" TValue="TrainModel"></GridEvents>
         <GridColumns>
-            <GridColumn Field=@nameof(TrainModel.TrainNum) HeaderText="Номер" TextAlign="TextAlign.Left" Width="35" AllowEditing="true" ValidationRules="@(new ValidationRules { Number = true, Range = new double[] { 1, 9999 } })"></GridColumn>
-            <GridColumn Field=@nameof(TrainModel.Index) IsPrimaryKey="true" HeaderText="Индекс" Width="60" AllowEditing="false"></GridColumn>
-            <GridColumn Field=@nameof(TrainModel.Length) HeaderText="Длина" Width="25" AllowEditing="false"></GridColumn>
-            <GridColumn Field=@nameof(TrainModel.WeightBrutto) HeaderText="Вес" Width="35" AllowEditing="false"></GridColumn>
+            <GridColumn Field=@nameof(TrainModel.TrainNum) HeaderText="Номер" TextAlign="TextAlign.Left" Width="30" AllowEditing="true" ValidationRules="@(new ValidationRules { Number = true, Range = new double[] { 1, 9999 } })"></GridColumn>
+            <GridColumn Field=@nameof(TrainModel.Index) IsPrimaryKey="true" HeaderText="Индекс" Width="45" AllowEditing="false"></GridColumn>
+            <GridColumn Field=@nameof(TrainModel.Length) HeaderText="Длина" Width="30" AllowEditing="false"></GridColumn>
+            <GridColumn Field=@nameof(TrainModel.WeightBrutto) HeaderText="Вес" Width="30" AllowEditing="false"></GridColumn>
             @if (ShowDislAndOper)
             {
-                <GridColumn Field=@nameof(TrainModel.Dislocation) HeaderText="Дислокация" Width="55" AllowEditing="false"></GridColumn>
-                <GridColumn Field=@nameof(TrainModel.LastOperation) HeaderText="Операция" Width="50" AllowEditing="false"></GridColumn>
+                <GridColumn Field=@nameof(TrainModel.Dislocation) HeaderText="Дислокация" Width="40" AllowEditing="false"></GridColumn>
+                <GridColumn Field=@nameof(TrainModel.LastOperation) HeaderText="Операция" Width="35" AllowEditing="false"></GridColumn>
             }
-            <GridColumn Field=@nameof(TrainModel.DateOper) Format="HH:mm" HeaderText="Время" Width="35" AllowEditing="true" EditType="EditType.DateTimePickerEdit"></GridColumn>
-            <GridColumn Field="Path.Area" HeaderText="Парк" Width="50" AllowEditing="false"></GridColumn>
+            <GridColumn Field=@nameof(TrainModel.DateOper) Format="HH:mm" HeaderText="Время" Width="30" AllowEditing="true" EditType="EditType.DateTimePickerEdit"></GridColumn>
+            <GridColumn Field="Path.Area" HeaderText="Парк" Width="45" AllowEditing="false"></GridColumn>
             <GridColumn Field="Path.PathNum" HeaderText="Путь" Width="20" AllowEditing="false"></GridColumn>
         </GridColumns>
     </SfGrid>

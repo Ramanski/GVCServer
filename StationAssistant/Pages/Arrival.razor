@@ -51,19 +51,72 @@
 
 @if (TrainListVisible || PathSelectorVisible)
 {
-    <ConfirmModal Title="@TitleModal" DialogClose="onCloseModal" OverlayClick="onCloseModal" OKClick="onOK" Width=@(PathSelectorVisible?"450":"800") Height="@(PathSelectorVisible?"180":"80%")">
+    <ConfirmModal Title="@TitleModal" DialogClose="onCloseModal" OverlayClick="onCloseModal" OKClick="onOK" Width=@(PathSelectorVisible?"450":"850") Height="@(PathSelectorVisible?"180":"80%")">
         @if (TrainListVisible)
         {
+            if(selectedTrainModel!=null)
+            {
+        <div class="container-fluid mb-2" id="tbl" style="text-align: center;font-size: medium;">
+            <table class="border container-fluid">
+                <thead>
+                    <tr>
+                        <td>Станция формирования</td>
+                        <td>№ состава</td>
+                        <td>Станция назначения</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            @selectedTrainModel.Index?.Substring(0, 4)
+                        </td>
+                        <td>
+                            @selectedTrainModel.Index?.Substring(5, 3)
+                        </td>
+                        <td>
+                            @selectedTrainModel.Index?.Substring(9, 4)
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <table class="border container-fluid">
+                <thead>
+                    <tr>
+                        <td>Голова 1 Хвост 2</td>
+                        <td>Число</td>
+                        <td>Месяц</td>
+                        <td>Часы</td>
+                        <td>Мин</td>
+                        <td>Условная длина</td>
+                        <td>Масса брутто</td>
+                        <td>Индекс негабаритности</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>@selectedTrainModel.DateOper?.Day</td>
+                        <td>@selectedTrainModel.DateOper?.Month</td>
+                        <td>@selectedTrainModel.DateOper?.Hour</td>
+                        <td>@selectedTrainModel.DateOper?.Minute</td>
+                        <td>@selectedTrainModel.Length</td>
+                        <td>@selectedTrainModel.WeightBrutto</td>
+                        <td>@selectedTrainModel.Oversize</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+            }
             <SfGrid DataSource="@selectedTrainModel.Vagons" EnableVirtualization="false" AllowSorting="true">
                 <GridColumns>
                     <GridColumn Field=@nameof(VagonModel.SequenceNum) HeaderText="№" Width="25"></GridColumn>
-                    <GridColumn Field=@nameof(VagonModel.Num) HeaderText="Номер" TextAlign="TextAlign.Left" IsPrimaryKey="true" Width="50"></GridColumn>
-                    <GridColumn Field=@nameof(VagonModel.Kind) HeaderText="Род" Width="40"></GridColumn>
-                    <GridColumn Field=@nameof(VagonModel.Destination) HeaderText="Назначение" Width="60"></GridColumn>
-                    <GridColumn Field=@nameof(VagonModel.Ksob) HeaderText="Собственник" Width="70"></GridColumn>
-                    <GridColumn Field=@nameof(VagonModel.Tvag) HeaderText="Тара" Width="40"></GridColumn>
-                    <GridColumn Field=@nameof(VagonModel.WeightNetto) HeaderText="Вес" Width="40"></GridColumn>
-                    <GridColumn Field=@nameof(VagonModel.Mark) HeaderText="Отметки" Width="60"></GridColumn>
+                    <GridColumn Field=@nameof(VagonModel.Num) HeaderText="Номер" TextAlign="TextAlign.Left" IsPrimaryKey="true" Width="60"></GridColumn>
+                    <GridColumn Field=@nameof(VagonModel.Kind) HeaderText="Род" Width="45"></GridColumn>
+                    <GridColumn Field=@nameof(VagonModel.Destination) HeaderText="Назначение" Width="70"></GridColumn>
+                    <GridColumn Field=@nameof(VagonModel.Ksob) HeaderText="Собств" Width="55"></GridColumn>
+                    <GridColumn Field=@nameof(VagonModel.Tvag) HeaderText="Тара" Width="45"></GridColumn>
+                    <GridColumn Field=@nameof(VagonModel.WeightNetto) HeaderText="Вес" Width="50"></GridColumn>
+                    <GridColumn Field=@nameof(VagonModel.Mark) HeaderText="Отметки" Width="75"></GridColumn>
                 </GridColumns>
             </SfGrid>
         }
@@ -82,6 +135,7 @@
 }
 
 <style>
+
 </style>
 
 
@@ -195,7 +249,7 @@
 
     void onOpenList()
     {
-        TitleModal = "Телеграмма-натурный лист поезда " + selectedTrainModel.TrainNum;
+        TitleModal = "Телеграмма-натурный лист поезда №" + selectedTrainModel.TrainNum;
         TrainListVisible = true;
     }
 

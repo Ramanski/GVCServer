@@ -30,7 +30,7 @@
                     </tr>
                     <tr>
                         <td>Общий вес:</td>
-                        <td><strong>@(arrivedTrains == null? 0: arrivedTrains.Sum(t=>t.WeightBrutto)/10)</strong> тонн</td>
+                        <td><strong>@(arrivedTrains == null? 0: arrivedTrains.Sum(t=>t.WeightBrutto))</strong> тонн</td>
                     </tr>
                 </table>
             </CardContent>
@@ -122,7 +122,20 @@
         </SfCard>
     </div>
 </div>
+<style>
+    .e-card .e-card-content {
+        font-size: 18px;
+        line-height: normal;
+        padding: 12px;
+        color: black;
+    }
 
+    .e-card-header{
+        font-size: 16px;
+        line-height: normal;
+        color: chocolate;
+    }
+</style>
 
 @code {
 

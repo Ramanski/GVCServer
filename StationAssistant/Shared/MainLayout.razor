@@ -97,7 +97,8 @@
                         Title = "К сведению",
                         Content = NotificationService.Message,
                         CssClass = "e-toast-info",
-                        Icon = "e-info toast-icons"
+                        Icon = "e-info toast-icons",
+                        ShowCloseButton = true
                     };
                     await this.ToastObj.Show(toastModel);
                 }
@@ -124,7 +125,8 @@
                         Content = NotificationService.Message,
                         CssClass = "e-toast-warning",
                         Icon = "e-warning toast-icons",
-                        TimeOut = 15000
+                        TimeOut = 15000,
+                        ShowCloseButton = true
                     };
                     await this.ToastObj.Show(toastModel);
                 }
@@ -137,7 +139,8 @@
                         Content = NotificationService.Message,
                         CssClass = "e-toast-danger",
                         Icon = "e-error toast-icons",
-                        TimeOut = 20000
+                        TimeOut = 20000,
+                        ShowCloseButton = true
                     };
                     await this.ToastObj.Show(toastModel);
                 }
