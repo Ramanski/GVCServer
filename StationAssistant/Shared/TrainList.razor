@@ -5,7 +5,7 @@
     var Tools = new List<string>() { "Update", "Cancel" };
 }
 <div id="sfGrid">
-    <SfGrid DataSource="@trainList" @ref="Grid" EnableVirtualization="false" AllowSelection="true" AllowSorting="true" Height="320" Toolbar="@(ShowToolbar?Tools:null)">
+    <SfGrid DataSource="@trainList" @ref="Grid" EnableVirtualization="false" AllowSelection="true" AllowSorting="true" Height="270" Toolbar="@(ShowToolbar?Tools:null)">
         <GridEditSettings AllowAdding="true" AllowDeleting="true" AllowEditing="AllowEditing"></GridEditSettings>
         <GridEvents OnLoad="DataBoundHandler" OnDataBound="OnDataBoundHandler" DataBound="DataBoundHandler" OnBeginEdit="()=> { ShowToolbar = true; }" OnActionComplete="ActionCompleted" RowSelected="RecordSelected" RowDeselected="DeselectRow" TValue="TrainModel"></GridEvents>
         <GridColumns>
@@ -62,12 +62,14 @@
 
     public void OnDataBoundHandler(BeforeDataBoundArgs<TrainModel> args)
     {
-        SpinnerObj.ShowSpinner(Target);
+        SpinnerObj.Show();
+        //SpinnerObj.ShowSpinner(Target);
     }
 
     public void DataBoundHandler(object args)
     {
-        SpinnerObj.HideSpinner(Target);
+        SpinnerObj.Hide();
+        //SpinnerObj.HideSpinner(Target);
     }
 
     public void ActionCompleted(ActionEventArgs<TrainModel> args)

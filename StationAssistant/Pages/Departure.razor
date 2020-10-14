@@ -36,7 +36,7 @@
 
     @if((FormationSheetIsVisible || PathSelectorIsVisible)&& departingList.selectedTrain != null)
     {
-        <ConfirmModal Title="@Title" DialogClose="onCloseModal" OverlayClick="onCloseModal" Width=@(FormationSheetIsVisible?"800":"550") Height="@(FormationSheetIsVisible?"80%":"180")" OKClick="onOK">
+        <ConfirmModal Title="@Title" DialogClose="onCloseModal" OverlayClick="onCloseModal" Width=@(FormationSheetIsVisible?"870":"550") Height="@(FormationSheetIsVisible?"80%":"180")" OKClick="onOK">
             @if (FormationSheetIsVisible)
             {
                 <FormationSheet trainIndex="@departingList.selectedTrain.Index"></FormationSheet>
@@ -97,7 +97,7 @@
             NotificationService.SetMessage(TypeNotification.Info, "Выберите поезд из списка");
             return;
         }
-        Title = "Телеграмма-натурный лист поезда " + departingList.selectedTrain.Index;
+        Title = "Натурный лист поезда " + departingList.selectedTrain.Index;
         TrainListIsVisible = false;
         FormationSheetIsVisible = true;
         StateHasChanged();

@@ -39,19 +39,19 @@
         <div class="row">
             @if (dataLoaded)
             {
-                <SfGrid @ref="Grid" DataSource="@vagons" Toolbar="@(new List<string>() { "Update", "Cancel" })" AllowSelection="true" AllowPaging="false" Width="750">
+                <SfGrid @ref="Grid" DataSource="@vagons" Toolbar="@(new List<string>() { "Update", "Cancel" })" AllowSelection="true" AllowPaging="false" Width="850">
                     <GridEditSettings AllowEditing="true" Mode="EditMode.Normal"></GridEditSettings>
-                    <GridSelectionSettings CheckboxOnly="false" PersistSelection="true" Type="SelectionType.Multiple"></GridSelectionSettings>
+                    <GridSelectionSettings CheckboxOnly="false" PersistSelection="true" Type="Syncfusion.Blazor.Grids.SelectionType.Multiple"></GridSelectionSettings>
                     <GridEvents RowSelected="GetSelectedRecords" OnActionComplete="ActionCompleted" TValue="Vagon"></GridEvents>
                     <GridColumns>
                         <GridColumn Type="ColumnType.CheckBox" Width="40"></GridColumn>
                         <GridColumn Field=@nameof(Vagon.Num) HeaderText="Вагон" IsPrimaryKey="true" AllowAdding="false" Width="90"></GridColumn>
                         <GridColumn Field=@nameof(Vagon.Ksob) HeaderText="Cобcтв" Width="80"></GridColumn>
-                        <GridColumn Field=@nameof(Vagon.WeightNetto) HeaderText="Вес" EditType="EditType.NumericEdit" ValidationRules="@(new ValidationRules { Required = true, Range = new double[] { 0, 2000 } })" Width="70"></GridColumn>
+                        <GridColumn Field=@nameof(Vagon.WeightNetto) HeaderText="Вес" EditType="EditType.NumericEdit" ValidationRules="@(new ValidationRules { Required = true, Range = new double[] { 0, 2000 } })" Width="90"></GridColumn>
                         <GridColumn Field=@nameof(Vagon.Kind) HeaderText="Род" AllowEditing="false" Width="60"></GridColumn>
                         <GridColumn Field=@nameof(Vagon.Tvag) HeaderText="Тара" AllowEditing="false" Width="60"></GridColumn>
                         <GridColumn Field=@nameof(Vagon.DateOper) AllowEditing="false" Format="dd/MM HH:mm" HeaderText="Расформирован" Width="140"></GridColumn>
-                        <GridColumn Field=@nameof(Vagon.Mark) HeaderText="Отметки" EditType="EditType.DefaultEdit" Width="190"></GridColumn>
+                        <GridColumn Field=@nameof(Vagon.Mark) HeaderText="Отметки" EditType="EditType.DefaultEdit" Width="220"></GridColumn>
                     </GridColumns>
                 </SfGrid>
             }

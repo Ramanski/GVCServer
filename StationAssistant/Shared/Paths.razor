@@ -114,10 +114,10 @@ else
     AccordionItems AccordionItemRef;
     SfProgressBar sfProgress;
     PathSelector pathSelector;
-    SfGrid<VagonModel> TrainGrid;
+//    SfGrid<VagonModel> TrainGrid;
     TrainModel targetTrainModel;
     public List<PathModel> paths { get; set; }
-    private List<VagonModel> vagonsOfTrain;
+//    private List<VagonModel> vagonsOfTrain;
     private PathModel selectedPathItem = null;
     private bool PathsHided { get; set; } = true;
     private bool AccordionStateChanged { get; set; } = false;
@@ -189,7 +189,7 @@ else
             await StationData.UpdateVagon(updatedVagon);
             NotificationService.SetMessage(TypeNotification.Success, $"Для вагона №{updatedVagon.Num} внесены корректировки");
         }
-        catch (Exception e)
+        catch (Exception)
         {
             NotificationService.SetMessage(TypeNotification.Error, $"Не удалось сохранить изменения");
         }

@@ -153,7 +153,7 @@
     private bool TrainListVisible { get; set; } = false;
     private bool PathSelectorVisible { get; set; } = false;
     private bool CancelConfirmVisible { get; set; } = false;
-    private bool DataIsLoaded = false;
+//    private bool DataIsLoaded = false;
     private bool ShowArrivingPathsOnly = false;
     public bool ArrivingTrainIsSelected { get; set; } = false;
     public bool ArrivedTrainIsSelected { get; set; } = false;
@@ -179,7 +179,7 @@
                 NotificationService.SetMessage(TypeNotification.Error, $"Не удалось загрузить поезда");
             }
         }
-        DataIsLoaded = true;
+ //       DataIsLoaded = true;
         timer = new Timer();
         timer.Interval = 30000;
         timer.Elapsed += updateArrivingList;

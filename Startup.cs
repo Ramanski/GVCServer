@@ -20,6 +20,7 @@ using GVCServer.Helpers;
 using GVCServer.Services;
 using Microsoft.AspNetCore.Localization;
 using System.Globalization;
+using Microsoft.AspNetCore.Identity;
 
 namespace GVCServer
 {
@@ -43,12 +44,22 @@ namespace GVCServer
                     });
             services.AddLocalization();
 
- services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
+            services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
             services.AddAutoMapper(typeof(Startup));
             services.AddScoped<ITrainRepository, TrainRepository>();
             services.AddScoped<IGuideRepository, GuideRepository>();
             services.AddDbContext<IVCStorageContext>(options =>
                     options.UseSqlServer(Configuration.GetConnectionString("IVCStorage")));
+            services.AddIdentity<IdentityUser, IdentityRole>(op =>
+            {
+                op.Password.RequireDigit = false;
+                op.Password.RequireNonAlphanumeric = false;
+                op.Password.RequireUppercase = false;
+                op.Password.RequireLowercase = false;
+                op.Password.RequiredLength = 1;
+            })
+                .AddEntityFrameworkStores<IVCStorageContext>()
+                .AddDefaultTokenProviders();
             services.AddScoped<IUserService, UserService>();
         }
 

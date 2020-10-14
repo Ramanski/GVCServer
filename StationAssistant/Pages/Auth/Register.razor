@@ -4,6 +4,7 @@
 @inject NavigationManager navigationManager
 @inject IAccountsRepository accountsRepository
 @inject ILoginService loginService
+@inject NotificationService NotificationService
 @attribute [AuthorizeRoles(Role.Admin)]
 
 
@@ -26,7 +27,7 @@
     <SfDropDownList TItem="Roles" TValue="int" PopupHeight="500px" Placeholder="Выберите роль" @bind-Value="DropVal" DataSource="@RolesList">
         <DropDownListFieldSettings Text="Name" Value="ID"></DropDownListFieldSettings>
     </SfDropDownList>
-    
+
     <button class="btn btn-lg btn-primary btn-block mt-2" type="submit">Зарегистрировать</button>
     <label class="text-danger">@error</label>
 </EditForm>
@@ -57,12 +58,12 @@
         {
             userInfo.Role = RolesList.Find(r => r.ID == DropVal).Name;
             var userToken = await accountsRepository.Regiser(userInfo);
-            await loginService.Login(userToken.Token);
-            navigationManager.NavigateTo("");
+            NotificationService.SetMessage(TypeNotification.Error, $"Регистрация прошла успешно");
         }
         catch (Exception ex)
         {
             error = ex.Message;
+            NotificationService.SetMessage(TypeNotification.Error, $"Не удалось зарегистрировать пользователя");
         }
     }
 }
