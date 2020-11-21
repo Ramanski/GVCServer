@@ -14,17 +14,27 @@ namespace GVCServer.Services
 {
         public interface IUserService
         {
-            AuthenticateResponse Authenticate(AuthenticateRequest model);
-            IEnumerable<User> GetAll();
-            User GetById(int id);
+            User Authenticate(LoginData model);
+            IEnumerable<UserDB> GetAll();
+            UserDB GetById(int id);
+        }
+
+    public class UserDB
+        {
+            public int Id { get; set; }
+            public string Name { get; set; }
+            public string Login { get; set; }
+            public string Password { get; set; }
+            public string Role { get; set; }
         }
 
         public class UserService : IUserService
         {
+            
             // users hardcoded for simplicity, store in a db with hashed passwords in production applications
-            private List<User> _users = new List<User>
+            private List<UserDB> _users = new List<UserDB>
             {
-                new User { Id = 1, Name = "Test", Login = "test", Password = "test", Role = "Admin" }
+                new UserDB { Id = 1, Name = "Test from GVC", Login = "gvcmain", Password = "gvcmain", Role = "Admin" }
             };
 
             private readonly AppSettings _appSettings;
@@ -34,25 +44,32 @@ namespace GVCServer.Services
                 _appSettings = appSettings.Value;
             }
 
-            public AuthenticateResponse Authenticate(AuthenticateRequest model)
+            public User Authenticate(LoginData loginData)
             {
-                var user = _users.SingleOrDefault(x => x.Login == model.Username && x.Password == model.Password);
+                var userdb = _users.SingleOrDefault(x => x.Login == loginData.Username && x.Password == loginData.Password);
 
                 // return null if user not found
-                if (user == null) return null;
+                if (userdb == null) return null;
+
+                User user = new User()
+                {
+                    FirstName = userdb.Name,
+                    Id = userdb.Id,
+                    Username = userdb.Login
+                };
 
                 // authentication successful so generate jwt token
                 var token = generateJwtToken(user);
-
-                return new AuthenticateResponse(user, token);
+                user.Token = token;
+                return user;
             }
 
-            public IEnumerable<User> GetAll()
+            public IEnumerable<UserDB> GetAll()
             {
                 return _users;
             }
 
-            public User GetById(int id)
+            public UserDB GetById(int id)
             {
                 return _users.FirstOrDefault(x => x.Id == id);
             }
@@ -61,7 +78,7 @@ namespace GVCServer.Services
 
             private string generateJwtToken(User user)
             {
-                // generate token that is valid for 7 days
+                // generate token that is valid for 1 day
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
                 var tokenDescriptor = new SecurityTokenDescriptor

@@ -1,6 +1,4 @@
-﻿@using StationAssistant.Data.Entities
-
-<div class="top-row navbar navbar-dark my-2">
+﻿<div class="top-row navbar navbar-dark my-2">
     <a class="navbar-brand" href=""><img src="/logo.png" style="margin-left: -15px; margin-top: -15px;"/></a>
     <button class="navbar-toggler" @onclick="ToggleNavMenu">
         <span class="navbar-toggler-icon"></span>
@@ -52,7 +50,7 @@
             <Authorized>
                 <li class="nav-item px-3 align-bottom">
                 <NavLink class="nav-link" href="logout">
-                    <span class="oi oi-account-logout" aria-hidden="true"></span> @context.User.Identity.Name
+                    <span class="oi oi-account-logout" aria-hidden="true"></span>
                 </NavLink>
                 </li>
             </Authorized>

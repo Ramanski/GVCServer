@@ -1,35 +1,69 @@
-﻿using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.JSInterop;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
+using ModelsLibrary;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace StationAssistant.Auth
+namespace StationAssistant.Services
 {
-    public class JWTAuthenticationStateProvider : AuthenticationStateProvider, ILoginService
+    public interface IAuthenticationService
     {
-        private readonly IJSRuntime js;
-        private readonly HttpClient httpClient;
-        private readonly string TOKENKEY = "TOKENKEY";
+        Task<User> GetUser();
+        Task Login(string username, string password);
+        Task Logout();
+        Task<AuthenticationState> GetAuthenticationStateAsync();
+    }
+
+    public class AuthenticationService : AuthenticationStateProvider, IAuthenticationService
+    {
+        private IHttpService _httpService;
+        private NavigationManager _navigationManager;
+        private ILocalStorageService _localStorageService;
         private AuthenticationState Anonymous =>
             new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
 
-        public JWTAuthenticationStateProvider(IJSRuntime js, HttpClient httpClient)
+        public User User { get; private set; }
+
+        public AuthenticationService(
+            IHttpService httpService,
+            NavigationManager navigationManager,
+            ILocalStorageService localStorageService
+        ) {
+            _httpService = httpService;
+            _navigationManager = navigationManager;
+            _localStorageService = localStorageService;
+        }
+
+        public async Task<User> GetUser()
         {
-            this.js = js;
-            this.httpClient = httpClient;
+            return await _localStorageService.GetItem<User>("user");
+        }
+
+        public async Task Login(string username, string password)
+        {
+            User = await _httpService.Post<User>("/users/authenticate", new { username, password });
+            await _localStorageService.SetItem("user", User);
+            var authState = BuildAuthenticationState(User.Token);
+            NotifyAuthenticationStateChanged(Task.FromResult(authState));
+        }
+
+        public async Task Logout()
+        {
+            User = null;
+            await _localStorageService.RemoveItem("user");
+            _navigationManager.NavigateTo("login");
+            NotifyAuthenticationStateChanged(Task.FromResult(Anonymous));
         }
 
         public async override Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-            var token = await js.GetFromLocalStorage(TOKENKEY);
-             
-            if(string.IsNullOrEmpty(token))
+            var token = (await _localStorageService.GetItem<User>("user"))?.Token;
+
+            if (string.IsNullOrEmpty(token))
             {
                 return Anonymous;
             }
@@ -37,9 +71,9 @@ namespace StationAssistant.Auth
             return BuildAuthenticationState(token);
         }
 
-        public AuthenticationState BuildAuthenticationState(string token)
+        private AuthenticationState BuildAuthenticationState(string token)
         {
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearder", token);
+            //httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearder", token);
             var clid = new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt");
             return new AuthenticationState(new ClaimsPrincipal(clid));
         }
@@ -92,20 +126,6 @@ namespace StationAssistant.Auth
             }
 
             return Convert.FromBase64String(output);
-        }
-
-        public async Task Login(string token)
-        {
-            await js.SetInLocalStorage(TOKENKEY, token);
-            var authState = BuildAuthenticationState(token);
-            NotifyAuthenticationStateChanged(Task.FromResult(authState));
-        }
-
-        public async Task LogOut()
-        {
-            await js.RemoveItem(TOKENKEY);
-            httpClient.DefaultRequestHeaders.Authorization = null;
-            NotifyAuthenticationStateChanged(Task.FromResult(Anonymous));
         }
     }
 }

@@ -67,8 +67,8 @@ namespace GVCServer
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             var supportedCultures = new[]{
-    new CultureInfo("ru")
-};
+            new CultureInfo("ru")
+        };
             app.UseRequestLocalization(new RequestLocalizationOptions
             {
                 DefaultRequestCulture = new RequestCulture("ru"),

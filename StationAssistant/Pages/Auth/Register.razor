@@ -2,13 +2,11 @@
 
 @using Syncfusion.Blazor.DropDowns
 @inject NavigationManager navigationManager
-@inject IAccountsRepository accountsRepository
-@inject ILoginService loginService
 @inject NotificationService NotificationService
 @attribute [AuthorizeRoles(Role.Admin)]
 
 
-<EditForm class="form-signin" OnValidSubmit="CreateUser" Model="userInfo">
+@*<EditForm class="form-signin" OnValidSubmit="CreateUser" Model="userInfo">
     <DataAnnotationsValidator />
     <h4 class="font-weight-normal text-center mb-3">Регистрация нового пользователя</h4>
 
@@ -31,7 +29,7 @@
     <button class="btn btn-lg btn-primary btn-block mt-2" type="submit">Зарегистрировать</button>
     <label class="text-danger">@error</label>
 </EditForm>
-
+*@
 @code{
 
     private User userInfo = new User();
@@ -49,15 +47,15 @@
         new Roles(){ ID= 1, Name= "Администратор" },
         new Roles(){ ID= 2, Name= "Дежурный по станции" },
         new Roles(){ ID= 3, Name= "Маневровый диспетчер" }
-     };
+    };
 
     private async Task CreateUser()
     {
         error = null;
         try
         {
-            userInfo.Role = RolesList.Find(r => r.ID == DropVal).Name;
-            var userToken = await accountsRepository.Regiser(userInfo);
+           @* userInfo.Role = RolesList.Find(r => r.ID == DropVal).Name;
+            var userToken = await accountsRepository.Regiser(userInfo);*@
             NotificationService.SetMessage(TypeNotification.Error, $"Регистрация прошла успешно");
         }
         catch (Exception ex)

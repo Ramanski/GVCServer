@@ -24,6 +24,7 @@ using Microsoft.IdentityModel.Tokens;
 using StationAssistant.Auth;
 using StationAssistant.Data;
 using StationAssistant.Data.Entities;
+using StationAssistant.Services;
 using StationAssistant.Shared;
 using Syncfusion.Blazor;
 
@@ -48,7 +49,6 @@ namespace StationAssistant
                         options.JsonSerializerOptions.Converters.Add(new TimeSpanJsonConverter());
                         options.JsonSerializerOptions.IgnoreNullValues = true;
                     });
-            services.AddControllers();
             services.AddServerSideBlazor();
             services.AddLocalization(opt => opt.ResourcesPath = "Resources");
             services.AddSyncfusionBlazor();
@@ -65,17 +65,20 @@ namespace StationAssistant
             }
 
             );
-            services.AddTransient(sp => new HttpClient { BaseAddress = new Uri($"{Configuration["IVCaddress"]}/{Configuration["StationCode"]}/") });
+            services.AddTransient(sp => new HttpClient 
+                { 
+                    BaseAddress = new Uri($"{Configuration["IVCaddress"]}/{Configuration["StationCode"]}/") 
+                });
+
             services.AddScoped<INSIUpdateService, NsiUpdateService>();
             services.AddScoped<IGvcDataService, GvcDataService>();
-            services.AddScoped<IAccountsRepository, AccountsRepository>();
             services.AddScoped<IStationDataService, StationDataService>();
             services.AddScoped<NotificationService>();
             services.AddAutoMapper(typeof(Startup));
             services.AddDbContext<StationStorageContext>(options =>
-                     options.UseSqlServer(Configuration.GetConnectionString("StationStorage")));
-
-            services.AddIdentity<IdentityUser, IdentityRole>(op =>
+                    options.UseSqlServer(Configuration.GetConnectionString("StationStorage"))
+                    );
+/*            services.AddIdentity<IdentityUser, IdentityRole>(op =>
             {
                 op.Password.RequireDigit = false;
                 op.Password.RequireNonAlphanumeric = false;
@@ -83,36 +86,41 @@ namespace StationAssistant
                 op.Password.RequireLowercase = false;
                 op.Password.RequiredLength = 1;
             })
-                    .AddEntityFrameworkStores<StationStorageContext>()
-                    .AddDefaultTokenProviders();
+            .AddEntityFrameworkStores<StationStorageContext>();*/
 
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                    .AddJwtBearer(options => 
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                         ValidateIssuer = false,
-                         ValidateAudience = false,
-                         ValidateLifetime = true,
-                         ValidateIssuerSigningKey = true,
-                         IssuerSigningKey = new SymmetricSecurityKey(
-                             Encoding.UTF8.GetBytes(Configuration["jwt:key"])),
-                             ClockSkew = TimeSpan.Zero
-                    });
+            /*            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                                .AddJwtBearer(options => 
+                                options.TokenValidationParameters = new TokenValidationParameters
+                                {
+                                     ValidateIssuer = false,
+                                     ValidateAudience = false,
+                                     ValidateLifetime = true,
+                                     ValidateIssuerSigningKey = true,
+                                     IssuerSigningKey = new SymmetricSecurityKey(
+                                         Encoding.UTF8.GetBytes(Configuration["jwt:key"])),
+                                         ClockSkew = TimeSpan.Zero
+                                });*/
             services.AddAuthenticationCore();
-            services.AddScoped<JWTAuthenticationStateProvider>();
+            services.AddScoped<IAuthenticationService, AuthenticationService>();
+            services.AddScoped<AuthenticationStateProvider, AuthenticationService>();
+            services
+                .AddScoped<IUserService, UserService>()
+                .AddScoped<IHttpService, HttpService>()
+                .AddScoped<ILocalStorageService, LocalStorageService>();
+            /*services.AddScoped<JWTAuthenticationStateProvider>();
             services.AddScoped<AuthenticationStateProvider, JWTAuthenticationStateProvider>(
                 provider => provider.GetRequiredService<JWTAuthenticationStateProvider>()
                 );
             services.AddScoped<ILoginService, JWTAuthenticationStateProvider>(
                 provider => provider.GetRequiredService<JWTAuthenticationStateProvider>()
-                );
+                );*/
         }
 
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("Mjk4MzI5QDMxMzgyZTMyMmUzMGxSRGpya1djRG9mYlJ4MThOaUJxc0l2aktUNGs4M3NkSEtkV1kzSVE1U2M9");
+            Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzM1ODEwQDMxMzgyZTMzMmUzMG9laG1XbUJkcnI0OHZpYTdicFdQVDdYK2ZTMzBXRDE5aDlhcnhYSTF0Y2c9");
 
             app.UseRequestLocalization(app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>().Value);
             if (env.IsDevelopment())
@@ -136,7 +144,6 @@ namespace StationAssistant
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapBlazorHub();
-                endpoints.MapControllers();
                 endpoints.MapFallbackToPage("/_Host");
             });
         }

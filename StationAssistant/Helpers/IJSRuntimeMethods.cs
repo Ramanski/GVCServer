@@ -8,17 +8,6 @@ namespace StationAssistant
 {
     public static class IJSRuntimeMethods
     {
-/*        public static async ValueTask<bool> Confirm(this IJSRuntime js, string message)
-        {
-            await js.InvokeVoidAsync("console.log", "message");
-            return await js.InvokeAsync<bool>("confirm", message);
-        }
-
-        public static async ValueTask MyFunction(this IJSRuntime js, string message)
-        {
-            await js.InvokeVoidAsync("myfunction", message);
-        }*/
-
         public static ValueTask<object> SetInLocalStorage(this IJSRuntime js, string key, string content)
     => js.InvokeAsync<object>(
         "localStorage.setItem", key, content);
