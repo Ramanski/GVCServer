@@ -1,37 +1,31 @@
 ﻿@page "/register"
 
-@using Syncfusion.Blazor.DropDowns
+@inject StationAssistant.Helpers.IAuthenticationService iauth
 @inject NavigationManager navigationManager
-@inject NotificationService NotificationService
-@attribute [AuthorizeRoles(Role.Admin)]
 
-
-@*<EditForm class="form-signin" OnValidSubmit="CreateUser" Model="userInfo">
+<EditForm class="form-signin" OnValidSubmit="CreateUser" Model="loginData">
     <DataAnnotationsValidator />
-    <h4 class="font-weight-normal text-center mb-3">Регистрация нового пользователя</h4>
+    <h4 class="font-weight-normal text-center my-2">Вход в систему</h4>
 
-    <label for="inputName" class="sr-only">Имя пользователя</label>
-    <InputText id="inputName" class="form-control" placeholder="Name" @bind-Value="@userInfo.Name" />
-    <ValidationMessage For="@(() => userInfo.Login)" />
-
-    <label for="inputLogin" class="sr-only">Логин</label>
-    <InputText id="inputLogin" class="form-control" placeholder="Login" autofocus @bind-Value="@userInfo.Login" />
-    <ValidationMessage For="@(() => userInfo.Login)" />
+    <label for="inputUsername" class="sr-only">Логин</label>
+    <InputText id="inputUsername" class="form-control" @bind-Value="loginData.Username" autofocus placeholder="Введите логин" />
+    <ValidationMessage For="@(() => loginData.Username)" />
 
     <label for="inputPassword" class="sr-only">Пароль</label>
-    <InputText id="inputPassword" class="form-control" placeholder="Password" @bind-Value="@userInfo.Password" />
-    <ValidationMessage For="@(() => userInfo.Password)" />
+    <InputText type="password" id="inputPassword" class="form-control" placeholder="Введите пароль" @bind-Value="loginData.Password" />
+    <ValidationMessage For="@(() => loginData.Password)" />
 
-    <SfDropDownList TItem="Roles" TValue="int" PopupHeight="500px" Placeholder="Выберите роль" @bind-Value="DropVal" DataSource="@RolesList">
-        <DropDownListFieldSettings Text="Name" Value="ID"></DropDownListFieldSettings>
-    </SfDropDownList>
-
-    <button class="btn btn-lg btn-primary btn-block mt-2" type="submit">Зарегистрировать</button>
-    <label class="text-danger">@error</label>
+    <button class="btn btn-lg btn-primary btn-block" type="submit">
+        Зарегистрироваться
+    </button>
+    @if (!string.IsNullOrEmpty(error))
+    {
+        <div class="alert alert-danger mt-3 mb-0">@error</div>
+    }
 </EditForm>
-*@
-@code{
 
+@code{
+    private LoginData loginData = new LoginData();
     private User userInfo = new User();
     public int DropVal = 1;
 
@@ -54,14 +48,11 @@
         error = null;
         try
         {
-           @* userInfo.Role = RolesList.Find(r => r.ID == DropVal).Name;
-            var userToken = await accountsRepository.Regiser(userInfo);*@
-            NotificationService.SetMessage(TypeNotification.Error, $"Регистрация прошла успешно");
+            await iauth.Register(loginData.Username, loginData.Password);
         }
         catch (Exception ex)
         {
             error = ex.Message;
-            NotificationService.SetMessage(TypeNotification.Error, $"Не удалось зарегистрировать пользователя");
         }
     }
 }
