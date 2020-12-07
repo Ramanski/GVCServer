@@ -84,10 +84,11 @@ namespace GVCServer.Services
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
                     Subject = new ClaimsIdentity(new[] { new Claim("id", user.Id.ToString()) }),
-                    Expires = DateTime.UtcNow.AddDays(1),
+                    Issuer = "GVCServer",
+                    Expires = DateTime.UtcNow.AddMinutes(1),
                     SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
                 };
-                var token = tokenHandler.CreateToken(tokenDescriptor);
+                var token = new JwtSecurityTokenHandler().CreateToken(tokenDescriptor);
                 return tokenHandler.WriteToken(token);
             }
         }

@@ -21,6 +21,9 @@ using GVCServer.Services;
 using Microsoft.AspNetCore.Localization;
 using System.Globalization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace GVCServer
 {
@@ -42,15 +45,32 @@ namespace GVCServer
                         options.JsonSerializerOptions.IgnoreNullValues = true;
                         options.JsonSerializerOptions.Converters.Add(new TimeSpanJsonConverter());
                     });
-            services.AddLocalization();
 
+            services.AddRazorPages();
+
+            services.AddLocalization();
             services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
             services.AddAutoMapper(typeof(Startup));
             services.AddScoped<ITrainRepository, TrainRepository>();
             services.AddScoped<IGuideRepository, GuideRepository>();
             services.AddDbContext<IVCStorageContext>(options =>
                     options.UseSqlServer(Configuration.GetConnectionString("IVCStorage")));
-            services.AddIdentity<IdentityUser, IdentityRole>(op =>
+
+            services.AddAuthentication("OAuth")
+                    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, conf =>
+                    {
+                        var secretBytes = Encoding.UTF8.GetBytes(Configuration["AppSettings:Secret"]);
+                        var key = new SymmetricSecurityKey(secretBytes);
+
+                        conf.TokenValidationParameters = new TokenValidationParameters()
+                        {
+                            ValidIssuer = "GVCServer",
+                            ClockSkew = TimeSpan.Zero,
+                            IssuerSigningKey = key
+                        };
+                    });
+
+/*            services.AddIdentity<IdentityUser, IdentityRole>(op =>
             {
                 op.Password.RequireDigit = false;
                 op.Password.RequireNonAlphanumeric = false;
@@ -59,7 +79,8 @@ namespace GVCServer
                 op.Password.RequiredLength = 1;
             })
                 .AddEntityFrameworkStores<IVCStorageContext>()
-                .AddDefaultTokenProviders();
+                .AddDefaultTokenProviders();*/
+
             services.AddScoped<IUserService, UserService>();
         }
 
@@ -76,16 +97,10 @@ namespace GVCServer
                 FallBackToParentCultures = false
             });
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.CreateSpecificCulture("ru");
-            /*            if (env.IsDevelopment())
-                        {
-                            app.UseExceptionHandler("/error-local-development");
-                        }*/
 
-            //app.ConfigureExceptionHandler(logger);
+            //app.UseExceptionHandler("/error");
 
-            app.UseExceptionHandler("/error");
-
-            //app.UseHttpsRedirection();
+            app.UseHttpsRedirection();
 
             app.UseRouting();
 
@@ -93,6 +108,7 @@ namespace GVCServer
 
             app.UseEndpoints(endpoints =>
             {
+                endpoints.MapRazorPages();
                 endpoints.MapControllers();
             });
         }

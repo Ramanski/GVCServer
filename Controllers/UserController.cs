@@ -15,7 +15,6 @@ namespace GVCServer.Controllers
     [Route("[controller]")]
     public class UsersController : ControllerBase
     {
-        //private string station = "161306";
         private IUserService _userService;
         private readonly UserManager<IdentityUser> _userManager;
 
@@ -57,11 +56,13 @@ namespace GVCServer.Controllers
         }*/
 
         [Authorize]
-        [HttpGet]
+        [HttpGet("info")]
         public IActionResult GetAll()
         {
-            var users = _userService.GetAll();
-            return Ok(users);
+            var ident = User.Identity;
+            var claims = User.Claims;
+            //var users = _userService.GetAll();
+            return Ok(new { IdentityName = ident.Name, FirstClaim = claims.FirstOrDefault()?.Value });
         }
     }
 }

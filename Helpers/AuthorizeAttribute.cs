@@ -14,7 +14,7 @@ namespace GVCServer.Helpers
     {
         public void OnAuthorization(AuthorizationFilterContext context)
         {
-            var user = (User)context.HttpContext.Items["User"];
+            var user = context.HttpContext.Items["User"];
             if (user == null)
             {
                 // not logged in
