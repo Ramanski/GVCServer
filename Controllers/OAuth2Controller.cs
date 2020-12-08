@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using System;
@@ -16,6 +17,13 @@ namespace GVCServer.Controllers
     [Route("[controller]")]
     public class OAuth2Controller : Controller
     {
+        public IConfiguration Configuration { get; }
+        public OAuth2Controller(IConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
+
+
         [AllowAnonymous]
         [HttpGet("authorize")]
         public IActionResult Authorize(
@@ -52,20 +60,20 @@ namespace GVCServer.Controllers
                 new Claim("granny", "cookie")
             };
 
-            var secretBytes = Encoding.UTF8.GetBytes("gvcmaingvcmaingvcmain");
+            var secretBytes = Encoding.UTF8.GetBytes(Configuration["AppSettings:Secret"]);
             var key = new SymmetricSecurityKey(secretBytes);
             var algorithm = SecurityAlgorithms.HmacSha256;
 
             var signingCredentials = new SigningCredentials(key, algorithm);
 
             var token = new JwtSecurityToken(
-                "gvcmain",
-                "stationAssistant",
+                Configuration["AppSettings:ServerName"],
+                client_id,
                 claims,
                 notBefore: DateTime.Now,
                 expires: grant_type == "refresh_token"
                     ? DateTime.Now.AddMinutes(5)
-                    : DateTime.Now.AddMilliseconds(1),
+                    : DateTime.Now.AddDays(10),
                 signingCredentials);
 
             var access_token = new JwtSecurityTokenHandler().WriteToken(token);

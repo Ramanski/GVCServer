@@ -55,7 +55,6 @@ namespace GVCServer.Controllers
             }
         }*/
 
-        [Authorize]
         [HttpGet("info")]
         public IActionResult GetAll()
         {

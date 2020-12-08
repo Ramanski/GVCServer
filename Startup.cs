@@ -39,7 +39,8 @@ namespace GVCServer
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers(options => options.Filters.Add(new HttpResponseExceptionFilter()))
+            services.AddControllers(options => 
+                options.Filters.Add(new HttpResponseExceptionFilter()))
                     .AddJsonOptions(options =>
                     {
                         options.JsonSerializerOptions.IgnoreNullValues = true;
@@ -56,7 +57,7 @@ namespace GVCServer
             services.AddDbContext<IVCStorageContext>(options =>
                     options.UseSqlServer(Configuration.GetConnectionString("IVCStorage")));
 
-            services.AddAuthentication("OAuth")
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, conf =>
                     {
                         var secretBytes = Encoding.UTF8.GetBytes(Configuration["AppSettings:Secret"]);
@@ -64,22 +65,12 @@ namespace GVCServer
 
                         conf.TokenValidationParameters = new TokenValidationParameters()
                         {
-                            ValidIssuer = "GVCServer",
+                            ValidIssuer = Configuration["AppSettings:ServerName"],
+                            ValidAudiences = Configuration.GetSection("AppSettings:Audiences").Get<IEnumerable<string>>(),
                             ClockSkew = TimeSpan.Zero,
                             IssuerSigningKey = key
                         };
                     });
-
-/*            services.AddIdentity<IdentityUser, IdentityRole>(op =>
-            {
-                op.Password.RequireDigit = false;
-                op.Password.RequireNonAlphanumeric = false;
-                op.Password.RequireUppercase = false;
-                op.Password.RequireLowercase = false;
-                op.Password.RequiredLength = 1;
-            })
-                .AddEntityFrameworkStores<IVCStorageContext>()
-                .AddDefaultTokenProviders();*/
 
             services.AddScoped<IUserService, UserService>();
         }
@@ -87,9 +78,14 @@ namespace GVCServer
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            var supportedCultures = new[]{
-            new CultureInfo("ru")
-        };
+            var supportedCultures = new[]{ new CultureInfo("ru") };
+
+            app.UseStaticFiles();
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
+
             app.UseRequestLocalization(new RequestLocalizationOptions
             {
                 DefaultRequestCulture = new RequestCulture("ru"),
@@ -98,13 +94,14 @@ namespace GVCServer
             });
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.CreateSpecificCulture("ru");
 
-            //app.UseExceptionHandler("/error");
-
             app.UseHttpsRedirection();
 
             app.UseRouting();
 
-            app.UseMiddleware<JwtMiddleware>();
+            app.UseAuthentication();
+
+            app.UseAuthorization();
+            //app.UseMiddleware<JwtMiddleware>();
 
             app.UseEndpoints(endpoints =>
             {

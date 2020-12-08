@@ -6,7 +6,9 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using AutoMapper.Internal;
 using GVCServer.Data;
+using GVCServer.Helpers;
 using GVCServer.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -26,7 +28,7 @@ namespace GVCServer.Controllers
             _logger = logger;
             _trainRepository = trainRepository;
         }
-
+        
         [HttpPost]
         public async Task<ActionResult<bool>> Post(MsgModel message, string station)
         {
@@ -254,6 +256,7 @@ namespace GVCServer.Controllers
                 };
         }
 
+        [Authorize]
         [HttpGet("Arriving")]
         public async Task<ActionResult<TrainModel[]>> Get(string station)
         {
@@ -287,6 +290,7 @@ namespace GVCServer.Controllers
             }
         }
 
+        [Authorize]
         [HttpGet("Next-Ordinal")]
         public async Task<ActionResult<short>> GetOrdinal(string station)
         {

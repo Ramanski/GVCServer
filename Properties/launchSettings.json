@@ -11,17 +11,19 @@
   "profiles": {
     "IIS Express": {
       "commandName": "IISExpress",
-      "launchUrl": "Identity/Account/Login",
+      "launchUrl": "",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      }
+      },
+      "nativeDebugging": false
     },
     "GVCServer": {
       "commandName": "Project",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "applicationUrl": "http://localhost:5000"
+      "nativeDebugging": false,
+      "applicationUrl": "https://localhost:44881;http://localhost:44880"
     }
   }
 }
