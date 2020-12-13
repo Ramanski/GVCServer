@@ -32,7 +32,7 @@ namespace GVCServer.Data
         /// <param name="vagonNums"></param>
         /// <param name="station"></param>
         /// <returns></returns>
-        public Task<bool> DetachVagons(string index, string[] vagonNums, DateTime timeOper, string station);
+        public Task<bool> DetachVagons(string index, List<VagonModel> vagonNums, DateTime timeOper, string station);
 
         /// <summary>
         /// Запись поезда из ТНГЛ (сообщение 02, P0005)

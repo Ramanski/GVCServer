@@ -1,8 +1,8 @@
 ﻿@page "/arrival"
-@inject StationAssistant.Data.IGvcDataService GvcDataFetch
-@inject StationAssistant.Data.IStationDataService StationData
+@inject StationAssistant.Services.IGvcDataService GvcDataFetch
+@inject StationAssistant.Services.IStationDataService StationData
 @implements IDisposable
-@inject NotificationService NotificationService
+@inject StationAssistant.Services.NotificationService NotificationService
 
 @using Syncfusion.Blazor.Grids
 @using Syncfusion.Blazor.Buttons
@@ -358,7 +358,7 @@
 
         try
         {
-            await GvcDataFetch.CancelOperation(train.Index, "201");
+            await GvcDataFetch.CancelOperation(train.Index, 201);
             await StationData.DeleteTrainAsync(train.Index);
             arrivedList.DeleteTrain(train);
             arrivingList.AddTrain(train);

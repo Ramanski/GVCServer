@@ -2,6 +2,7 @@
 using GVCServer.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
+using Microsoft.Extensions.Logging;
 using ModelsLibrary;
 using System;
 using System.Collections.Generic;
@@ -14,11 +15,13 @@ namespace GVCServer.Data
     {
         private readonly IVCStorageContext _context;
         private readonly IMapper _imapper;
+        private readonly ILogger _logger;
 
-        public TrainRepository(IVCStorageContext context, IMapper imapper)
+        public TrainRepository(IVCStorageContext context, IMapper imapper, ILogger<TrainRepository> logger)
         {
             _context = context;
             _imapper = imapper;
+            _logger = logger;
         }
 
         public async Task<bool> AddTrainAsync(TrainModel TrainModel, string station)
@@ -32,15 +35,21 @@ namespace GVCServer.Data
 
             try
             {
+                _logger.LogInformation("Mapping trainmodel...");
                 train = _imapper.Map<Train>(TrainModel);
                 train.FormStation = _context.Station.Where(s => s.Code.StartsWith(TrainModel.Index.Substring(0, 4))).Select(s => s.Code).FirstOrDefault();
                 train.DestinationStation = _context.Station.Where(s => s.Code.StartsWith(TrainModel.Index.Substring(9, 4))).Select(s => s.Code).FirstOrDefault();
+                _logger.LogDebug("Found {FormStation} {DestinationStation}", train.FormStation, train.DestinationStation);
                 train.Dislocation = station;
+                _logger.LogInformation("Mapping vagons...");
                 opVag = _imapper.Map<OpVag[]>(TrainModel.Vagons);
 
                 errors = await CheckValuesForTGNL(station, opVag);
                 if (errors.Any())
+                {
+                    _logger.LogWarning("Throwing user errors", string.Join(',', errors));
                     throw new AggregateException(errors);
+                }
 
                 opTrain = new OpTrain
                 {
@@ -52,12 +61,16 @@ namespace GVCServer.Data
                     LastOper = true
                 };
 
+                // TODO: Проверить. Теперь код станции указывается полностью, не в ЕСР? 
                 planForm = _context.Station
                                     .Where(s => s.Code.StartsWith(train.DestinationStation))
                                     .Select(s => s.Code)
                                     .FirstOrDefault();
                 if (planForm == null)
+                {
+                    _logger.LogWarning("Not found station by ESR code", train.DestinationStation);
                     throw new ArgumentException($"Не найдена станция назначения по коду ЕСР {train.DestinationStation}");
+                }
 
                 foreach (OpVag vagon in opVag)
                 {
@@ -73,10 +86,12 @@ namespace GVCServer.Data
                 train.OpTrain.Add(opTrain);
                 train.OpVag = opVag;
                 _context.Train.Add(train);
+                _logger.LogInformation("Saving new train in DB context", train.Uid);
                 return await _context.SaveChangesAsync() != 0;
             }
             catch (Exception e)
             {
+                _logger.LogError("Exception occured while adding new train", e.Message, e.StackTrace);
                 throw e;
             }
         }
@@ -98,11 +113,14 @@ namespace GVCServer.Data
                 Train = train
             };
             _context.OpTrain.Add(newOperation);
+            _logger.LogInformation("Operation with train added", newOperation.Uid);
             train.Dislocation = station;
             if (messageCode.Equals("203"))
             {
+                _logger.LogInformation("Disband Vagons operation called");
                 return await DisbandVagons(train, station, timeOper, messageCode);
             }
+            _logger.LogDebug("Saving changes in DB...");
             return await _context.SaveChangesAsync() != 0;
         }
 
@@ -256,15 +274,15 @@ namespace GVCServer.Data
             return await _context.SaveChangesAsync() != 0;
         }
 
-        public async Task<bool> DetachVagons(string index, string[] vagonNums, DateTime timeOper, string station)
+        public async Task<bool> DetachVagons(string index, List<VagonModel> vagonNums, DateTime timeOper, string station)
         {
             Train train = await FindTrain(index);
             List<OpVag> vagonOperations = await GetLastVagonOperationsQuery(train, false).ToListAsync();
             string detachCode = GetOperations("9").Result.Where(o => o.Parameter.Equals(0)).FirstOrDefault().Code;
 
-            foreach (string vagonNum in vagonNums)
+            foreach (VagonModel vagonNum in vagonNums)
             {
-                OpVag vagOper = vagonOperations.Where(ol => ol.Num == vagonNum)
+                OpVag vagOper = vagonOperations.Where(ol => ol.Num == vagonNum.Num)
                                         .Select(ol => new OpVag {
                                             Destination = ol.Destination,
                                             Mark = ol.Mark,
@@ -477,15 +495,17 @@ namespace GVCServer.Data
         private async Task<Train> FindTrain(string index)
         {
             int[] trainParams = DefineIndex(index);
-
             Train train = await _context.Train
                                       .Where(t => t.FormStation.Substring(0, 4) == trainParams[0].ToString() && t.Ordinal == trainParams[1] && t.DestinationStation.Substring(0, 4) == trainParams[2].ToString())
                                       .OrderByDescending(t => t.FormTime)
                                       .FirstOrDefaultAsync();
             if (train == null)
             {
+                _logger.LogWarning("Not found train in DB context. Parameters:", string.Join(',', trainParams));
                 throw new KeyNotFoundException($"Не найдена информация по индексу запрашиваемого поезда: {index}");
             }
+
+            _logger.LogInformation("Found train", train.Uid);
             return train;
         }
         
@@ -500,9 +520,10 @@ namespace GVCServer.Data
 
         private async Task<List<Exception>> CheckValuesForTGNL (string station, OpVag[] currentVgOpers)
         {
-                List<Exception> errors = new List<Exception>();
+            List<Exception> errors = new List<Exception>();
             try
             {
+                _logger.LogInformation("Checking TGNL values");
                 string[] vagonOperNums = currentVgOpers.Select(vo => vo.Num)
                                                        .ToArray();
                 OpVag[] lastVgOpers = await GetLastVagonOperationsQuery(vagonOperNums, false).Select(vo => new OpVag
@@ -512,23 +533,31 @@ namespace GVCServer.Data
                     DateOper = vo.DateOper,
                     TrainId = vo.TrainId
                 })
-                                                                                        .ToArrayAsync();
-                // Проверка наличия вагонов
+                    .ToArrayAsync();
+                
+                // Todo: проверить по номерам вагонов вместо количества записей. 
+                // Достали меньше записей по вагонам, чем заявлено в сообщении
                 if (lastVgOpers.Count() < currentVgOpers.Count())
                 {
+                    _logger.LogInformation("Suspected extra vagons");
                     string[] vagonCardsNums = _context.Vagon
                                                    .Where(vg => vagonOperNums.Contains(vg.Id))
                                                    .Select(vg => vg.Id)
                                                    .ToArray();
                         if (vagonCardsNums.Length != vagonOperNums.Length)
                         {
-                        string[] notFoundVagons = vagonOperNums.Except(vagonCardsNums).ToArray();
-                        errors.Add(new KeyNotFoundException($"Не найдены вагоны в картотеке БД: {string.Join(',', notFoundVagons)}"));
+                            string[] notFoundVagons = vagonOperNums.Except(vagonCardsNums).ToArray();
+                            errors.Add(new KeyNotFoundException($"Не найдены вагоны в картотеке БД: {string.Join(',', notFoundVagons)}"));
+                            _logger.LogWarning("Not found vagons in DB", string.Join(',', notFoundVagons));
                         }
                 }
 
                 if (!lastVgOpers.Any())
+                {
+                    _logger.LogDebug($"Returning found {lastVgOpers.Length} errors...");
                     return errors;
+                }
+
                 foreach (OpVag lastVgOper in lastVgOpers)
                 {
                     OpVag currentVgOper = currentVgOpers.Where(vgo => lastVgOper.Num.Equals(vgo.Num)).FirstOrDefault();
@@ -541,11 +570,12 @@ namespace GVCServer.Data
 
                     if (lastVgOper.DateOper > currentVgOper.DateOper)
                         errors.Add(new ArgumentException($"Время последней операции {lastVgOper.DateOper} для вагона {lastVgOper.Num} позже указанной {currentVgOper.DateOper}"));
-
                 }
             }
+            // HACK: Fix placing Exceptions in errors for end-user
             catch(Exception exc)
             {
+                _logger.LogError("Put developer`s Exception in errors for end-user", exc.Message);
                 errors.Add(exc);
             }
             return errors;
@@ -559,8 +589,11 @@ namespace GVCServer.Data
                                             .Where(o => messageCode.Equals(o.Message))
                                             .ToArrayAsync();
             if (operationCode.Length == 0)
+            {
+                _logger.LogWarning("Not found operations for message", messageCode);
                 throw new NullReferenceException($"Не найдено ни одной операции по сообщению {messageCode}");
-
+            }
+            _logger.LogInformation("Found operations for message", messageCode, operationCode.Select(o => o.Mnemonic));
             return operationCode;
         }
     }

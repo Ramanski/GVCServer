@@ -1,8 +1,8 @@
 ﻿@page "/login"
 @using Microsoft.AspNetCore.WebUtilities
+@inject IAuthenticationService iauth
 @layout LoginLayout
 @inject NavigationManager navigationManager
-@inject IAuthenticationService AuthenticationService
 
 <h1 class="h2 font-weight-normal login-title">
     АСУ "Станционный ассистент"
@@ -38,18 +38,6 @@
     private bool loading;
     string error { get; set; }
 
-    protected override async Task OnInitializedAsync()
-    {
-        var authState = await AuthenticationService.GetAuthenticationStateAsync();
-        // redirect to home if already logged in
-        if (authState.User.Identity.IsAuthenticated)
-        {
-            var user = await AuthenticationService.GetUser();
-            Console.WriteLine("You are logged in as " + user?.FirstName);
-            Redirect();
-        }
-    }
-
     private void Redirect()
     {
         var uri = navigationManager.ToAbsoluteUri(navigationManager.Uri);
@@ -70,7 +58,7 @@
         loading = true;
         try
         {
-            await AuthenticationService.Login(loginData.Username, loginData.Password);
+            await iauth.Login(loginData.Username, loginData.Password);
             Redirect();
         }
         catch (Exception ex)

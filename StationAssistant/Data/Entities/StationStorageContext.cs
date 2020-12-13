@@ -1,11 +1,10 @@
 ﻿using System;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace StationAssistant.Data.Entities
 {
-    public partial class StationStorageContext : IdentityDbContext
+    public partial class StationStorageContext : DbContext
     {
         public StationStorageContext()
         {
@@ -211,8 +210,6 @@ namespace StationAssistant.Data.Entities
             });
 
             OnModelCreatingPartial(modelBuilder);
-
-            base.OnModelCreating(modelBuilder);
         }
 
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

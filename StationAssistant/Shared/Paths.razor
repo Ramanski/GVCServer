@@ -3,8 +3,8 @@
 @using Syncfusion.Blazor.Grids
 @using Syncfusion.Blazor.Navigations
 @using StationAssistant.Data.Entities;
-@inject StationAssistant.Data.IStationDataService StationData
-@inject NotificationService NotificationService
+@inject StationAssistant.Services.IStationDataService StationData
+@inject StationAssistant.Services.NotificationService NotificationService
 @inject NavigationManager NavigationManager
 
 @if (PathsHided)

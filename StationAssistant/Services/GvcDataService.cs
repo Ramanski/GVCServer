@@ -13,9 +13,35 @@ using System.Text.Json;
 using System.Net;
 using System.Data.Common;
 using System.Diagnostics;
+using Microsoft.AspNetCore.Http.Extensions;
 
-namespace StationAssistant.Data
+namespace StationAssistant.Services
 {
+    public interface IGvcDataService
+    {
+        public Task<List<TrainModel>> GetArrivingTrains();
+
+        public Task<TrainModel> GetTrainInfo(string index);
+
+        public Task<List<string[]>> GetNextDestinationStationsAsync(List<Vagon> vagons);
+
+        public Task SendTrainArrivedAsync(string index, DateTime timeArrived);
+
+        public Task CancelOperation(string index, short msgCode);
+
+        public Task SendDisbanding(string index, DateTime timeDisbanded);
+
+        public Task SendDeparting(string index, DateTime timeDeparted);
+
+        public Task<string[]> GetNearestScheduleRoute(int directionId, byte trainKind, int minutesOffset = 30);
+
+        public Task<byte> GetTrainKind(string destination);
+
+        public Task<short> GetNextOrdinal();
+
+        public Task SendTGNL(TrainModel train);
+    }
+
     public class GvcDataService : IGvcDataService
     {
         private HttpClient _client;
@@ -95,7 +121,7 @@ namespace StationAssistant.Data
 
         public async Task SendTrainArrivedAsync(string index, DateTime timeArrived)
         {
-            MsgModel msgArrive = new MsgModel { Code = 201, Params = new string[] { index, timeArrived.ToString() } };
+            MovingMsg msgArrive = new MovingMsg(201, index, timeArrived);
             await PostToServer("Train", msgArrive);
         }
 
@@ -105,27 +131,32 @@ namespace StationAssistant.Data
             return await PostToServer<List<string[]>, string[]>("NSI/PF", destinations);
         }
 
-        public async Task CancelOperation(string index, string msgCode)
+        public async Task CancelOperation(string index, short msgCode)
         {
-            MsgModel msgArrive = new MsgModel { Code = 333, Params = new string[] { index, msgCode} };
-            await PostToServer("Train", msgArrive);
+            CancelMsg cancelMsg = new CancelMsg(index, msgCode);
+            await PostToServer("Train", cancelMsg);
         }
 
         public async Task SendDisbanding(string index, DateTime timeDisbanded)
         {
-            MsgModel msgDisband = new MsgModel { Code = 203, Params = new string[] { index, timeDisbanded.ToString() } };
+            MovingMsg msgDisband = new MovingMsg(203, index, timeDisbanded);
             await PostToServer("Train", msgDisband);
         }
 
         public async Task SendDeparting(string index, DateTime timeDeparted)
         {
-            MsgModel msgDepart = new MsgModel { Code = 200, Params = new string[] { index, timeDeparted.ToString() } };
+            MovingMsg msgDepart = new MovingMsg(200, index, timeDeparted);
             await PostToServer("Train", msgDepart);
         }
 
         public async Task<string[]> GetNearestScheduleRoute(int directionId, byte trainKind, int minutesOffset = 30)
         {
-            return await GetFromServer<string[]>($"NSI/Closest-Departure?direction={directionId}&kind={trainKind}&minsOffset={minutesOffset}");
+            QueryBuilder query = new QueryBuilder();
+            query.Add("direction", directionId.ToString());
+            query.Add("kind", trainKind.ToString());
+            query.Add("minsOffset", minutesOffset.ToString());
+            
+            return await GetFromServer<string[]>("NSI/Closest-Departure" + query.ToString());
         }
 
         public async Task<byte> GetTrainKind(string destination)
@@ -139,10 +170,9 @@ namespace StationAssistant.Data
         }
         
         public async Task SendTGNL(TrainModel trainModel)
-        {   
-            MsgModel msgTGNL = new MsgModel { Code = 2 };
-            msgTGNL.Body = JsonSerializer.Serialize(trainModel);
-            await PostToServer("Train", msgTGNL);
+        {
+            ConsistList consistList = new ConsistList(trainModel);
+            await PostToServer("Train", consistList);
         }
     }
 }

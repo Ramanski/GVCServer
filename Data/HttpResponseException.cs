@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -17,18 +18,38 @@ namespace GVCServer.Models
     public class HttpResponseExceptionFilter : IActionFilter, IOrderedFilter
     {
         public int Order { get; set; } = int.MaxValue - 10;
+        public ILogger<HttpResponseExceptionFilter> Logger { get; }
 
-        public void OnActionExecuting(ActionExecutingContext context) { }
+        public HttpResponseExceptionFilter(ILogger<HttpResponseExceptionFilter> logger)
+        {
+            Logger = logger;
+        }
+
+        public HttpResponseExceptionFilter()
+        {
+        }
+
+        public void OnActionExecuting(ActionExecutingContext context) 
+        {
+        }
 
         public void OnActionExecuted(ActionExecutedContext context)
         {
-            if (context.Exception is HttpResponseException exception)
+            if(context.Exception != null)
             {
-                context.Result = new ObjectResult(exception.Value)
+                if (context.Exception is HttpResponseException exception)
                 {
-                    StatusCode = exception.Status
-                };
-                context.ExceptionHandled = true;
+                    context.Result = new ObjectResult(exception.Value)
+                    {
+                        StatusCode = exception.Status
+                    };
+                    context.ExceptionHandled = true;
+                    Logger.LogWarning(context.Exception, "");
+                }
+                else
+                {
+                    Logger.LogError(context.Exception, "Unexpected error on action exexuted");
+                }
             }
         }
     }

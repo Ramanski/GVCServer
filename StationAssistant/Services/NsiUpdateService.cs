@@ -9,8 +9,17 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace StationAssistant.Data
+namespace StationAssistant.Services
 {
+    interface INSIUpdateService
+    {
+        public Task<string> UpdateVagonKindsAsync();
+
+        public Task<string> UpdateTrainKindsAsync();
+
+        public Task<string> UpdatePFClaimsAsync();
+    }
+
     public class NsiUpdateService : INSIUpdateService
     {
         private HttpClient _client;

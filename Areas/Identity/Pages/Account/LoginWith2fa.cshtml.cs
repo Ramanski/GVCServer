@@ -44,6 +44,7 @@ namespace GVCServer.Areas.Identity.Pages.Account
 
         public async Task<IActionResult> OnGetAsync(bool rememberMe, string returnUrl = null)
         {
+            _logger.LogDebug("Entered Login with 2FA page", rememberMe, returnUrl);
             // Ensure the user has gone through the username & password screen first
             var user = await _signInManager.GetTwoFactorAuthenticationUserAsync();
 

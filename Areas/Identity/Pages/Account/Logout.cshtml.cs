@@ -24,6 +24,7 @@ namespace GVCServer.Areas.Identity.Pages.Account
 
         public void OnGet()
         {
+            _logger.LogDebug("Entered Logout page");
         }
 
         public async Task<IActionResult> OnPost(string returnUrl = null)
@@ -32,10 +33,12 @@ namespace GVCServer.Areas.Identity.Pages.Account
             _logger.LogInformation("User logged out.");
             if (returnUrl != null)
             {
+                _logger.LogDebug("Local redirect to {returnUrl}", returnUrl);
                 return LocalRedirect(returnUrl);
             }
             else
             {
+                _logger.LogDebug("Redirecting to root page");
                 return RedirectToPage();
             }
         }

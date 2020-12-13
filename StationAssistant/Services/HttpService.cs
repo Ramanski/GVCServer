@@ -23,18 +23,15 @@ namespace StationAssistant.Services
     {
         private HttpClient _httpClient;
         private NavigationManager _navigationManager;
-        private ILocalStorageService _localStorageService;
         private IConfiguration _configuration;
 
         public HttpService(
             HttpClient httpClient,
             NavigationManager navigationManager,
-            ILocalStorageService localStorageService,
             IConfiguration configuration
         ) {
             _httpClient = httpClient;
             _navigationManager = navigationManager;
-            _localStorageService = localStorageService;
             _configuration = configuration;
         }
 
@@ -56,7 +53,7 @@ namespace StationAssistant.Services
         private async Task<T> sendRequest<T>(HttpRequestMessage request)
         {
             // add jwt auth header if user is logged in and request is to the api url
-            var user = await _localStorageService.GetItem<User>("user");
+            User user = null;// await _localStorageService.GetItem<User>("user");
             var isApiUrl = !request.RequestUri.IsAbsoluteUri;
             if (user != null && isApiUrl)
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", user.Token);

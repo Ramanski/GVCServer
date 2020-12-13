@@ -1,18 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
 using AutoMapper;
-using GVCServer.Data;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
@@ -20,8 +12,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
-using StationAssistant.Auth;
 using StationAssistant.Data;
 using StationAssistant.Data.Entities;
 using StationAssistant.Services;
@@ -46,7 +36,6 @@ namespace StationAssistant
             services.AddRazorPages()
                     .AddJsonOptions(options =>
                     {
-                        options.JsonSerializerOptions.Converters.Add(new TimeSpanJsonConverter());
                         options.JsonSerializerOptions.IgnoreNullValues = true;
                     });
             services.AddServerSideBlazor();
@@ -67,7 +56,7 @@ namespace StationAssistant
             );
             services.AddTransient(sp => new HttpClient 
                 { 
-                    BaseAddress = new Uri($"{Configuration["IVCaddress"]}/{Configuration["StationCode"]}/") 
+                    BaseAddress = new Uri(Configuration["GVCServer:BaseAddress"]) 
                 });
 
             services.AddScoped<INSIUpdateService, NsiUpdateService>();
@@ -78,42 +67,47 @@ namespace StationAssistant
             services.AddDbContext<StationStorageContext>(options =>
                     options.UseSqlServer(Configuration.GetConnectionString("StationStorage"))
                     );
-/*            services.AddIdentity<IdentityUser, IdentityRole>(op =>
-            {
-                op.Password.RequireDigit = false;
-                op.Password.RequireNonAlphanumeric = false;
-                op.Password.RequireUppercase = false;
-                op.Password.RequireLowercase = false;
-                op.Password.RequiredLength = 1;
-            })
-            .AddEntityFrameworkStores<StationStorageContext>();*/
 
-            /*            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                                .AddJwtBearer(options => 
-                                options.TokenValidationParameters = new TokenValidationParameters
-                                {
-                                     ValidateIssuer = false,
-                                     ValidateAudience = false,
-                                     ValidateLifetime = true,
-                                     ValidateIssuerSigningKey = true,
-                                     IssuerSigningKey = new SymmetricSecurityKey(
-                                         Encoding.UTF8.GetBytes(Configuration["jwt:key"])),
-                                         ClockSkew = TimeSpan.Zero
-                                });*/
+            services.AddAuthentication( configureOptions =>
+                    {
+                        configureOptions.DefaultAuthenticateScheme = "AppCookie";
+                        configureOptions.DefaultSignInScheme = "AppCookie";
+                        configureOptions.DefaultChallengeScheme = "OAuth";
+                    })
+                    .AddCookie("AppCookie", conf =>
+                    {
+                        conf.Cookie.Name = "StationAssist.Cookie";
+                        conf.LoginPath = "/login";
+                    })
+                    .AddOAuth("OAuth", conf =>
+                    {
+                        conf.AuthorizationEndpoint = Configuration["GVCServer:Authorizing"];
+                        conf.TokenEndpoint = Configuration["GVCServer:Token"];
+                        conf.CallbackPath = "/callback";
+                        conf.ClientId = Configuration["Auth:Id"];
+                        conf.ClientSecret = Configuration["Auth:Secret"];
+                    });
+
+            services.AddDbContext<UsersContext>(config =>
+            {
+                config.UseInMemoryDatabase("Memory");
+            });
+
+            // AddIdentity registers the services
+            services.AddIdentity<IdentityUser, IdentityRole>(config =>
+            {
+                config.Password.RequiredLength = 4;
+                config.Password.RequireDigit = false;
+                config.Password.RequireNonAlphanumeric = false;
+                config.Password.RequireUppercase = false;
+                config.SignIn.RequireConfirmedEmail = true;
+            })
+                .AddEntityFrameworkStores<UsersContext>()
+                .AddDefaultTokenProviders();
+
             services.AddAuthenticationCore();
             services.AddScoped<IAuthenticationService, AuthenticationService>();
-            services.AddScoped<AuthenticationStateProvider, AuthenticationService>();
-            services
-                .AddScoped<IUserService, UserService>()
-                .AddScoped<IHttpService, HttpService>()
-                .AddScoped<ILocalStorageService, LocalStorageService>();
-            /*services.AddScoped<JWTAuthenticationStateProvider>();
-            services.AddScoped<AuthenticationStateProvider, JWTAuthenticationStateProvider>(
-                provider => provider.GetRequiredService<JWTAuthenticationStateProvider>()
-                );
-            services.AddScoped<ILoginService, JWTAuthenticationStateProvider>(
-                provider => provider.GetRequiredService<JWTAuthenticationStateProvider>()
-                );*/
+            services.AddScoped<IHttpService, HttpService>();
         }
 
 

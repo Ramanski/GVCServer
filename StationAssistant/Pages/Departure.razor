@@ -3,9 +3,9 @@
 @using Microsoft.AspNetCore.Authentication.JwtBearer;
 @using Syncfusion.Blazor.Buttons
 @using Syncfusion.Blazor.Popups
-@inject NotificationService NotificationService
-@inject StationAssistant.Data.IGvcDataService GvcDataFetch
-@inject StationAssistant.Data.IStationDataService StationData
+@inject StationAssistant.Services.NotificationService NotificationService
+@inject StationAssistant.Services.IGvcDataService GvcDataFetch
+@inject StationAssistant.Services.IStationDataService StationData
 @attribute [Authorize]
 
     <SfDialog @bind-Visible="@ConfirmIsVisible" Width="400px" Target="#target" ShowCloseIcon="true" Header="@Title" Content="@Body">

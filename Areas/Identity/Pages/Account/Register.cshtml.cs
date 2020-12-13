@@ -64,6 +64,7 @@ namespace GVCServer.Areas.Identity.Pages.Account
 
         public async Task OnGetAsync(string returnUrl = null)
         {
+            _logger.LogDebug("Entered Register page with {returnUrl}", returnUrl);
             ReturnUrl = returnUrl;
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
         }
@@ -93,11 +94,13 @@ namespace GVCServer.Areas.Identity.Pages.Account
 
                     if (_userManager.Options.SignIn.RequireConfirmedAccount)
                     {
+                        _logger.LogDebug("Redirecting to RegisterConfirmation page");
                         return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl = returnUrl });
                     }
                     else
                     {
                         await _signInManager.SignInAsync(user, isPersistent: false);
+                        _logger.LogDebug("Local redirect to {returnUrl}", returnUrl);
                         return LocalRedirect(returnUrl);
                     }
                 }
@@ -107,7 +110,7 @@ namespace GVCServer.Areas.Identity.Pages.Account
                 }
             }
 
-            // If we got this far, something failed, redisplay form
+            _logger.LogError("Something failed. ModelState is not valid.");
             return Page();
         }
     }

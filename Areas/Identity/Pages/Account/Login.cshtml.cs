@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http.Extensions;
+using GVCServer.Helpers;
 
 namespace GVCServer.Areas.Identity.Pages.Account
 {
@@ -59,9 +60,10 @@ namespace GVCServer.Areas.Identity.Pages.Account
 
         public async Task OnGetAsync(string redirect_uri, string state)
         {
-
+            _logger.LogDebug("Entered Login page from {redirect_uri}", redirect_uri);
             if (!string.IsNullOrEmpty(ErrorMessage))
             {
+                _logger.LogWarning("Errors found on getting Login page", ErrorMessage);
                 ModelState.AddModelError(string.Empty, ErrorMessage);
             }
 
@@ -77,6 +79,7 @@ namespace GVCServer.Areas.Identity.Pages.Account
         public async Task<IActionResult> OnPostAsync(string redirect_uri = null, string state = null)
         {
             redirect_uri = redirect_uri ?? Url.Content("~/");
+            _logger.LogDebug("Got Login credentials with {redirect_uri}", redirect_uri);
 
             if (ModelState.IsValid)
             {
@@ -85,41 +88,37 @@ namespace GVCServer.Areas.Identity.Pages.Account
                 var result = Microsoft.AspNetCore.Identity.SignInResult.Success; //await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
                 if (result.Succeeded)
                 {
-                    _logger.LogInformation("User logged in.");
-                    var authCode = RandomString(20);
+                    _logger.LogInformation("User credentials are correct");
+                    var authCode = Randomizer.GetRandomString(20);
+                    _logger.LogDebug("Generated authorization code", authCode);
                     var query = new QueryBuilder();
                     query.Add("code", authCode);
                     query.Add("state", state);
                     var returnUrl = redirect_uri + query.ToString();
-
+                    _logger.LogDebug("Redirecting to page...", returnUrl);
                     return Redirect(returnUrl);
                 }
                 if (result.RequiresTwoFactor)
                 {
+                    _logger.LogInformation("User requires Two Factor auth.");
+                    _logger.LogDebug("Redirecting...");
                     return RedirectToPage("./LoginWith2fa", new { ReturnUrl = redirect_uri, RememberMe = Input.RememberMe });
                 }
                 if (result.IsLockedOut)
                 {
-                    _logger.LogWarning("User account locked out.");
+                    _logger.LogWarning("User account is locked out.");
                     return RedirectToPage("./Lockout");
                 }
                 else
                 {
+                    _logger.LogWarning("Invalid login attempt", result.ToString());
                     ModelState.AddModelError(string.Empty, "Invalid login attempt.");
                     return Page();
                 }
             }
 
-            // If we got this far, something failed, redisplay form
+            _logger.LogError("Something failed. ModelState is not valid.");
             return Page();
-        }
-
-        private static Random random = new Random();
-        public static string RandomString(int length)
-        {
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-            return new string(Enumerable.Repeat(chars, length)
-              .Select(s => s[random.Next(s.Length)]).ToArray());
         }
     }
 }

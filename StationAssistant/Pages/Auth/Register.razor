@@ -1,6 +1,6 @@
 ﻿@page "/register"
 
-@inject StationAssistant.Helpers.IAuthenticationService iauth
+@inject IAuthenticationService iauth
 @inject NavigationManager navigationManager
 
 <EditForm class="form-signin" OnValidSubmit="CreateUser" Model="loginData">

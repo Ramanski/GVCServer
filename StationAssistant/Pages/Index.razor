@@ -1,18 +1,18 @@
 ﻿@page "/"
 @using StationAssistant.Data.Entities;
 @using Syncfusion.Blazor.Cards;
-@inject NotificationService NotificationService
-@inject StationAssistant.Data.IStationDataService StationDataService
+@inject StationAssistant.Services.NotificationService NotificationService
+@inject StationAssistant.Services.IStationDataService StationDataService
 @attribute [Authorize]
 
-<AuthorizeView>
+@*<AuthorizeView>
     <Authorized>
         <h5>Вход осущствлен в роли "@context.User.Claims.Where(cl => cl.Type == System.Security.Claims.ClaimTypes.Role).FirstOrDefault()?.Value.ToLower()"</h5>
     </Authorized>
     <NotAuthorized>
         <h5>Вход осущствлен в роли "анонимный пользователь"</h5>
     </NotAuthorized>
-</AuthorizeView>
+</AuthorizeView>*@
 
 <div class="row">
     <div class="col-6 p-2">
