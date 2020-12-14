@@ -37,13 +37,6 @@ namespace GVCServer.Services
                 new UserDB { Id = 1, Name = "Test from GVC", Login = "gvcmain", Password = "gvcmain", Role = "Admin" }
             };
 
-            private readonly AppSettings _appSettings;
-
-            public UserService(IOptions<AppSettings> appSettings)
-            {
-                _appSettings = appSettings.Value;
-            }
-
             public User Authenticate(LoginData loginData)
             {
                 var userdb = _users.SingleOrDefault(x => x.Login == loginData.Username && x.Password == loginData.Password);

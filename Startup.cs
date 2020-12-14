@@ -36,21 +36,18 @@ namespace GVCServer
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
+                                                                  
         {
             services.AddControllers(options => 
                 options.Filters.Add(new HttpResponseExceptionFilter()))
                     .AddJsonOptions(options =>
                     {
                         options.JsonSerializerOptions.IgnoreNullValues = true;
-                        options.JsonSerializerOptions.Converters.Add(new TimeSpanJsonConverter());
                     });
-
             services.AddRazorPages();
 
             services.AddLocalization();
-            services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
             services.AddAutoMapper(typeof(Startup));
             services.AddScoped<ITrainRepository, TrainRepository>();
             services.AddScoped<IGuideRepository, GuideRepository>();
@@ -101,7 +98,6 @@ namespace GVCServer
             app.UseAuthentication();
 
             app.UseAuthorization();
-            //app.UseMiddleware<JwtMiddleware>();
 
             app.UseEndpoints(endpoints =>
             {
