@@ -1,11 +1,9 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace GVCServer.Data.Entities
 {
-    public partial class IVCStorageContext : IdentityDbContext
+    public partial class IVCStorageContext : DbContext
     {
         public IVCStorageContext()
         {
