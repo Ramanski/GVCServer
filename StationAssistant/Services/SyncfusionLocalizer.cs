@@ -5,7 +5,7 @@ using System.Resources;
 using System.Threading.Tasks;
 using Syncfusion.Blazor;
 
-namespace StationAssistant.Shared
+namespace StationAssistant.Services
 {
     public class SyncfusionLocalizer: ISyncfusionStringLocalizer
     {

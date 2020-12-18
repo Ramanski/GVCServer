@@ -2,7 +2,7 @@
 @using Syncfusion.Blazor.Charts
 @using Syncfusion.Blazor.Buttons
 @inject StationAssistant.Services.IStationDataService StationData
-@attribute [Authorize]
+@attribute [Authorize(Roles = Role.Admin)]
 
 @if (!dataLoaded)
 {

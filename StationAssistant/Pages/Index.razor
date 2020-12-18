@@ -3,16 +3,18 @@
 @using Syncfusion.Blazor.Cards;
 @inject StationAssistant.Services.NotificationService NotificationService
 @inject StationAssistant.Services.IStationDataService StationDataService
-@attribute [Authorize]
+@inject AuthenticationStateProvider AuthState
+@attribute [AllowAnonymous]
 
-@*<AuthorizeView>
+<AuthorizeView>
     <Authorized>
-        <h5>Вход осущствлен в роли "@context.User.Claims.Where(cl => cl.Type == System.Security.Claims.ClaimTypes.Role).FirstOrDefault()?.Value.ToLower()"</h5>
+        <h5>Вход осущствлен в роли "@context.User.Claims.Where(cl => cl.Type == System.Security.Claims.ClaimTypes.Role).FirstOrDefault()?.Value"</h5>
     </Authorized>
     <NotAuthorized>
-        <h5>Вход осущствлен в роли "анонимный пользователь"</h5>
+        <h5>Вы вошли как "анонимный пользователь". Доступ к разделам ограничен.</h5>
     </NotAuthorized>
-</AuthorizeView>*@
+</AuthorizeView>
+
 
 <div class="row">
     <div class="col-6 p-2">
@@ -143,11 +145,25 @@
     List<TrainModel> departingTrains;
     List<Vagon> vagons;
     List<PathModel> paths;
- //   string[] areas;
+    //   string[] areas;
     Direction[] directions;
+
+    private string Username = "Anonymous User";
 
     protected override async Task OnInitializedAsync()
     {
+        // Authentication
+
+        var state = await AuthState.GetAuthenticationStateAsync();
+
+        Username =
+            state.User.Claims
+            .Where(c => c.Type.Equals("name"))
+            .Select(c => c.Value)
+            .FirstOrDefault() ?? string.Empty;
+
+        ///
+
         var trains = await StationDataService.GetAllTrainsAsync();
         if (trains != null)
         {

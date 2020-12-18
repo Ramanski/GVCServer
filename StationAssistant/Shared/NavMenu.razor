@@ -49,14 +49,14 @@
         <AuthorizeView>
             <Authorized>
                 <li class="nav-item px-3 align-bottom">
-                <NavLink class="nav-link" href="logout">
-                    <span class="oi oi-account-logout" aria-hidden="true"></span>
+                <NavLink class="nav-link" href="Logout">
+                    <span class="oi oi-account-logout" aria-hidden="true">@context.User.Claims.Where(cl => cl.Type.Equals(System.Security.Claims.ClaimTypes.Name)).FirstOrDefault().Value</span>
                 </NavLink>
                 </li>
             </Authorized>
             <NotAuthorized>
                 <li class="nav-item px-3">
-                    <NavLink class="nav-link" href="login">
+                    <NavLink class="nav-link" href="Login">
                         <span class="oi oi-account-login" aria-hidden="true"></span> Войти
                     </NavLink>
                 </li>
