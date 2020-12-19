@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Server;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,6 +13,7 @@ namespace StationAssistant
             : RevalidatingServerAuthenticationStateProvider
     {
         private readonly BlazorServerAuthStateCache Cache;
+
 
         public BlazorServerAuthState(
             ILoggerFactory loggerFactory,

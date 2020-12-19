@@ -6,6 +6,7 @@
 @inject StationAssistant.Services.IStationDataService StationData
 @inject StationAssistant.Services.NotificationService NotificationService
 @inject NavigationManager NavigationManager
+@attribute [AuthorizeRoles(Role.Admin, Role.DSC)]
 
 @if (PathsHided)
 {
@@ -108,21 +109,22 @@ else
 
 @code {
 
-    [Parameter] public string Area { get; set; }
+    [Parameter] 
+    public string Area { get; set; }
     FormationSheet formationSheet;
     SfAccordion Accordion;
     AccordionItems AccordionItemRef;
     SfProgressBar sfProgress;
     PathSelector pathSelector;
-//    SfGrid<VagonModel> TrainGrid;
     TrainModel targetTrainModel;
     public List<PathModel> paths { get; set; }
-//    private List<VagonModel> vagonsOfTrain;
     private PathModel selectedPathItem = null;
     private bool PathsHided { get; set; } = true;
     private bool AccordionStateChanged { get; set; } = false;
-    [Parameter] public bool isSort { get; set; }
-    [Parameter] public bool isEmpty { get; set; }
+    [Parameter] 
+    public bool isSort { get; set; }
+    [Parameter] 
+    public bool isEmpty { get; set; }
     private bool FormationIsVisible = false;
     private bool TrainListIsVisible = false;
     private bool PathSelectorVisible { get; set; } = false;
@@ -140,6 +142,7 @@ else
         PathSelectorVisible = true;
     }
 
+    [AuthorizeRoles(Role.DSC)]
     private async Task OnTrainListCall(int pathId)
     {
         targetTrainModel = await StationData.GetTrainOnPath(pathId, true);

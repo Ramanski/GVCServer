@@ -44,7 +44,7 @@ namespace StationAssistant.Pages
                 return Page();
             }
 
-            public IActionResult OnGetLogin()
+            public IActionResult OnGetLogin(string redirectUri = null)
             {
                 System.Diagnostics.Debug.WriteLine("\n_Host OnGetLogin");
                 var authProps = new AuthenticationProperties
@@ -52,7 +52,7 @@ namespace StationAssistant.Pages
                     IsPersistent = true,
                     //ExpiresUtc = DateTimeOffset.UtcNow.AddHours(15),
                     ExpiresUtc = DateTimeOffset.UtcNow.AddSeconds(30),
-                    RedirectUri = Url.Content("~/")
+                    RedirectUri = string.IsNullOrEmpty(redirectUri) ? Url.Content("~/") : redirectUri,
                 };
                 return Challenge(authProps, OpenIdConnectDefaults.AuthenticationScheme);
             }

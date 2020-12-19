@@ -66,6 +66,7 @@ namespace StationAssistant
                 { 
                     BaseAddress = new Uri(Configuration["GVCServer:BaseAddress"]) 
                 });
+            services.AddHttpClient();
             services.AddScoped<IHttpService, HttpService>();
 
             // Убрать, как только реализую кэш

@@ -27,6 +27,8 @@
 @code{
     public void Redirect()
     {
-        navigationManager.NavigateTo("/Login", true);
+        var returnUrl = navigationManager.ToBaseRelativePath(navigationManager.Uri);
+
+        navigationManager.NavigateTo($"/Login?redirectUri={returnUrl}", true);
     }
 }
