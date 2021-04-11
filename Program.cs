@@ -20,8 +20,8 @@ namespace GVCServer
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.UseStartup<Startup>()
-                              .UseUrls("http://localhost:49885");
+                    webBuilder.UseStartup<Startup>();
+                             // .UseUrls("http://localhost:49885");
                 });
     }
 }

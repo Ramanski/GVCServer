@@ -17,10 +17,13 @@ using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore.SqlServer;
 using GVCServer.Data;
 using GVCServer.Helpers;
-using GVCServer.Services;
 using Microsoft.AspNetCore.Localization;
 using System.Globalization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using GVCServer.Repositories;
 
 namespace GVCServer
 {
@@ -33,63 +36,47 @@ namespace GVCServer
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
+        public void ConfigureServices(IServiceCollection services)                                                   
         {
-            services.AddControllers(options => options.Filters.Add(new HttpResponseExceptionFilter()))
+            services.AddControllers(options => 
+                options.Filters.Add(new HttpResponseExceptionFilter()))
                     .AddJsonOptions(options =>
                     {
                         options.JsonSerializerOptions.IgnoreNullValues = true;
-                        options.JsonSerializerOptions.Converters.Add(new TimeSpanJsonConverter());
                     });
-            services.AddLocalization();
 
-            services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
             services.AddAutoMapper(typeof(Startup));
-            services.AddScoped<ITrainRepository, TrainRepository>();
+            services.AddScoped<TrainRepository>();
             services.AddScoped<IGuideRepository, GuideRepository>();
+            services.AddScoped<WagonOperationsService>();
+            services.AddScoped<TrainOperationsService>();
+
             services.AddDbContext<IVCStorageContext>(options =>
                     options.UseSqlServer(Configuration.GetConnectionString("IVCStorage")));
-            services.AddIdentity<IdentityUser, IdentityRole>(op =>
-            {
-                op.Password.RequireDigit = false;
-                op.Password.RequireNonAlphanumeric = false;
-                op.Password.RequireUppercase = false;
-                op.Password.RequireLowercase = false;
-                op.Password.RequiredLength = 1;
-            })
-                .AddEntityFrameworkStores<IVCStorageContext>()
-                .AddDefaultTokenProviders();
-            services.AddScoped<IUserService, UserService>();
+
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, conf =>
+                    {
+                        conf.Authority = Configuration["AppSettings:IdentityServer"];
+                        conf.Audience = Configuration["AppSettings:ServerName"];
+                    });
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            var supportedCultures = new[]{
-            new CultureInfo("ru")
-        };
-            app.UseRequestLocalization(new RequestLocalizationOptions
-            {
-                DefaultRequestCulture = new RequestCulture("ru"),
-                SupportedCultures = supportedCultures,
-                FallBackToParentCultures = false
-            });
-            CultureInfo.DefaultThreadCurrentCulture = CultureInfo.CreateSpecificCulture("ru");
-            /*            if (env.IsDevelopment())
-                        {
-                            app.UseExceptionHandler("/error-local-development");
-                        }*/
+            // if (env.IsDevelopment())
+            // {
+            //     app.UseDeveloperExceptionPage();
+            // }
+            //app.UseStaticFiles();
 
-            //app.ConfigureExceptionHandler(logger);
-
-            app.UseExceptionHandler("/error");
-
-            //app.UseHttpsRedirection();
+            app.UseHttpsRedirection();
 
             app.UseRouting();
 
-            app.UseMiddleware<JwtMiddleware>();
+            //app.UseAuthentication();
+
+            //app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {

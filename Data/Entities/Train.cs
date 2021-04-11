@@ -18,6 +18,8 @@ namespace GVCServer.Data.Entities
         public short Ordinal { get; set; }
         public string DestinationStation { get; set; }
         public DateTime? FormTime { get; set; }
+        
+        // TODO: Delete
         public string Dislocation { get; set; }
         public short Length { get; set; }
         public int WeightBrutto { get; set; }

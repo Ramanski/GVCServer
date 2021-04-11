@@ -5,9 +5,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace GVCServer.Data
+namespace GVCServer.Repositories
 {
-    public class GuideRepository : IGuideRepository
+    public class GuideRepository: IGuideRepository
     {
         private readonly IVCStorageContext _context;
 

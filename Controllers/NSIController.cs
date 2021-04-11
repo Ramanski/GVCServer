@@ -2,162 +2,57 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using GVCServer.Data;
 using GVCServer.Data.Entities;
 using GVCServer.Models;
+using GVCServer.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GVCServer.Controllers
 {
-    [Route("{station}/[controller]")]
+    [Route("nsi")]
     [ApiController]
     public class NSIController : ControllerBase
     {
         private readonly IGuideRepository _guideRepository;
+        private string station { get; set; }
 
         public NSIController(IGuideRepository guideRepository)
         {
             _guideRepository = guideRepository;
+            station = "161306";//User?.Claims.Where(cl => cl.Type == ClaimTypes.Locality).FirstOrDefault()?.Value;
         }
 
-        [HttpPost("PF")]
-        public async Task<ActionResult<List<string[]>>> GetPFStations(string station, string[] destination)
+        [HttpPost("pf")]
+        public async Task<ActionResult<List<string[]>>> GetPFStations(string[] destination)
         {
-            try
-            {
-                if (destination.Length == 0)
-                    throw new ArgumentNullException("Не задано ни одной станции назначения");
-                return await _guideRepository.GetPlanFormStations(station, destination);
-            }
-            catch (Exception e)
-            {
-                throw new HttpResponseException()
-                {
-                    Status = (int)HttpStatusCode.BadRequest,
-                    Value = e.Message
-                };
-            }
+            if (destination.Length == 0)
+                return BadRequest();
+            return await _guideRepository.GetPlanFormStations(station, destination);
         }
 
-        [HttpGet("Train-Kind")]
-        public async Task<ActionResult<byte>> GetTrainKind(string station, string destination)
-        {
-            try
-            {
-                return await _guideRepository.GetTrainKind(station, destination);
-            }
-            catch (Exception e)
-            {
-                throw new HttpResponseException()
-                {
-                    Status = (int)HttpStatusCode.BadRequest,
-                    Value = e.Message
-                };
-            }
-        }
+        [HttpGet("train-Kind")]
+        public async Task<ActionResult<byte>> GetTrainKind(string station, string destination) => await _guideRepository.GetTrainKind(station, destination);
 
-        [HttpGet("Closest-Departure")]
-        public async Task<ActionResult<string[]>> GetClosestDeparture(string station, int minsOffset, int direction, int kind)
-        {
-            try
-            {
-                return await _guideRepository.GetClosestDeparture(station, kind, direction, minsOffset);
-            }
-            catch (Exception e)
-            {
-                throw new HttpResponseException()
-                {
-                    Status = (int)HttpStatusCode.BadRequest,
-                    Value = e.Message
-                };
-            }
-        }
+        [HttpGet("closest-departure")]
+        public async Task<ActionResult<string[]>> GetClosestDeparture(string station, int minsOffset, int direction, int kind) => await _guideRepository.GetClosestDeparture(station, kind, direction, minsOffset);
 
-        [HttpGet("Operations")]
-        public async Task<ActionResult<List<Operation>>> GetOperations(string station)
-        {
-            try
-            {
-                return await _guideRepository.GetOperations();
-            }
-            catch (Exception e)
-            {
-                throw new HttpResponseException()
-                {
-                    Status = (int)HttpStatusCode.BadRequest,
-                    Value = e.Message
-                };
-            }
-        }
+        [HttpGet("operations")]
+        public async Task<ActionResult<List<Operation>>> GetOperations(string station) => await _guideRepository.GetOperations();
 
-        [HttpGet("Schedule")]
-        public async Task<ActionResult<List<Schedule>>> GetSchedule(string station)
-        {
-            try
-            {
-                return await _guideRepository.GetSchedule(station);
-            }
-            catch (Exception e)
-            {
-                throw new HttpResponseException()
-                {
-                    Status = (int)HttpStatusCode.BadRequest,
-                    Value = e.Message
-                };
-            }
-        }
+        [HttpGet("schedule")]
+        public async Task<ActionResult<List<Schedule>>> GetSchedule(string station) => await _guideRepository.GetSchedule(station);
 
-        [HttpGet("PF/Claims")]
-        public async Task<ActionResult<List<Pfclaim>>> GetPFclaims(string station)
-        {
-            try
-            {
-                return await _guideRepository.GetPlanFormClaims(station);
-            }
-            catch (Exception e)
-            {
-                throw new HttpResponseException()
-                {
-                    Status = (int)HttpStatusCode.BadRequest,
-                    Value = e.Message
-                };
-            }
-        }
+        [HttpGet("pf/Claims")]
+        public async Task<ActionResult<List<Pfclaim>>> GetPFclaims(string station) => await _guideRepository.GetPlanFormClaims(station);
 
-        [HttpGet("Vagon/Kinds")]
-        public async Task<ActionResult<List<VagonKind>>> GetVagonKinds()
-        {
-            try
-            {
-                return await _guideRepository.GetVagonKinds();
-            }
-            catch (Exception e)
-            {
-                throw new HttpResponseException()
-                {
-                    Status = (int)HttpStatusCode.BadRequest,
-                    Value = e.Message
-                };
-            }
-        }
+        [HttpGet("wagon/kinds")]
+        public async Task<ActionResult<List<VagonKind>>> GetVagonKinds() => await _guideRepository.GetVagonKinds();
 
-        [HttpGet("Train/Kinds")]
-        public async Task<ActionResult<List<TrainKind>>> GetTrainKinds()
-        {
-            try
-            {
-                return await _guideRepository.GetTrainKinds();
-            }
-            catch (Exception e)
-            {
-                throw new HttpResponseException()
-                {
-                    Status = (int)HttpStatusCode.BadRequest,
-                    Value = e.Message
-                };
-            }
-        }
+        [HttpGet("train/kinds")]
+        public async Task<ActionResult<List<TrainKind>>> GetTrainKinds() => await _guideRepository.GetTrainKinds();
     }
 }

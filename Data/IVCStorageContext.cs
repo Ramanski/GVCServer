@@ -1,11 +1,10 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
+using ModelsLibrary;
 
 namespace GVCServer.Data.Entities
 {
-    public partial class IVCStorageContext : IdentityDbContext
+    public partial class IVCStorageContext : DbContext
     {
         public IVCStorageContext()
         {
@@ -28,9 +27,24 @@ namespace GVCServer.Data.Entities
         public virtual DbSet<TrainKind> TrainKind { get; set; }
         public virtual DbSet<Vagon> Vagon { get; set; }
         public virtual DbSet<VagonKind> VagonKind { get; set; }
+        public DbSet<ActualWagonOperations> ActualWagOpers {get;set;}
+        public DbSet<TrainModel> TrainModels {get; set;}
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<ActualWagonOperations>((awo =>
+            {
+                awo.HasNoKey();
+                awo.ToView("WagonModel");
+            }));
+
+            modelBuilder.Entity<TrainModel>(entity =>
+            {
+                entity.HasNoKey();
+                entity.ToView("TrainModel");
+            });
+
             modelBuilder.Entity<Direction>(entity =>
             {
                 entity.Property(e => e.Id).ValueGeneratedNever();
@@ -185,7 +199,7 @@ namespace GVCServer.Data.Entities
             modelBuilder.Entity<Operation>(entity =>
             {
                 entity.HasIndex(e => e.Code)
-                    .HasName("UK_Operations")
+                    .HasDatabaseName("UK_Operations")
                     .IsUnique();
 
                 entity.Property(e => e.Code)
@@ -283,7 +297,7 @@ namespace GVCServer.Data.Entities
                     .HasName("PK_Stations");
 
                 entity.HasIndex(e => e.Code)
-                    .HasName("UK_Stations")
+                    .HasDatabaseName("UK_Stations")
                     .IsUnique();
 
                 entity.Property(e => e.Code)
