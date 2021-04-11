@@ -9,10 +9,22 @@
   },
   "servers": [
     {
-      "url": "http://petstore.swagger.io/v1"
+      "description": "Https local",
+      "url": "https://localhost:44881"
+    },
+     {
+      "description": "Http local",
+      "url": "http://localhost:44880"
     }
   ],
   "paths": {
+    "/trains/coming": {
+            "get":
+            {
+                "summary": "Trains, coming to the station",
+                
+            }
+        },
     "/user": {
       "get": {
         "summary": "Details about a user",
