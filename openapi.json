@@ -1,35 +1,231 @@
 {
    "openapi":"3.0.0",
    "info":{
-      "version":"1.0.0",
       "title":"GVCServer",
+	  "description":"This API provides the actual model of the railway network objects(trains, wagons) to its clients (railway stations)",
+      "contact":{
+		"name": "Raman Hryvusevich",
+		"email": "3romanski@gmail.com"
+	  },
       "license":{
          "name":"MIT"
-      }
+      },
+	  "version":"0.1.0"
    },
    "servers":[
       {
-         "description":"Https local",
-         "url":"https://localhost:44881"
-      },
-      {
-         "description":"Http local",
-         "url":"http://localhost:44880"
+		"url":"{protocol}://localhost:{port}",
+        "description":"The development API server",
+		"variables":{
+			"protocol":{
+				"enum":[
+					"http",
+					"https"
+				],
+			"default": "https"
+			},
+			"port":{
+				"enum":[
+					"44881",
+					"44880"
+				],
+			"default": "44881"
+			}
+		}
       }
    ],
    "paths":{
-      "/trains/coming":{
+      "/trains":{
+		"post":{
+			"summary":"Формирование поезда",
+			"operationId":"createTrain",
+			"requestBody":{
+				"required": true,
+				"content":{
+						"application/json":{
+							"schema":{
+								"type": "array",
+								"items": {
+									"$ref":"#/components/schemas/TrainModel"			
+								}
+							}
+						}
+				}
+			},
+			"responses":{
+               "200":{
+                   "description":"Details about a trains coming to the client`s station",
+				   "content":{
+						"application/json":{
+							"schema": {
+								"$ref":"#/components/schemas/TrainModel"
+							}
+						}
+					}
+				},
+			   "default":{
+                  "description":"unexpected error",
+                  "content":{
+                     "application/json":{
+                        "schema":{
+                           "$ref":"#/components/schemas/Error"
+                        }
+                     }
+                  }
+               }
+            }
+		},
+		"delete":{
+			"summary":"Отмена формирования поезда",
+			"operationId":"cancelCreation",
+			"requestBody":{
+				"required": true,
+				"content":{
+						"application/json":{
+							"schema":{
+								"type": "array",
+								"items": {
+									"$ref":"#/components/schemas/ConsistList"			
+								}
+							}
+						}
+				}
+			},
+			"responses":{
+               "200":{
+                   "description":"Details about a trains coming to the client`s station",
+				   "content":{
+						"application/json":{
+							"schema": {
+								"$ref":"#/components/schemas/TrainModel"
+							}
+						}
+					}
+				},
+			   "default":{
+                  "description":"unexpected error",
+                  "content":{
+                     "application/json":{
+                        "schema":{
+                           "$ref":"#/components/schemas/Error"
+                        }
+                     }
+                  }
+               }
+            }
+		}
+	  },
+	  "/trains/coming":{
          "get":{
             "summary":"Trains, coming to the station",
             "operationId":"comingTrains",
             "responses":{
                "200":{
-                   "description":"Details about a trains coming to the client`s station"
+                   "description":"Details about a trains coming to the client`s station",
+				   "content":{
+						"application/json":{
+							"schema":{
+								"type": "array",
+								"items": {
+									"$ref":"#/components/schemas/TrainModel"			
+								}
+							}
+						}
+					}
+				},
+			   "default":{
+                  "description":"unexpected error",
+                  "content":{
+                     "application/json":{
+                        "schema":{
+                           "$ref":"#/components/schemas/Error"
+                        }
+                     }
+                  }
                }
             }
-         }
+        }
       },
-      "/nsi/train-kind":{
+	  "/trains/{index}":{
+        "get":{
+            "summary":"Details about requested train",
+            "operationId":"trainDetails",
+			"parameters":[
+				{
+					"name":"index",
+					"in":"path",
+					"description":"Index of the train",
+					"required": true,
+					"schema":{
+						"type":"string"
+					},
+					"style":"simple"
+				}
+			],
+            "responses":{
+               "200":{
+                   "description":"Details about a trains coming to the client`s station",
+				   "content":{
+						"application/json":{
+							"schema": {
+								"$ref":"#/components/schemas/TrainModel"
+							}
+						}
+					}
+				},
+			   "default":{
+                  "description":"unexpected error",
+                  "content":{
+                     "application/json":{
+                        "schema":{
+                           "$ref":"#/components/schemas/Error"
+                        }
+                     }
+                  }
+               }
+            }
+         },
+		"put":{
+			"summary":"Корректировка параметров поезда",
+			"operationId":"correctTrain",
+			"requestBody":{
+				"required": true,
+				"content":{
+						"application/json":{
+							"schema":{
+								"type": "array",
+								"items": {
+									"$ref":"#/components/schemas/ConsistList"			
+								}
+							}
+						}
+				}
+			},
+			"responses":{
+               "200":{
+                   "description":"Train parameters updated successfully",
+				   "content":{
+						"application/json":{
+							"schema": {
+								"$ref":"#/components/schemas/TrainModel"
+							}
+						}
+					}
+				},
+			   "default":{
+                  "description":"unexpected error",
+                  "content":{
+                     "application/json":{
+                        "schema":{
+                           "$ref":"#/components/schemas/Error"
+                        }
+                     }
+                  }
+               }
+			}
+		}
+	  },    
+	  "/nsi/train-kind":{
          "get":{
             "parameters":[
                {
@@ -73,96 +269,154 @@
                }
             }
          }
-   },
-   "/user":{
-      "get":{
-         "summary":"Details about a user",
-         "operationId":"listUser",
-         "tags":[
-            "user"
-         ],
-         "parameters":[
-            {
-               "name":"id",
-               "in":"query",
-               "description":"ID of the user",
-               "required":true,
-               "schema":{
-                  "type":"integer",
-                  "format":"int32"
-               }
-            }
-         ],
-         "responses":{
-            "200":{
-               "description":"Details about a user",
-               "headers":{
-                  "x-next":{
-                     "description":"A link to the next page of responses",
-                     "schema":{
-                        "type":"string"
-                     }
-                  }
-               },
-               "content":{
-                  "application/json":{
-                     "schema":{
-                        "$ref":"#/components/schemas/User"
-                     }
-                  }
-               }
-            },
-            "default":{
-               "description":"unexpected error",
-               "content":{
-                  "application/json":{
-                     "schema":{
-                        "$ref":"#/components/schemas/Error"
-                     }
-                  }
-               }
-            }
-         }
-      }
-   }
+	}
    },
    "components":{
       "schemas":{
-         "User":{
-            "type":"object",
-            "required":[
-               "id",
-               "name"
-            ],
-            "properties":{
-               "id":{
-                  "type":"integer",
-                  "format":"int64"
-               },
-               "name":{
-                  "type":"string"
-               },
-               "tag":{
-                  "type":"string"
-               }
-            }
-         },
-         "Error":{
-            "type":"object",
-            "required":[
-               "code",
-               "message"
-            ],
-            "properties":{
-               "code":{
-                  "type":"integer",
-                  "format":"int32"
-               },
-               "message":{
-                  "type":"string"
-               }
-            }
-         }
+			"TrainModel":{
+				"type":"object",
+				"required":[
+					"id",
+					"index",
+					"kind",
+					"dislocation",
+					"weightBrutto",
+					"length"
+				],
+				"properties":{
+					"id":{
+						"type":"string"
+					},
+					"kind":{
+						"type":"integer",
+						"minimum":1,
+						"maximum":99
+					},
+					"index":{
+						"type":"string"
+					},
+					"dislocation":{
+						"type":"string"
+					},
+					"length":{
+						"type":"integer",
+						"minimum":1,
+						"maximum":150
+					},
+					"weightBrutto":{
+						"type":"integer",
+						"format":"int32"
+					},
+					"num":{
+						"type":"string"
+					},
+					"codeOper":{
+						"type":"string"
+					},
+					"dateOper":{
+						"type":"string",
+						"format":"date-time"
+					}
+				},
+				"example":{
+					"id": ""
+				}
+			},
+			"MsgModel":{
+				"type":"object",
+				"properties":{
+					"code":{
+						"type":"string"
+					},
+					"datOper":{
+						"type":"string",
+						"format":"date-time"
+					}
+				},
+				"required":[
+					"code",
+					"datOper"
+				],
+				"discriminator":{
+					"propertyName":"code",
+					"mapping":{
+						        "P0005":"ConsistList",
+                                "P0071":"CorrectMsg",
+                                "P0072":"CorrectMsg",
+                                "P0073":"CorrectMsg",
+                                "P0074":"TrainUpdateMsg",
+                                "P0001":"MovingMsg",
+                                "P0002":"MovingMsg",
+                                "P0003":"MovingMsg",
+                                "P0004":"MovingMsg",
+                                "00000":"CancelMessage"
+                    }
+				}					
+			},
+			"ConsistList":{
+				"description":"Натурный лист на сформированный поезд",
+				"allOf":[
+				{
+					"$ref":"#/components/schemas/MsgModel"
+				},
+				{
+					"type":"object",
+					"properties":{
+						"trainModel":{
+							"$ref":"#/components/schemas/TrainModel"
+						}
+					},
+					"required":[
+						"trainModel"
+					]
+				}
+				]
+			},
+			"CorrectMsg":{
+				"description":"Сообщение о корректировке состава поезда",
+				"allOf":[
+				{
+					"$ref":"#/components/schemas/MsgModel"
+				},
+				{
+					"type":"object",
+					"properties":{
+						"wagonsList":{
+							"type":"array",
+							"items":{
+								"$ref":"#/components/schemas/WagonModel"
+							}
+						},
+						"trainIndex":{
+							"type":"string"
+						}
+					},
+					"required":[
+						"wagonsList",
+						"trainIndex"
+					]
+				}
+				]
+			},
+			"MovingMsg":{
+				"description":"Сообщение о совершении операции с поездом",
+				"allOf":[
+				{
+					"$ref":"#/components/schemas/MsgModel"
+				},
+				{
+					"type":"object",
+					"properties":{
+						"trainIndex":{
+							"type":"string"
+						}
+					},
+					"required":[
+						"trainIndex"
+					]
+				}
+				]
+			}
       }
    }
 }
