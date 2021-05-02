@@ -1,0 +1,27 @@
+﻿@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Popups
+
+        <SfDialog Target="#target" Width="@Width" Height="@Height" IsModal="true" AllowDragging="true" ShowCloseIcon="true">
+            <DialogTemplates>
+                <Header> @Title </Header>
+                <Content>
+                    @ChildContent
+                </Content>
+            </DialogTemplates>
+            <DialogButtons>
+                <DialogButton IsPrimary="true" Content="@OKButtonName" OnClick="@OKClick" />
+            </DialogButtons>
+            <DialogEvents Closed="@DialogClose" OnOverlayClick="@OverlayClick"></DialogEvents>
+        </SfDialog>
+
+
+@code {
+    [Parameter] public string Title { get; set; }
+    [Parameter] public string OKButtonName { get; set; } = "ОК";
+    [Parameter] public string Height { get; set; } = "500";
+    [Parameter] public string Width { get; set; } = "800";
+    [Parameter] public RenderFragment ChildContent { get; set; }
+    [Parameter] public EventCallback DialogClose { get; set; }
+    [Parameter] public EventCallback OverlayClick { get; set; }
+    [Parameter] public EventCallback OKClick { get; set; }
+}

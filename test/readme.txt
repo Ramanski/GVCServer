@@ -1,0 +1,1 @@
+Test projects with similar folder structure to src

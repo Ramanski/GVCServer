@@ -1,0 +1,34 @@
+﻿@inject NavigationManager navigationManager
+@attribute [AllowAnonymous]
+
+<div class="login-container">
+    <div class="login-body">
+        <h1 class="h2 font-weight-normal login-title">
+            Нет доступа
+        </h1>
+
+        <AuthorizeView>
+            <NotAuthorized>
+                <h5>Для доступа к странице необходимо авторизоваться в системе.</h5>
+                <button class="btn btn-lg btn-primary" @onclick="() => Redirect()">
+                    Авторизация с OIDC
+                </button>
+            </NotAuthorized>
+            <Authorized>
+                @if(context.User.Identity.IsAuthenticated)
+                {
+                    <h5>У вас нету прав доступа к данному разделу.</h5>
+                }
+            </Authorized>
+        </AuthorizeView>
+    </div>
+</div>
+
+@code{
+    public void Redirect()
+    {
+        var returnUrl = navigationManager.ToBaseRelativePath(navigationManager.Uri);
+
+        navigationManager.NavigateTo($"/Login?redirectUri={returnUrl}", true);
+    }
+}

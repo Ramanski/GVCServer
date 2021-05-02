@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="ModelsLibrary.MsgModel">
+    <Position X="2" Y="1" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIAAAAAAAAAAAAhAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>MsgModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ModelsLibrary.PathModel">
+    <Position X="2" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAAAABAQAABAAAAAAAAAAQQAAQQAAAA=</HashCode>
+      <FileName>PathModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ModelsLibrary.PFclaimsModel">
+    <Position X="5.5" Y="1" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AIAAACAAAAAACAAAAAAAAAAAAAAAAQAAAAAQAAAAAAA=</HashCode>
+      <FileName>PFclaimsModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ModelsLibrary.Role">
+    <Position X="7.25" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAACAAAA=</HashCode>
+      <FileName>Role.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ModelsLibrary.TrainModel">
+    <Position X="3.75" Y="1" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAABAAgAgJAAAAAAAHAAAAAAAAAAAEAAAAAAAA=</HashCode>
+      <FileName>TrainModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ModelsLibrary.UserInfo">
+    <Position X="7.25" Y="1" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAEAAAAAQAAAAAAAACAAAQAAAAAAA=</HashCode>
+      <FileName>UserInfo.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ModelsLibrary.UserToken">
+    <Position X="3.75" Y="4" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAA=</HashCode>
+      <FileName>UserToken.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ModelsLibrary.WagonModel">
+    <Position X="5.5" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>IAAAAAAAAAJACAAAAAAAAAAAQAAAAAAEQACAAAAAAAA=</HashCode>
+      <FileName>WagonModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

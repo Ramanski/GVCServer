@@ -1,0 +1,77 @@
+﻿<div class="top-row navbar navbar-dark my-2">
+    <a class="navbar-brand" href=""><img src="/logo.png" style="margin-left: -15px; margin-top: -15px;"/></a>
+    <button class="navbar-toggler" @onclick="ToggleNavMenu">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <ul class="nav flex-column">
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="oi oi-home" aria-hidden="true"></span> Главная
+            </NavLink>
+        </li>
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="arrival">
+                <span class="oi oi-cloud-download" aria-hidden="true"></span> Прибытие
+            </NavLink>
+        </li>
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="departure">
+                <span class="oi oi-cloud-upload" aria-hidden="true"></span> Отправление
+            </NavLink>
+        </li>
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="paths">
+                <span class="oi oi-menu" aria-hidden="true"></span> Пути
+            </NavLink>
+        </li>
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="info">
+                <span class="oi oi-project" aria-hidden="true"></span> Справка
+            </NavLink>
+        </li>
+        <AuthorizeView Roles=@Role.Admin>
+            <Authorized>
+                @*<li class="nav-item px-3">
+                    <NavLink class="nav-link" href="updater">
+                        <span class="oi oi-plus" aria-hidden="true"></span> Обновление НСИ
+                    </NavLink>
+                </li>*@
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="register">
+                        <span class="oi oi-person" aria-hidden="true"></span> Новый пользователь
+                    </NavLink>
+                </li>
+            </Authorized>
+        </AuthorizeView>
+        <AuthorizeView>
+            <Authorized>
+                <li class="nav-item px-3 align-bottom">
+                <NavLink class="nav-link" href="Logout">
+                    <span class="oi oi-account-logout" aria-hidden="true">@context.User.Claims.Where(cl => cl.Type.Equals(System.Security.Claims.ClaimTypes.Name)).FirstOrDefault().Value</span>
+                </NavLink>
+                </li>
+            </Authorized>
+            <NotAuthorized>
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="Login">
+                        <span class="oi oi-account-login" aria-hidden="true"></span> Войти
+                    </NavLink>
+                </li>
+            </NotAuthorized>
+        </AuthorizeView>
+    </ul>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

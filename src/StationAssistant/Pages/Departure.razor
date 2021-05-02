@@ -1,0 +1,219 @@
+﻿@page "/departure"
+
+@using Microsoft.AspNetCore.Authentication.JwtBearer;
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Popups
+@inject StationAssistant.Services.NotificationService NotificationService
+@inject StationAssistant.Services.IGvcDataService GvcDataFetch
+@inject StationAssistant.Services.IStationDataService StationData
+@attribute [Authorize]
+
+    <SfDialog @bind-Visible="@ConfirmIsVisible" Width="400px" Target="#target" ShowCloseIcon="true" Header="@Title" Content="@Body">
+        <DialogButtons>
+            <DialogButton Content="Yes" IsPrimary="true" OnClick="(async() => await Depart())" />
+            <DialogButton Content="No" OnClick="(() => { ConfirmIsVisible = false; })" />
+        </DialogButtons>
+    </SfDialog>
+
+
+        <h3> Прогноз отправления поездов </h3>
+        <div class="row">
+
+            <div class="col-xs-6 col-sm-6 col-lg-12 col-md-12">
+                <SfButton Disabled="!TrainIsSelected" IsPrimary="true" IconCss="e-icons e-depart" OnClick="(async() => await Depart())">Отправить поезд</SfButton>
+
+                <SfButton Disabled="!TrainIsSelected" IsPrimary="false" IconCss="e-icons e-tgnl" OnClick="(() => ShowDetails())">Натурный лист</SfButton>
+
+                <SfButton Disabled="!TrainIsSelected" IsPrimary="false" IconCss="e-icons e-schedule-icon" OnClick="(async () => await onGetDepartureRoute())">Нитка ГДП</SfButton>
+
+                <SfButton Disabled="!TrainIsSelected" IsPrimary="false" IconCss="e-icons e-relocate" OnClick="(() => onOpenPath())">Перестановка состава</SfButton>
+            </div>
+        </div>
+        <div class="content-wrapper">
+                <TrainList @ref="departingList" trainList="departingTrains"IsSelected="@(() => { TrainIsSelected = true; })" 
+                           IsDeselected="@(() => { TrainIsSelected = false; })" AllowEditing="true" TrainParamsUpdated="@TrainParamsUpdated"/> 
+        </div>
+
+    @if((FormationSheetIsVisible || PathSelectorIsVisible)&& departingList.selectedTrain != null)
+    {
+        <ConfirmModal Title="@Title" DialogClose="onCloseModal" OverlayClick="onCloseModal" Width=@(FormationSheetIsVisible?"870":"550") Height="@(FormationSheetIsVisible?"80%":"180")" OKClick="onOK">
+            @if (FormationSheetIsVisible)
+            {
+                <FormationSheet trainIndex="@departingList.selectedTrain.Index"></FormationSheet>
+            }
+            else if (PathSelectorIsVisible)
+            {
+                <PathSelector @ref="pathSelector" selectedTrain="departingList.selectedTrain" isArriving="false" isDeparting="true"></PathSelector>
+            }
+        </ConfirmModal>
+    }
+
+    <style>
+        .e-play-icon::before {
+            content: '\e677';
+            font-size: 12px;
+        }
+    </style>
+
+
+@code {
+
+    PathSelector pathSelector;
+    TrainList departingList;
+    private List<TrainModel> departingTrains { get; set; }
+    private List<PathModel> paths { get; set; }
+    public bool TrainIsSelected { get; set; } = false;
+    private bool TrainListIsVisible { get; set; } = false;
+    private bool PathSelectorIsVisible { get; set; } = false;
+    private bool FormationSheetIsVisible { get; set; } = false;
+    private bool ConfirmIsVisible { get; set; } = false;
+    private string Title;
+    private string Body;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            departingTrains = await StationData.GetDepartingTrains();
+            TrainListIsVisible = true;
+        }
+        catch (Exception e)
+        {
+            if (e is HttpRequestException)
+            {
+                NotificationService.SetMessage(TypeNotification.Warning, e.Message);
+            }
+            else
+            {
+                NotificationService.SetMessage(TypeNotification.Error, $"Не удалось загрузить поезда");
+            }
+        }
+    }
+
+    private void ShowDetails()
+    {
+        if (departingList.selectedTrain == null)
+        {
+            NotificationService.SetMessage(TypeNotification.Info, "Выберите поезд из списка");
+            return;
+        }
+        Title = "Натурный лист поезда " + departingList.selectedTrain.Index;
+        TrainListIsVisible = false;
+        FormationSheetIsVisible = true;
+        StateHasChanged();
+    }
+
+    void onCloseModal()
+    {
+        PathSelectorIsVisible = false;
+        TrainListIsVisible = true;
+    }
+
+    public async Task TrainParamsUpdated(TrainModel updatedModel)
+    {
+        try
+        {
+            await StationData.UpdateTrain(updatedModel);
+            NotificationService.SetMessage(TypeNotification.Success, $"Для поезда №{updatedModel.TrainNum} внесены корректировки");
+        }
+        catch (Exception)
+        {
+            NotificationService.SetMessage(TypeNotification.Error, $"Не удалось сохранить изменения");
+        }
+    }
+
+    async Task onOK()
+    {
+        if (PathSelectorIsVisible && pathSelector != null)
+        {
+            //departingList.selectedTrain.Path = await StationData.GetPathAsync(pathSelector.PathId);
+            try
+            {
+                var train = departingList.selectedTrain;
+                await StationData.RelocateTrain(train.Index, pathSelector.PathId);
+                train.Path = await StationData.GetPathAsync(pathSelector.PathId);
+                departingList.UpdateSelectedRow(train);
+                NotificationService.SetMessage(TypeNotification.Success, $"Перестановка поезда №{train.TrainNum} на путь отправления завершена");
+
+            }
+            catch (Exception e)
+            {
+                if (e is HttpRequestException)
+                {
+                    NotificationService.SetMessage(TypeNotification.Warning, e.Message);
+                }
+                else
+                {
+                    NotificationService.SetMessage(TypeNotification.Error, $"Не удалось загрузить поезда");
+                }
+            }
+        }
+        onCloseModal();
+    }
+
+    void onOpenPath()
+    {
+        var train = departingList.selectedTrain;
+        Title = "Выбор пути отправления " + (train.TrainNum == null ? train.TrainNum : train.Index);
+        PathSelectorIsVisible = true;
+        TrainListIsVisible = false;
+    }
+
+    void onPreDepart()
+    {
+        Title = $"Подтвердите действие";
+        Body = "Отправить поезд ?";
+        ConfirmIsVisible = true;
+    }
+
+    async Task onGetDepartureRoute()
+    {
+        try
+        {
+            var train = departingList.selectedTrain;
+            TrainModel trainModel = await StationData.SetDepartureRoute(train);
+            departingList.UpdateSelectedRow(trainModel);
+            NotificationService.SetMessage(TypeNotification.Success, $"Для поезда {trainModel.Index} установлен №{trainModel.TrainNum} и время отправления {trainModel.DateOper?.ToShortTimeString()}");
+        }
+        catch (Exception e)
+        {
+            if (e is HttpRequestException)
+            {
+                NotificationService.SetMessage(TypeNotification.Warning, e.Message);
+            }
+            else
+            {
+                NotificationService.SetMessage(TypeNotification.Error, $"Не удалось выполнить операцию");
+            }
+        }
+    }
+
+    private async Task Depart()
+    {
+        try
+        {
+            TrainModel train = departingList.selectedTrain;
+            if (train.TrainNum == null)
+            {
+                NotificationService.SetMessage(TypeNotification.Warning, "Не выбрана нитка отправления");
+            }
+            await StationData.TrainDeparture(train.Index);
+            departingList.DeleteTrain(train);
+            NotificationService.SetMessage(TypeNotification.Success, $"Операция по отправлению поезда №{train.TrainNum} проведена успешно");
+        }
+        catch (Exception e)
+        {
+            if (e is HttpRequestException || e is ArgumentException)
+            {
+                NotificationService.SetMessage(TypeNotification.Warning, e.Message);
+            }
+            else
+            {
+                NotificationService.SetMessage(TypeNotification.Error, $"Не удалось отправить поезд");
+            }
+        }
+        //todo
+        StateHasChanged();
+    }
+
+}

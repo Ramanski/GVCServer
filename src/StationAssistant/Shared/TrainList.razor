@@ -1,0 +1,101 @@
+﻿@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Spinner
+
+@{
+    var Tools = new List<string>() { "Update", "Cancel" };
+}
+<div id="sfGrid">
+    <SfGrid DataSource="@trainList" @ref="Grid" EnableVirtualization="false" AllowSelection="true" AllowSorting="true" Height="270" Toolbar="@(ShowToolbar?Tools:null)">
+        <GridEditSettings AllowAdding="true" AllowDeleting="true" AllowEditing="AllowEditing"></GridEditSettings>
+        <GridEvents OnLoad="DataBoundHandler" OnDataBound="OnDataBoundHandler" DataBound="DataBoundHandler" OnBeginEdit="()=> { ShowToolbar = true; }" OnActionComplete="ActionCompleted" RowSelected="RecordSelected" RowDeselected="DeselectRow" TValue="TrainModel"></GridEvents>
+        <GridColumns>
+            <GridColumn Field=@nameof(TrainModel.TrainNum) HeaderText="Номер" TextAlign="TextAlign.Left" Width="30" AllowEditing="true" ValidationRules="@(new ValidationRules { Number = true, Range = new double[] { 1, 9999 } })"></GridColumn>
+            <GridColumn Field=@nameof(TrainModel.Index) IsPrimaryKey="true" HeaderText="Индекс" Width="45" AllowEditing="false"></GridColumn>
+            <GridColumn Field=@nameof(TrainModel.Length) HeaderText="Длина" Width="30" AllowEditing="false"></GridColumn>
+            <GridColumn Field=@nameof(TrainModel.WeightBrutto) HeaderText="Вес" Width="30" AllowEditing="false"></GridColumn>
+            @if (ShowDislAndOper)
+            {
+                <GridColumn Field=@nameof(TrainModel.Dislocation) HeaderText="Дислокация" Width="40" AllowEditing="false"></GridColumn>
+                <GridColumn Field=@nameof(TrainModel.LastOperation) HeaderText="Операция" Width="35" AllowEditing="false"></GridColumn>
+            }
+            <GridColumn Field=@nameof(TrainModel.DateOper) Format="HH:mm" HeaderText="Время" Width="30" AllowEditing="true" EditType="EditType.DateTimePickerEdit"></GridColumn>
+            <GridColumn Field="Path.Area" HeaderText="Парк" Width="45" AllowEditing="false"></GridColumn>
+            <GridColumn Field="Path.PathNum" HeaderText="Путь" Width="20" AllowEditing="false"></GridColumn>
+        </GridColumns>
+    </SfGrid>
+</div>
+    <SfSpinner @ref="SpinnerObj" Target="#sfGrid"></SfSpinner>
+
+@code {
+    SfSpinner SpinnerObj;
+    [Parameter] public List<TrainModel> trainList { get; set; }
+    [Parameter] public bool ShowDislAndOper { get; set; } = false;
+    [Parameter] public bool AllowEditing { get; set; } = false;
+    [Parameter] public EventCallback IsSelected { get; set; }
+    [Parameter] public EventCallback IsDeselected { get; set; }
+    [Parameter] public EventCallback<TrainModel> TrainParamsUpdated { get; set; }
+    private bool ShowToolbar = false;
+    private string Target { get; set; } = "#sfGrid";
+    public TrainModel selectedTrain;
+    private int selectedRow;
+    SfGrid<TrainModel> Grid;
+
+    public async Task RecordSelected(RowSelectEventArgs<TrainModel> args)
+    {
+        selectedRow = (int)args.RowIndex;
+        selectedTrain = trainList[selectedRow];
+        await IsSelected.InvokeAsync(args);
+    }
+
+    public void UpdateSelectedRow(TrainModel trainModel)
+    {
+        Grid.UpdateRow(selectedRow, trainModel);
+    }
+
+    public async Task DeselectRow()
+    {
+        selectedTrain = null;
+        //await Grid.ClearRowSelection();
+        await Grid.ClearSelection();
+        await IsDeselected.InvokeAsync(null);
+    }
+
+    public void OnDataBoundHandler(BeforeDataBoundArgs<TrainModel> args)
+    {
+        SpinnerObj.Show();
+        //SpinnerObj.ShowSpinner(Target);
+    }
+
+    public void DataBoundHandler(object args)
+    {
+        SpinnerObj.Hide();
+        //SpinnerObj.HideSpinner(Target);
+    }
+
+    public void ActionCompleted(ActionEventArgs<TrainModel> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            TrainParamsUpdated.InvokeAsync(args.Data);
+            ShowToolbar = false;
+        }
+    }
+
+    public void AddTrain(TrainModel train)
+    {
+        //this.trainList.Add(train);
+        Grid.AddRecord(train);
+    }
+
+    public async Task StateChanged()
+    {
+        await Grid.CallStateHasChangedAsync();
+        StateHasChanged();
+    }
+
+    public void DeleteTrain(TrainModel train)
+    {
+        //trainList.Remove(train);
+        Grid.DeleteRecord();
+    }
+}

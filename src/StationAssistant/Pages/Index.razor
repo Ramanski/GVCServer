@@ -1,0 +1,164 @@
+﻿@page "/"
+@using StationAssistant.Data.Entities;
+@using Syncfusion.Blazor.Cards;
+@inject StationAssistant.Services.NotificationService NotificationService
+@inject StationAssistant.Services.IStationDataService StationDataService
+@inject AuthenticationStateProvider AuthState
+@attribute [AllowAnonymous]
+
+<AuthorizeView>
+    <Authorized>
+        <h5>Вход осущствлен в роли "@context.User.Claims.Where(cl => cl.Type == System.Security.Claims.ClaimTypes.Role).FirstOrDefault()?.Value"</h5>
+    </Authorized>
+    <NotAuthorized>
+        <h5>Вы вошли как "анонимный пользователь". Доступ к разделам ограничен.</h5>
+    </NotAuthorized>
+</AuthorizeView>
+
+
+<div class="row">
+    <div class="col-6 p-2">
+        <SfCard>
+            <CardHeader><strong>Прибытие поездов</strong></CardHeader>
+            <CardContent>
+                <table>
+                    <tr>
+                        <td>Поездов прибыло:</td>
+                        <td><strong>@(arrivedTrains == null? 0: arrivedTrains.Count())</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Вагонов прибыло:</td>
+                        <td><strong>@(arrivedTrains == null? 0: arrivedTrains.Sum(t => t.Length))</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Общий вес:</td>
+                        <td><strong>@(arrivedTrains == null? 0: arrivedTrains.Sum(t=>t.WeightBrutto))</strong> тонн</td>
+                    </tr>
+                </table>
+            </CardContent>
+            <CardFooter>
+                <NavLink class="btn-info" href="arrival">
+                    Перейти к прибытию
+                </NavLink>
+            </CardFooter>
+        </SfCard>
+    </div>
+    <div class="col-6 p-2">
+        <SfCard>
+            <CardHeader><strong>Отправление поездов</strong></CardHeader>
+            <CardContent>
+                <table>
+                    <tr>
+                        <td>Поездов сформировано:</td>
+                        <td><strong>@(departingTrains == null? 0: departingTrains.Count())</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Вагонов сформировано:</td>
+                        <td><strong>@(departingTrains == null? 0: departingTrains.Sum(t => t.Length))</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Общий вес:</td>
+                        <td><strong>@(departingTrains == null? 0: departingTrains.Sum(t=>t.WeightBrutto)/10) тонн</strong></td>
+                    </tr>
+                </table>
+            </CardContent>
+            <CardFooter>
+                <NavLink class="btn btn-primary" href="departure">
+                    Перейти к отправлению
+                </NavLink>
+            </CardFooter>
+        </SfCard>
+    </div>
+</div>
+<div class="row">
+    <div class="col-6 p-2">
+        <SfCard>
+            <CardHeader><strong>Парки путей</strong></CardHeader>
+            <CardContent>
+                @if (paths != null)
+                {
+                    <table>
+                        @foreach (string area in paths.Select(p => p.Area).Distinct())
+                        {
+                            <tr>
+                                <td>@area.Trim():</td>
+                                <td><strong>@paths.Where(p => p.AnyTrain && p.Area == area).Count()</strong> из @paths.Where(p => p.Area == area).Count() путей занято </td>
+                            </tr>
+                        }
+                    </table>
+                }
+            </CardContent>
+            <CardFooter>
+                <NavLink class="btn btn-primary" href="paths">
+                    Перейти к вагонам на путях
+                </NavLink>
+            </CardFooter>
+        </SfCard>
+    </div>
+    <div class="col-6 p-2">
+        <SfCard>
+            <CardHeader><strong>Накопление</strong></CardHeader>
+            <CardContent>
+                @if (directions != null)
+                {
+                    <table>
+                        @{var tracks = directions.Select(d => d.Track).Distinct();
+                            foreach (string track in tracks)
+                            {
+                                var directionStations = directions.Where(d => d.Track == track).Select(d => d.StationDestination);
+                                var vagonsToDirection = vagons.Where(v => directionStations.Contains(v.PlanForm) && v.TrainIndex == null);
+                                <tr>
+                                    <td>@track:</td>
+                                    <td><strong>@(vagonsToDirection == null ? 0 : vagonsToDirection.Count())</strong> (порожних @(vagonsToDirection == null ? 0 : vagonsToDirection.Where(v => v.WeightNetto == 0).Count()))</td>
+                                </tr>
+                            }
+                        }
+                    </table>
+                }
+            </CardContent>
+            <CardFooter>
+                <NavLink class="btn btn-primary" href="paths">
+                    Перейти накоплению на путях
+                </NavLink>
+            </CardFooter>
+        </SfCard>
+    </div>
+</div>
+<style>
+    .e-card .e-card-content {
+        font-size: 18px;
+        line-height: normal;
+        padding: 12px;
+        color: black;
+    }
+
+    .e-card-header{
+        font-size: 16px;
+        line-height: normal;
+        color: chocolate;
+    }
+</style>
+
+@code {
+
+    List<TrainModel> arrivedTrains;
+    List<TrainModel> departingTrains;
+    List<Vagon> vagons;
+    List<PathModel> paths;
+    //   string[] areas;
+    Direction[] directions;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var trains = await StationDataService.GetAllTrainsAsync();
+        if (trains != null)
+        {
+            arrivedTrains = trains.Where(t => t.Index.Substring(9, 4) == "1613").ToList();
+            departingTrains = trains.Where(t => t.Index.Substring(0, 4) == "1613").ToList();
+        }
+        //areas = await StationDataService.GetAreasAsync();
+        paths = await StationDataService.GetPaths();
+        directions = await StationDataService.GetDirections();
+        vagons = await StationDataService.GetVagons();
+    }
+}
