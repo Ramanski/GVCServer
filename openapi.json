@@ -292,10 +292,21 @@
 						"minimum":1,
 						"maximum":99
 					},
+                    "ordinal":{
+						"type":"integer",
+						"minimum":1,
+						"maximum":999
+					},
 					"index":{
 						"type":"string"
 					},
 					"dislocation":{
+						"type":"string"
+					},
+                    "formStation":{
+						"type":"string"
+					},
+                    "destinationStation":{
 						"type":"string"
 					},
 					"length":{
@@ -318,9 +329,17 @@
 						"format":"date-time"
 					}
 				},
-				"example":{
-					"id": ""
-				}
+				"example": {
+                    "id": "55c2dbaa-7fd5-4789-858b-4bca03d01e48",
+                    "kind": 30,
+                    "num": "2842",
+                    "formStation": "162900",
+                    "ordinal": 4,
+                    "destinationStation": "161306",
+                    "dateOper": "2021-05-02T21:05:00+03:00",
+                    "length": 61,
+                    "weightBrutto": 4359
+                }
 			},
 			"MsgModel":{
 				"type":"object",
