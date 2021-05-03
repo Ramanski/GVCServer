@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using GVCServer.Data.Entities;
@@ -42,8 +43,8 @@ namespace GVCServer.Controllers
         [HttpGet("{trainId}")]
         public async Task<ActionResult<TrainModel>> GetTrainInfo(string trainId)
         {
-            TrainModel trainModel = await _trainRepository.GetTrainModelAsync(trainId);
-            return (trainModel == null) ? NotFound() : trainModel;
+            TrainModel trainModel = await _trainRepository.GetActualTrainAsync(Guid.Parse(trainId));
+            return (trainModel == null) ? NoContent() : trainModel;
         }
 
         [HttpPost]
@@ -65,9 +66,5 @@ namespace GVCServer.Controllers
             await _trainRepository.UpdateTrainParams(trainModel);
             return Ok();
         }
-
-        /// TODO: Deprecated!!!
-        [HttpGet("next-ordinal")]
-        public async Task<ActionResult<short>> GetNextOrdinal() => await _trainRepository.GetNextOrdinal(station);
     }
 }

@@ -84,25 +84,23 @@
                                 <td>Мин</td>
                                 <td>Условная длина</td>
                                 <td>Масса брутто</td>
-                                <td>Индекс негабаритности</td>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
                                 <td>1</td>
-                                <td>@selectedTrainModel.DateOper?.Day</td>
-                                <td>@selectedTrainModel.DateOper?.Month</td>
-                                <td>@selectedTrainModel.DateOper?.Hour</td>
-                                <td>@selectedTrainModel.DateOper?.Minute</td>
+                                <td>@selectedTrainModel.DateOper.Day</td>
+                                <td>@selectedTrainModel.DateOper.Month</td>
+                                <td>@selectedTrainModel.DateOper.Hour</td>
+                                <td>@selectedTrainModel.DateOper.Minute</td>
                                 <td>@selectedTrainModel.Length</td>
                                 <td>@selectedTrainModel.WeightBrutto</td>
-                                <td>@selectedTrainModel.Oversize</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             }
-            <SfGrid DataSource="@selectedTrainModel.Vagons" EnableVirtualization="false" AllowSorting="true">
+            <SfGrid DataSource="@selectedTrainModel.Wagons" EnableVirtualization="false" AllowSorting="true">
                 <GridColumns>
                     <GridColumn Field=@nameof(WagonModel.SequenceNum) HeaderText="№" Width="25"></GridColumn>
                     <GridColumn Field=@nameof(WagonModel.Num) HeaderText="Номер" TextAlign="TextAlign.Left" IsPrimaryKey="true" Width="60"></GridColumn>
@@ -245,7 +243,7 @@
 
     void onOpenList()
     {
-        TitleModal = "Телеграмма-натурный лист поезда №" + selectedTrainModel.TrainNum;
+        TitleModal = "Телеграмма-натурный лист поезда №" + selectedTrainModel.Num;
         TrainListVisible = true;
     }
 
@@ -261,7 +259,7 @@
                     var train = arrivingList.selectedTrain;
                     train.Path = await StationData.GetPathAsync(pathSelector.PathId);
                     arrivingList.UpdateSelectedRow(train);
-                    NotificationService.SetMessage(TypeNotification.Success, $"Путь прибытия для поезда №{selectedTrainModel.TrainNum} установлен");
+                    NotificationService.SetMessage(TypeNotification.Success, $"Путь прибытия для поезда №{selectedTrainModel.Num} установлен");
                 }
                 else
                 {
@@ -269,7 +267,7 @@
                     await StationData.RelocateTrain(selectedTrainModel.Index, pathSelector.PathId);
                     train.Path = await StationData.GetPathAsync(pathSelector.PathId);
                     arrivedList.UpdateSelectedRow(train);
-                    NotificationService.SetMessage(TypeNotification.Success, $"Перестановка поезда №{selectedTrainModel.TrainNum} на другой путь завершена");
+                    NotificationService.SetMessage(TypeNotification.Success, $"Перестановка поезда №{selectedTrainModel.Num} на другой путь завершена");
                 }
             }
             catch (Exception)
@@ -289,7 +287,7 @@
             return;
         }
         ShowArrivingPathsOnly = ShowOnlyArriving;
-        TitleModal = $"Выбор пути для поезда {selectedTrainModel.TrainNum}";
+        TitleModal = $"Выбор пути для поезда {selectedTrainModel.Num}";
         PathSelectorVisible = true;
     }
 
@@ -316,7 +314,7 @@
             selectedTrainModel.DateOper = DateTime.Now;
             arrivedList.AddTrain(selectedTrainModel);
             await StationData.UpdatePathOccupation(selectedTrainModel.Path.Id);
-            NotificationService.SetMessage(TypeNotification.Success, $"Операция по прибытию поезда №{selectedTrainModel.TrainNum} завершена");
+            NotificationService.SetMessage(TypeNotification.Success, $"Операция по прибытию поезда №{selectedTrainModel.Num} завершена");
             await arrivingList.DeselectRow();
             await arrivedList.DeselectRow();
         }
@@ -337,7 +335,7 @@
     void onCancel()
     {
         Title = "Отмена прибытия поезда";
-        Body = $"Отменить ранее переданное сообщение о прибытии поезда {arrivedList.selectedTrain.TrainNum}?";
+        Body = $"Отменить ранее переданное сообщение о прибытии поезда {arrivedList.selectedTrain.Num}?";
         CancelConfirmVisible = true;
     }
 
@@ -361,7 +359,7 @@
             await arrivedList.DeselectRow();
             await arrivingList.DeselectRow();
             await StationData.UpdatePathOccupation(train.Path.Id);
-            NotificationService.SetMessage(TypeNotification.Success, $"Операция по отмене прибытия поезда №{train.TrainNum} проведена успешно");
+            NotificationService.SetMessage(TypeNotification.Success, $"Операция по отмене прибытия поезда №{train.Num} проведена успешно");
         }
         catch (Exception e)
         {
@@ -382,7 +380,7 @@
         {
             await GvcDataFetch.SendDisbanding(arrivedList.selectedTrain.Index, DateTime.Now);
             await StationData.DisbandTrain(arrivedList.selectedTrain);
-            NotificationService.SetMessage(TypeNotification.Success, $"Операция по расформированию поезда №{arrivedList.selectedTrain.TrainNum} завершена");
+            NotificationService.SetMessage(TypeNotification.Success, $"Операция по расформированию поезда №{arrivedList.selectedTrain.Num} завершена");
             arrivedList.DeleteTrain(arrivedList.selectedTrain);
         }
         catch (Exception e)

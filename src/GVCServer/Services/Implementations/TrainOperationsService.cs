@@ -37,6 +37,7 @@ namespace GVCServer.Repositories
             var affected = await _context.SaveChangesAsync();
             _logger.LogInformation($"Saved {affected} of 1 records");
         }
+
         public async Task ProcessTrain(Guid trainId, string station, DateTime timeOper, string operationCode)
         {
             _logger.LogInformation($"Processing operation {operationCode} for train {trainId}");
@@ -56,6 +57,7 @@ namespace GVCServer.Repositories
             var affected = await _context.SaveChangesAsync();
             _logger.LogInformation($"Saved {affected} of 1 record");
         }
+
         public async Task CorrectComposition(Guid trainId, DateTime timeOper, string station)
         {
             OpTrain correctOperation = new OpTrain()
@@ -75,6 +77,7 @@ namespace GVCServer.Repositories
 
             await UpdateTrainParameters(trainId);
         }
+
         public async Task UpdateTrainParameters(Guid trainId)
         {
             var train = await _context.Train.FindAsync(trainId);
@@ -97,6 +100,7 @@ namespace GVCServer.Repositories
             var affected = await _context.SaveChangesAsync();
             _logger.LogInformation($"Saved {affected} of 1 record");
         }
+
         public async Task DeleteLastTrainOperaion(string trainIndex, string operationCode)
         {
             var trainModel = await _context.TrainModels.Where(t => t.Index == trainIndex).FirstOrDefaultAsync();

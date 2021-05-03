@@ -23,7 +23,6 @@ namespace GVCServer.Data
 
             this.CreateMap<TrainModel, Train>()
                 .ForMember(t => t.Uid, m => m.MapFrom(tm => tm.Id))
-                .ForMember(t => t.Ordinal, m => m.MapFrom(tl => short.Parse(tl.Index.Substring(5, 3))))
                 .ForMember(t => t.FormTime, m => m.MapFrom(tm => tm.DateOper))
                 .ForMember(t => t.TrainKindId, m => m.MapFrom(tm => tm.Kind));
         }

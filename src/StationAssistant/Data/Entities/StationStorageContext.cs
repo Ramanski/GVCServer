@@ -110,7 +110,7 @@ namespace StationAssistant.Data.Entities
                     .IsUnicode(false)
                     .IsFixedLength();
 
-                entity.Property(e => e.TrainNum)
+                entity.Property(e => e.Num)
                     .HasMaxLength(4)
                     .IsUnicode(false)
                     .IsFixedLength();

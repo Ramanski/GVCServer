@@ -39,7 +39,7 @@ namespace StationAssistant.Services
         public Task SendTGNL(TrainModel train);
     }
 
-    public class GvcDataService //: IGvcDataService
+    public class GvcDataService : IGvcDataService
     {
         private HttpClient _client;
         private readonly StationStorageContext _context;
@@ -83,10 +83,11 @@ namespace StationAssistant.Services
             return await httpService.Post<List<string[]>>("NSI/PF", destinations);
         }
 
+        //TODO: Change to delete action
         public async Task CancelOperation(string index, string operCode)
         {
-            CancelMsg cancelMsg = new CancelMsg(index, operCode);
-            await httpService.Post<object>("Train", cancelMsg);
+            ConsistList cancelMsg = new ConsistList();
+            await httpService.Delete<object>("Train", cancelMsg);
         }
 
         public async Task SendDisbanding(string index, DateTime timeDisbanded)
@@ -123,8 +124,13 @@ namespace StationAssistant.Services
 
         public async Task SendTGNL(TrainModel trainModel)
         {
-            ConsistList consistList = new ConsistList(trainModel, DateTime.Now);
+            ConsistList consistList = new ConsistList(OperationCode.TrainComposition, trainModel, DateTime.Now);
             await httpService.Post<object>("Train", consistList);
+        }
+
+        public Task CancelOperation(string index, short msgCode)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace GVCServer.Repositories
 {
-    public class GuideRepository: IGuideRepository
+    public class GuideRepository
     {
         private readonly IVCStorageContext _context;
 

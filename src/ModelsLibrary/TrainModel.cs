@@ -21,6 +21,8 @@ namespace ModelsLibrary
         public short Length { get; set; }
         public int WeightBrutto { get; set; }
         public IEnumerable<WagonModel> Wagons {get;set;}
+        [JsonIgnore]
+        public PathModel Path { get; set; }
 
         public override string ToString()
         {

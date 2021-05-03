@@ -47,7 +47,7 @@ namespace GVCServer
 
             services.AddAutoMapper(typeof(Startup));
             services.AddScoped<TrainRepository>();
-            services.AddScoped<IGuideRepository, GuideRepository>();
+            services.AddScoped<GuideRepository>();
             services.AddScoped<WagonOperationsService>();
             services.AddScoped<TrainOperationsService>();
 

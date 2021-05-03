@@ -29,7 +29,7 @@ else
     if (TrainListIsVisible)
     {
         <ConfirmModal Title="Натурный лист" DialogClose="(() => TrainListIsVisible = false)" OverlayClick="(() => TrainListIsVisible = false)" OKButtonName="ОК" OKClick="(() => TrainListIsVisible = false)">
-            <SfGrid DataSource="targetTrainModel.Vagons" EnableVirtualization="false" AllowSorting="true" TValue="WagonModel">
+            <SfGrid DataSource="targetTrainModel.Wagons" EnableVirtualization="false" AllowSorting="true" TValue="WagonModel">
                 <GridColumns>
                     <GridColumn Field=@nameof(WagonModel.SequenceNum) HeaderText="№" Width="25"></GridColumn>
                     <GridColumn Field=@nameof(WagonModel.Num) HeaderText="Номер" TextAlign="TextAlign.Left" IsPrimaryKey="true" Width="50"></GridColumn>
@@ -216,7 +216,7 @@ else
     public async Task OnRelocateTrain()
     {
         await StationData.RelocateTrain(targetTrainModel.Index, pathSelector.PathId);
-        NotificationService.SetMessage(TypeNotification.Success, $"Перестановка поезда №{targetTrainModel.TrainNum} на другой путь завершена");
+        NotificationService.SetMessage(TypeNotification.Success, $"Перестановка поезда №{targetTrainModel.Num} на другой путь завершена");
         this.UpdateState();
     }
 

@@ -11,7 +11,7 @@ namespace StationAssistant.Data.Entities
         }
 
         public string TrainIndex { get; set; }
-        public string TrainNum { get; set; }
+        public string Num { get; set; }
         public string FormStation { get; set; }
         public short Ordinal { get; set; }
         public string DestinationStation { get; set; }

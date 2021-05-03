@@ -72,7 +72,7 @@ namespace StationAssistant
 
             // ������, ��� ������ �������� ���
             services.AddScoped<INSIUpdateService, NsiUpdateService>();
-            //services.AddScoped<IGvcDataService, GvcDataService>();
+            services.AddScoped<IGvcDataService, GvcDataService>();
             services.AddScoped<IStationDataService, StationDataService>();
             services.AddScoped<NotificationService>();
             services.AddAutoMapper(typeof(Startup));

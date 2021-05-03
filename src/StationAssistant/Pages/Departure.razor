@@ -114,7 +114,7 @@
         try
         {
             await StationData.UpdateTrain(updatedModel);
-            NotificationService.SetMessage(TypeNotification.Success, $"Для поезда №{updatedModel.TrainNum} внесены корректировки");
+            NotificationService.SetMessage(TypeNotification.Success, $"Для поезда №{updatedModel.Num} внесены корректировки");
         }
         catch (Exception)
         {
@@ -133,7 +133,7 @@
                 await StationData.RelocateTrain(train.Index, pathSelector.PathId);
                 train.Path = await StationData.GetPathAsync(pathSelector.PathId);
                 departingList.UpdateSelectedRow(train);
-                NotificationService.SetMessage(TypeNotification.Success, $"Перестановка поезда №{train.TrainNum} на путь отправления завершена");
+                NotificationService.SetMessage(TypeNotification.Success, $"Перестановка поезда №{train.Num} на путь отправления завершена");
 
             }
             catch (Exception e)
@@ -154,7 +154,7 @@
     void onOpenPath()
     {
         var train = departingList.selectedTrain;
-        Title = "Выбор пути отправления " + (train.TrainNum == null ? train.TrainNum : train.Index);
+        Title = "Выбор пути отправления " + (train.Num == null ? train.Num : train.Index);
         PathSelectorIsVisible = true;
         TrainListIsVisible = false;
     }
@@ -173,7 +173,7 @@
             var train = departingList.selectedTrain;
             TrainModel trainModel = await StationData.SetDepartureRoute(train);
             departingList.UpdateSelectedRow(trainModel);
-            NotificationService.SetMessage(TypeNotification.Success, $"Для поезда {trainModel.Index} установлен №{trainModel.TrainNum} и время отправления {trainModel.DateOper?.ToShortTimeString()}");
+            NotificationService.SetMessage(TypeNotification.Success, $"Для поезда {trainModel.Index} установлен №{trainModel.Num} и время отправления {trainModel.DateOper.ToShortTimeString()}");
         }
         catch (Exception e)
         {
@@ -193,13 +193,13 @@
         try
         {
             TrainModel train = departingList.selectedTrain;
-            if (train.TrainNum == null)
+            if (train.Num == null)
             {
                 NotificationService.SetMessage(TypeNotification.Warning, "Не выбрана нитка отправления");
             }
             await StationData.TrainDeparture(train.Index);
             departingList.DeleteTrain(train);
-            NotificationService.SetMessage(TypeNotification.Success, $"Операция по отправлению поезда №{train.TrainNum} проведена успешно");
+            NotificationService.SetMessage(TypeNotification.Success, $"Операция по отправлению поезда №{train.Num} проведена успешно");
         }
         catch (Exception e)
         {
