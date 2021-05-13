@@ -25,10 +25,6 @@ namespace GVCServer.Models
             Logger = logger;
         }
 
-        public HttpResponseExceptionFilter()
-        {
-        }
-
         public void OnActionExecuting(ActionExecutingContext context) 
         {
         }
@@ -48,7 +44,8 @@ namespace GVCServer.Models
                 }
                 else
                 {
-                    Logger.LogError(context.Exception,"Unexpected error on action executed");
+                    Logger.LogError(context.Exception.Message);
+                    context.Result = new BadRequestResult();
                     context.ExceptionHandled = true;
                 }
             }
