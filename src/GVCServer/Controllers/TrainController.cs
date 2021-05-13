@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -40,10 +41,28 @@ namespace GVCServer.Controllers
             return (comingTrains.Length == 0) ? NoContent() : comingTrains;
         }
 
-        [HttpGet("{trainId}")]
-        public async Task<ActionResult<TrainModel>> GetTrainInfo(string trainId)
+        [HttpGet("example")]
+        public ActionResult<ConsistList> GetExample()
         {
-            TrainModel trainModel = await _trainRepository.GetActualTrainAsync(Guid.Parse(trainId));
+            List<WagonModel> wagons = new List<WagonModel>(){ new WagonModel(){Num = "12345678", WeightNetto = 1234}};
+            TrainModel model = new TrainModel(){
+                                    Id = new Guid(), 
+                                    DestinationStation = "161306", 
+                                    Dislocation = "140007", 
+                                    FormStation = "140007", 
+                                    Kind = 20,
+                                    Num = 1200,
+                                    WeightBrutto = 3624,
+                                    Wagons = wagons
+                                    };
+            
+            return Ok(new ConsistList(OperationCode.TrainComposition, model, DateTime.Now));
+        }
+
+        [HttpGet("{trainId}")]
+        public async Task<ActionResult<TrainModel>> GetTrainInfo(Guid trainId)
+        {
+            TrainModel trainModel = await _trainRepository.GetActualTrainAsync(trainId);
             return (trainModel == null) ? NoContent() : trainModel;
         }
 

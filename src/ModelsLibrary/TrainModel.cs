@@ -9,7 +9,7 @@ namespace ModelsLibrary
     {
         public Guid Id {get; set;}
         public byte Kind { get; set; }
-        public string Num { get; set; }
+        public short Num { get; set; }
         public string FormStation { get; set; }
         public short Ordinal { get; set; }
         public string DestinationStation { get; set; }

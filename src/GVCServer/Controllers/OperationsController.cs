@@ -23,7 +23,7 @@ namespace GVCServer.Controllers
     [Route("{trainIndex}/operations")]
     public class OperationsController : ControllerBase
     {
-        private readonly ITrainRepository _trainRepository;
+        private readonly TrainRepository _trainRepository;
         private readonly WagonOperationsService wagonOperationsService;
         private readonly TrainOperationsService trainOperationsService;
 
@@ -31,7 +31,7 @@ namespace GVCServer.Controllers
         private readonly ILogger<TrainController> _logger;
 
         public OperationsController(ILogger<TrainController> logger, 
-                                    ITrainRepository trainRepository, 
+                                    TrainRepository trainRepository, 
                                     WagonOperationsService wagonOperationsService,
                                     TrainOperationsService trainOperationsService)
         {
@@ -42,10 +42,10 @@ namespace GVCServer.Controllers
             station = User?.Claims.Where(cl => cl.Type == ClaimTypes.Locality).FirstOrDefault()?.Value;
         }
 
-        [HttpPost("move")]
+        [HttpPost]
         public async Task<ActionResult> AddMovingOperation(MovingMsg movingMsg)
         {
-            var train = await _trainRepository.FindTrain(movingMsg.TrainIndex);
+            var train = await _trainRepository.FindTrain(Guid.Parse(movingMsg.TrainId));
             if (movingMsg.Code.Equals(OperationCode.TrainDisbanding))
             {
                 await wagonOperationsService.DisbandWagons(train, station, movingMsg.DatOper);

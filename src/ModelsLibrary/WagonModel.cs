@@ -11,7 +11,7 @@ namespace ModelsLibrary
         public short Tvag { get; set; }
         public string Destination { get; set; }
         public short WeightNetto { get; set; }
-        public byte Mark { get; set; }
+        public string Mark { get; set; }
 
         public TrainModel Train {get; set;}
     }

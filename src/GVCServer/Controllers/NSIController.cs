@@ -17,10 +17,10 @@ namespace GVCServer.Controllers
     [ApiController]
     public class NSIController : ControllerBase
     {
-        private readonly IGuideRepository _guideRepository;
+        private readonly GuideRepository _guideRepository;
         private string station { get; set; }
 
-        public NSIController(IGuideRepository guideRepository)
+        public NSIController(GuideRepository guideRepository)
         {
             _guideRepository = guideRepository;
             station = "161306";//User?.Claims.Where(cl => cl.Type == ClaimTypes.Locality).FirstOrDefault()?.Value;

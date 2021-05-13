@@ -41,20 +41,21 @@ namespace ModelsLibrary
                                                                 OperationCode.AdditionVagons, 
                                                                 OperationCode.CorrectingComposition
 																};
-        public CorrectMsg(string correctionOper, List<WagonModel> wagonList, DateTime timeCorrected)
+        public CorrectMsg(string correctionOper, Guid trainId, List<string> wagonList, DateTime timeCorrected)
         {
             if (!CorrectionOperations.Exists(oper => correctionOper.Equals(oper)))
                 throw new ArgumentOutOfRangeException("Недопустимый тип сообщения для данной операции");
             Code = correctionOper;
             WagonsList = wagonList;
             DatOper = timeCorrected;
+            TrainId = trainId.ToString();
         }
         [JsonInclude]
         public override string Code {get; protected set;}
         [JsonInclude]
-        public List<WagonModel> WagonsList { get; private set;}
+        public List<string> WagonsList { get; private set;}
         [JsonInclude]
-        public string TrainIndex { get; private set;}
+        public string TrainId { get; private set;}
         [JsonInclude]
         public override DateTime DatOper { get; protected set; }
     }
@@ -67,18 +68,18 @@ namespace ModelsLibrary
 															OperationCode.TrainDisbanding															
 															};
 
-        public MovingMsg(string movingCode, string trainIndex, DateTime timeMoved)
+        public MovingMsg(string movingCode, Guid trainId, DateTime timeMoved)
         {
             if (!MovingOperations.Exists(oper => movingCode.Equals(oper)))
                 throw new ArgumentOutOfRangeException("Недопустимый тип сообщения для данной операции");
             Code = movingCode;
-            TrainIndex = trainIndex;
+            TrainId = trainId.ToString();
             DatOper = timeMoved;
         }
         [JsonInclude]
         public override string Code { get; protected set; }
         [JsonInclude]
-        public string TrainIndex { get; private set;}
+        public string TrainId { get; private set;}
         [JsonInclude]
         public override DateTime DatOper { get; protected set;}
     }

@@ -39,7 +39,7 @@ namespace GVCServer
         public void ConfigureServices(IServiceCollection services)                                                   
         {
             services.AddControllers(options => 
-                options.Filters.Add(new HttpResponseExceptionFilter()))
+                options.Filters.Add<HttpResponseExceptionFilter>())
                     .AddJsonOptions(options =>
                     {
                         options.JsonSerializerOptions.IgnoreNullValues = true;

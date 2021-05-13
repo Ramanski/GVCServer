@@ -59,7 +59,7 @@ namespace GVCServer.Repositories
         {
             TrainModel[] trainModels = await _context.Train.Where(t => station.Equals(t.DestinationStation) && !t.Dislocation.Equals(station))
                                                  .Include(t => t.OpTrain)
-                                                    .ThenInclude(o => o.KopNavigation)
+                                                 //.Include(t => t.Schedule)
                                                  .Select(t => new TrainModel
                                                  {
                                                      Id = t.Uid,
@@ -68,25 +68,23 @@ namespace GVCServer.Repositories
                                                      FormStation = t.FormStation,
                                                      Ordinal = t.Ordinal,
                                                      DestinationStation = t.DestinationStation,
+                                                     Dislocation = t.OpTrain.OrderByDescending(t => t.Datop).First().SourceStation,
                                                      Length = t.Length,
+                                                     CodeOper = t.OpTrain.OrderByDescending(t => t.Datop).First().Kop,
                                                      WeightBrutto = t.WeightBrutto,
-                                                     DateOper = t.OpTrain.Where(o => (bool)o.LastOper).First().Datop
+                                                     DateOper = t.OpTrain.OrderByDescending(t => t.Datop).First().Datop
                                                  })
                                                  .ToArrayAsync();
-
-            foreach (TrainModel trainModel in trainModels)
-            {
-                StickScheduleTime(trainModel);
-            }
             return trainModels;
         }
 
+        // TODO: Call from client
         private async void StickScheduleTime(TrainModel trainModel)
         {
-            var timeToArrive = _context.Schedule
-                              .Where(s => s.TrainNum.ToString() == trainModel.Num)
+            var timeToArrive = await _context.Schedule
+                              .Where(s => s.TrainNum == trainModel.Num)
                               .Select(s => s.ArrivalTime)
-                              .FirstOrDefault();
+                              .FirstOrDefaultAsync();
             if (timeToArrive.HasValue)
             {
                 var dateTime = DateTime.Today.AddTicks(timeToArrive.Value.Ticks);
@@ -117,7 +115,23 @@ namespace GVCServer.Repositories
         }
 
         public async Task<TrainModel> GetActualTrainAsync(Guid trainId){
-            return await _context.TrainModels.Where(t => t.Id == trainId).FirstOrDefaultAsync();
+            var trainModel = await _context.TrainModels
+                                 .Where(t => t.Id == trainId).FirstOrDefaultAsync();
+            trainModel.Wagons = await _context.OpVag
+                                              .Include(v => v.NumNavigation)
+                                              .Where(t => t.TrainId == trainId )
+                                              .Select(wagon => new WagonModel(){
+                                                  Destination = wagon.Destination,
+                                                  Kind = wagon.NumNavigation.Kind,
+                                                  Ksob = wagon.NumNavigation.Ksob,
+                                                  Num = wagon.Num,
+                                                  Mark = wagon.Mark,
+                                                  SequenceNum = wagon.SequenceNum ?? 0,
+                                                  Tvag = wagon.NumNavigation.Tvag,
+                                                  WeightNetto = wagon.WeightNetto ?? 0
+                                              })
+                                              .ToListAsync();
+            return trainModel;
         }
     }
 }

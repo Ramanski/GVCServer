@@ -12,7 +12,7 @@ namespace GVCServer.Data.Entities
         }
 
         public Guid Uid { get; set; }
-        public string TrainNum { get; set; }
+        public short TrainNum { get; set; }
         public byte? TrainKindId { get; set; }
         public string FormStation { get; set; }
         public short Ordinal { get; set; }
@@ -27,6 +27,7 @@ namespace GVCServer.Data.Entities
 
         public virtual TrainKind TrainKind { get; set; }
         public virtual ICollection<OpTrain> OpTrain { get; set; }
+        public virtual ICollection<Schedule> Schedule { get; set; }
         public virtual ICollection<OpVag> OpVag { get; set; }
     }
 }

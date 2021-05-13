@@ -288,6 +288,10 @@ namespace GVCServer.Data.Entities
                     .HasForeignKey(d => d.DirectionId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Schedule_Direction");
+
+                // entity.HasOne(s => s.Train)
+                //         .WithMany(t => t.Schedule)
+                //         .HasForeignKey(s => s.TrainNum);
             });
 
             modelBuilder.Entity<Station>(entity =>
@@ -367,6 +371,10 @@ namespace GVCServer.Data.Entities
                     .WithMany(p => p.Train)
                     .HasForeignKey(d => d.TrainKindId)
                     .HasConstraintName("FK_Train_TrainKind");
+
+                // entity.HasMany(t => t.Schedule)
+                //         .WithOne(s => s.Train)
+                //         .HasForeignKey(t => t.TrainNum);
             });
 
             modelBuilder.Entity<TrainKind>(entity =>

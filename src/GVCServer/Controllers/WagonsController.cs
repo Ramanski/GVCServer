@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -19,12 +20,12 @@ namespace GVCServer.Controllers
     public class WagonsController : ControllerBase
     {
         private readonly ILogger<TrainController> logger;
-        private readonly ITrainRepository _trainRepository;
+        private readonly TrainRepository _trainRepository;
         private readonly WagonOperationsService wagonOperationsService;
 
         private string station { get; set; }
 
-        public WagonsController(ILogger<TrainController> logger, ITrainRepository trainRepository, WagonOperationsService wagonOperationsService)
+        public WagonsController(ILogger<TrainController> logger, TrainRepository trainRepository, WagonOperationsService wagonOperationsService)
         {
             this.logger = logger;
             this._trainRepository = trainRepository;
@@ -35,23 +36,21 @@ namespace GVCServer.Controllers
         [HttpPost]
         public async Task<ActionResult> AttachWagons(CorrectMsg correctMsg)
         {
-            await _trainRepository.CorrectVagons(correctMsg.TrainIndex, correctMsg.WagonsList, correctMsg.DatOper, station);
+            await wagonOperationsService.CorrectComposition(Guid.Parse(correctMsg.TrainId), correctMsg.WagonsList, correctMsg.DatOper, station);
             return Ok();
         }
 
         [HttpPut]
         public async Task<ActionResult> CorrectWagonsList(CorrectMsg correctMsg)
         {
-            await _trainRepository.CorrectVagons(correctMsg.TrainIndex, correctMsg.WagonsList, correctMsg.DatOper, station);
+            await wagonOperationsService.CorrectComposition(Guid.Parse(correctMsg.TrainId), correctMsg.WagonsList, correctMsg.DatOper, station);
             return Ok();
         }
 
         [HttpDelete]
         public async Task<ActionResult> DetachWagons(CorrectMsg correctMsg)
         {
-            var wagonNums = correctMsg.WagonsList.Select(w => w.Num).ToList();
-            var trainId = _trainRepository.FindTrain(correctMsg.TrainIndex).Result.Uid;
-            await wagonOperationsService.AddWagonOperations(trainId, OperationCode.DetachWagons, wagonNums, correctMsg.DatOper, station);
+            await wagonOperationsService.AddWagonOperations(Guid.Parse(correctMsg.TrainId), OperationCode.DetachWagons, correctMsg.WagonsList, correctMsg.DatOper, station);
             return Ok();
         }
     }

@@ -15,5 +15,6 @@ namespace GVCServer.Data.Entities
         public TimeSpan? DepartureTime { get; set; }
 
         public virtual Direction Direction { get; set; }
+        public virtual Train Train { get; set; }
     }
 }
