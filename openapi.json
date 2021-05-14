@@ -146,15 +146,15 @@
             }
         }
       },
-	  "/trains/{index}":{
+	  "/trains/{trainId}":{
         "get":{
             "summary":"Details about requested train",
             "operationId":"trainDetails",
 			"parameters":[
 				{
-					"name":"index",
+					"name":"trainId",
 					"in":"path",
-					"description":"Index of the train",
+					"description":"Guid of the train",
 					"required": true,
 					"schema":{
 						"type":"string"
@@ -225,6 +225,186 @@
 			}
 		}
 	  },    
+      "/{trainId}/operations":{
+        "post":{
+			"summary":"Add operations for the train",
+			"operationId":"AddMovingOperation",
+            "parameters":[
+				{
+					"name":"trainId",
+					"in":"path",
+					"description":"Guid of the train",
+					"required": true,
+					"schema":{
+						"type":"string"
+					},
+					"style":"simple"
+				}
+			],
+			"requestBody":{
+				"required": true,
+				"content":{
+						"application/json":{
+							"schema":{
+								"type": "array",
+								"items": {
+									"$ref":"#/components/schemas/MovingMsg"			
+								}
+							}
+						}
+				}
+			},
+			"responses":{
+               "200":{
+                   "description":"Operation added successfully"
+				},
+			   "default":{
+                  "description":"unexpected error",
+                  "content":{
+                     "application/json":{
+                        "schema":{
+                           "$ref":"#/components/schemas/Error"
+                        }
+                     }
+                  }
+               }
+            }
+		}
+      },
+      "/{trainId}/wagons":{
+        "post":{
+			"summary":"Attach wagons to the train",
+			"operationId":"AttachWagons",
+            "parameters":[
+				{
+					"name":"trainId",
+					"in":"path",
+					"description":"Guid of the train",
+					"required": true,
+					"schema":{
+						"type":"string"
+					},
+					"style":"simple"
+				}
+			],
+			"requestBody":{
+				"required": true,
+				"content":{
+						"application/json":{
+							"schema":{
+								"type": "array",
+								"items": {
+									"$ref":"#/components/schemas/CorrectMsg"			
+								}
+							}
+						}
+				}
+			},
+			"responses":{
+               "200":{
+                   "description":"Wagons attached successfully"
+				},
+			   "default":{
+                  "description":"unexpected error",
+                  "content":{
+                     "application/json":{
+                        "schema":{
+                           "$ref":"#/components/schemas/Error"
+                        }
+                     }
+                  }
+               }
+            }
+		},
+        "put":{
+			"summary":"Corrects consist of the train with attaching new wagons and detaching current wagons in the train",
+			"operationId":"CorrectWagonsList",
+            "parameters":[
+				{
+					"name":"trainId",
+					"in":"path",
+					"description":"Guid of the train",
+					"required": true,
+					"schema":{
+						"type":"string"
+					},
+					"style":"simple"
+				}
+			],
+			"requestBody":{
+				"required": true,
+				"content":{
+						"application/json":{
+							"schema":{
+								"type": "array",
+								"items": {
+									"$ref":"#/components/schemas/CorrectMsg"			
+								}
+							}
+						}
+				}
+			},
+			"responses":{
+               "200":{
+                   "description":"Wagons list corrected successfully"
+				},
+			   "default":{
+                  "description":"unexpected error",
+                  "content":{
+                     "application/json":{
+                        "schema":{
+                           "$ref":"#/components/schemas/Error"
+                        }
+                     }
+                  }
+               }
+            }
+		},
+        "delete":{
+			"summary":"Detaching current wagons in the train",
+			"operationId":"DetachWagons",
+            "parameters":[
+				{
+					"name":"trainId",
+					"in":"path",
+					"description":"Guid of the train",
+					"required": true,
+					"schema":{
+						"type":"string"
+					},
+					"style":"simple"
+				}
+			],
+			"requestBody":{
+				"required": true,
+				"content":{
+						"application/json":{
+							"schema":{
+								"type": "array",
+								"items": {
+									"$ref":"#/components/schemas/CorrectMsg"			
+								}
+							}
+						}
+				}
+			},
+			"responses":{
+               "200":{
+                   "description":"Wagons detached successfully"
+				},
+			   "default":{
+                  "description":"unexpected error",
+                  "content":{
+                     "application/json":{
+                        "schema":{
+                           "$ref":"#/components/schemas/Error"
+                        }
+                     }
+                  }
+               }
+            }
+		}
+      },
 	  "/nsi/train-kind":{
          "get":{
             "parameters":[
