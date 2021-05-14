@@ -327,6 +327,12 @@
 					"dateOper":{
 						"type":"string",
 						"format":"date-time"
+					}, 
+					"wagons":{
+						"type": "array",
+						"items":{
+							"$ref":"#/components/schemas/WagonModel"			
+						}
 					}
 				},
 				"example": {
@@ -340,6 +346,49 @@
                     "length": 61,
                     "weightBrutto": 4359
                 }
+			},
+			"WagonModel":{
+				"type":"object",
+				"required":[
+					"num",
+					"ksob",
+					"kind",
+					"weightNetto"
+				],
+				"properties":{
+					"num":{
+						"type":"string"
+					},
+					"sequenceNum":{
+						"type":"integer",
+						"minimum":1,
+						"maximum":255
+					},
+					"ksob":{
+						"type":"string"
+					},
+					"kind":{
+						"type":"integer",
+						"minimum":0,
+						"maximum":32767
+					},
+					"tvag":{
+						"type":"integer",
+						"minimum":1,
+						"maximum":32767
+					},
+                    "destination":{
+						"type":"string"
+					},
+					"weightNetto":{
+						"type":"integer",
+						"minimum":1,
+						"maximum":32767
+					},
+					"mark":{
+						"type":"string"
+					}
+				}
 			},
 			"MsgModel":{
 				"type":"object",
