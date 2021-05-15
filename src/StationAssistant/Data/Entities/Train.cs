@@ -10,7 +10,7 @@ namespace StationAssistant.Data.Entities
             Vagon = new HashSet<Vagon>();
         }
 
-        public string TrainIndex { get; set; }
+        public Guid Uid { get; set; }
         public string Num { get; set; }
         public string FormStation { get; set; }
         public short Ordinal { get; set; }

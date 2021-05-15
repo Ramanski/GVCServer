@@ -50,8 +50,8 @@ namespace StationAssistant.Pages
                 var authProps = new AuthenticationProperties
                 {
                     IsPersistent = true,
-                    //ExpiresUtc = DateTimeOffset.UtcNow.AddHours(15),
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddSeconds(30),
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(10),
+                    //ExpiresUtc = DateTimeOffset.UtcNow.AddSeconds(30),
                     RedirectUri = string.IsNullOrEmpty(redirectUri) ? Url.Content("~/") : redirectUri,
                 };
                 return Challenge(authProps, OpenIdConnectDefaults.AuthenticationScheme);

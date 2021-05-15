@@ -82,12 +82,11 @@ namespace StationAssistant.Data.Entities
 
             modelBuilder.Entity<Train>(entity =>
             {
-                entity.HasKey(e => e.TrainIndex);
+                entity.HasKey(e => e.Uid);
 
-                entity.Property(e => e.TrainIndex)
-                    .HasMaxLength(13)
-                    .IsUnicode(false)
-                    .IsFixedLength();
+                entity.Property(e => e.Uid)
+                    .HasColumnName("UID")
+                    .HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.DateOper).HasColumnType("datetime");
 
@@ -168,10 +167,7 @@ namespace StationAssistant.Data.Entities
 
                 entity.Property(e => e.SequenceNum).HasDefaultValueSql("((0))");
 
-                entity.Property(e => e.TrainIndex)
-                    .HasMaxLength(13)
-                    .IsUnicode(false)
-                    .IsFixedLength();
+                entity.Property(e => e.TrainId);
 
                 entity.Property(e => e.Tvag).HasColumnName("TVAG");
 
@@ -189,7 +185,7 @@ namespace StationAssistant.Data.Entities
 
                 entity.HasOne(d => d.TrainIndexNavigation)
                     .WithMany(p => p.Vagon)
-                    .HasForeignKey(d => d.TrainIndex)
+                    .HasForeignKey(d => d.TrainId)
                     .HasConstraintName("FK_Vagon_Train");
 
                 entity.HasOne(d => d.VagonKind)

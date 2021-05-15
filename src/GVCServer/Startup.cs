@@ -51,8 +51,10 @@ namespace GVCServer
             services.AddScoped<WagonOperationsService>();
             services.AddScoped<TrainOperationsService>();
 
-            services.AddDbContext<IVCStorageContext>(options =>
-                    options.UseSqlServer(Configuration.GetConnectionString("IVCStorage")));
+            services.AddDbContext<IVCStorageContext>(options => {
+                    options.EnableDetailedErrors();
+                    options.UseSqlServer(Configuration.GetConnectionString("IVCStorage"));
+                    });
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, conf =>

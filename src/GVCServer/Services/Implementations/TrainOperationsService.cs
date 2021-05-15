@@ -101,9 +101,9 @@ namespace GVCServer.Repositories
             _logger.LogInformation($"Saved {affected} of 1 record");
         }
 
-        public async Task DeleteLastTrainOperaion(string trainIndex, string operationCode)
+        public async Task DeleteLastTrainOperaion(Guid trainId, string operationCode)
         {
-            var trainModel = await _context.TrainModels.Where(t => t.Index == trainIndex).FirstOrDefaultAsync();
+            var trainModel = await _context.TrainModels.Where(t => t.Id == trainId).FirstOrDefaultAsync();
             var trainOperation = await _context.OpTrain
                                           .Where(o => o.TrainId == trainModel.Id && (bool)o.LastOper)
                                           .FirstOrDefaultAsync();

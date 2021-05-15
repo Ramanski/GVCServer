@@ -18,9 +18,9 @@ namespace StationAssistant.Services
 
         public Task UpdatePaths(string area);
 
-        public Task AddTrainAsync(string index, DateTime timeArrived, int pathId);
+        public Task AddTrainAsync(Guid trainId, DateTime timeArrived, int pathId);
 
-        public Task DeleteTrainAsync(string index);
+        public Task DeleteTrainAsync(Guid trainId);
 
         public Task<List<TrainModel>> GetAllTrainsAsync();
 
@@ -46,7 +46,7 @@ namespace StationAssistant.Services
 
         public Task RelocateTrain(string trainIndex, int pathId);
 
-        public Task TrainDeparture(string index);
+        public Task TrainDeparture(Guid trainId);
 
         public Task<List<PathModel>> GetAvailablePaths(TrainModel train, bool arriving, bool departing);
 
@@ -99,26 +99,18 @@ namespace StationAssistant.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task AddTrainAsync(string index, DateTime timeArrived, int pathId)
+        public async Task AddTrainAsync(Guid trainId, DateTime timeArrived, int pathId)
         {
-            TrainModel trainModel = await _igvcData.GetTrainInfo(index);
+            TrainModel trainModel = await _igvcData.GetTrainInfo(trainId);
 
             Train train = _imapper.Map<Train>(trainModel);
-            train.DestinationStation = _context.Station
-                                               .Where(s => s.Code.StartsWith(trainModel.Index.Substring(9, 4)))
-                                               .Select(s => s.Code)
-                                               .FirstOrDefault();
-            train.FormStation = _context.Station
-                                        .Where(s => s.Code.StartsWith(trainModel.Index.Substring(0, 4)))
-                                        .Select(s => s.Code)
-                                        .FirstOrDefault();
             train.PathId = pathId;
             train.DateOper = timeArrived;
 
             List<Vagon> vagons = _imapper.Map<List<Vagon>>(trainModel.Wagons);
             foreach (Vagon vagon in vagons)
             {
-                vagon.TrainIndex = train.TrainIndex;
+                vagon.TrainId = train.Uid;
                 vagon.PathId = pathId;
                 vagon.DateOper = timeArrived;
             }
@@ -130,8 +122,8 @@ namespace StationAssistant.Services
 
         public async Task UpdateTrain(TrainModel updatedModel)
         {
-            Train train = _context.Train.Find(updatedModel.Index);
-            train.Num = updatedModel.Num;
+            Train train = _context.Train.Find(updatedModel.Id);
+            train.Num = updatedModel.Num.ToString();
             train.ScheduleTime = updatedModel.DateOper;
             await _context.SaveChangesAsync();
         }
@@ -150,10 +142,10 @@ namespace StationAssistant.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteTrainAsync(string index)
+        public async Task DeleteTrainAsync(Guid trainId)
         {
             Train train = await _context.Train
-                                      .Where(t => t.TrainIndex.Equals(index))
+                                      .Where(t => t.Uid.Equals(trainId))
                                       .Include(t => t.Vagon)
                                       .FirstOrDefaultAsync();
             if (train != null)
@@ -311,7 +303,7 @@ namespace StationAssistant.Services
 
         public async Task<List<Vagon>> GetVagonsOfTrain(string trainIndex)
         {
-            List<Vagon> vagons = await _context.Vagon.Where(v => v.TrainIndex.Equals(trainIndex)).ToListAsync();
+            List<Vagon> vagons = await _context.Vagon.Where(v => v.TrainId.Equals(trainIndex)).ToListAsync();
 
             return vagons;
         }
@@ -338,20 +330,20 @@ namespace StationAssistant.Services
             await UpdatePathOccupation(newPath);
         }
 
-        public async Task TrainDeparture(string index)
+        public async Task TrainDeparture(Guid trainId)
         {
-            Train train = _context.Train.Find(index);
+            Train train = _context.Train.Find(trainId);
             bool pathIsDeparting = await _context.Path
                                                  .Where(p => train.PathId.Equals(p.Id))
                                                  .Select(p => p.Departure)
                                                  .SingleAsync();
             if (!pathIsDeparting)
                 throw new ArgumentException("Поезд не на пути отправления");
-            List<Vagon> vagons = await _context.Vagon.Where(v => v.TrainIndex.Equals(train.TrainIndex)).ToListAsync();
+            List<Vagon> vagons = await _context.Vagon.Where(v => v.TrainId.Equals(train.Uid)).ToListAsync();
             List<WagonModel> WagonModel = _imapper.Map<List<WagonModel>>(vagons);
             TrainModel TrainModel = _imapper.Map<TrainModel>(train);
             TrainModel.Wagons = WagonModel;
-            await _igvcData.SendDeparting(train.TrainIndex, DateTime.Now);
+            await _igvcData.SendDeparting(train.Uid, DateTime.Now);
             _context.RemoveRange(vagons);
             _context.Remove(train);
             await _context.SaveChangesAsync();
@@ -366,9 +358,8 @@ namespace StationAssistant.Services
 
         public async Task<List<PathModel>> GetAvailablePaths(TrainModel train, bool arriving = false, bool departing = false)
         {
-            List<PathModel> availablePaths;
-            IQueryable<Path> emptyPaths = _context.Path
-                                                  .Where(p => p.Occupation == 0 && !p.Main && p.Length >= train.Length);
+            var emptyPaths = _context.Path
+                                     .Where(p => p.Occupation == 0 && !p.Main && p.Length >= train.Length);
 
             if (arriving)
             {
@@ -379,19 +370,19 @@ namespace StationAssistant.Services
                 emptyPaths = emptyPaths.Where(p => p.Departure);
             }
 
-            if ((arriving || departing) && !string.IsNullOrEmpty(train.Num))
+            if ((arriving || departing) && !string.IsNullOrEmpty(train.Num.ToString()))
             {
-                if (int.Parse(train.Num) % 2 == 0)
+                if (train.Num % 2 == 0)
                     emptyPaths = emptyPaths.Where(p => p.Even);
                 else
                     emptyPaths = emptyPaths.Where(p => p.Odd);
             }
 
-            availablePaths = _imapper.Map<List<PathModel>>(await emptyPaths.ToListAsync());
+            var availablePaths = emptyPaths;// await emptyPaths.ToListAsync();
 
             if (availablePaths.Any())
             {
-                return availablePaths;
+                return _imapper.Map<List<PathModel>>(availablePaths);
             }
             else
             {
@@ -402,7 +393,7 @@ namespace StationAssistant.Services
         public async Task<List<Vagon>> DisbandTrain(TrainModel train)
         {
             List<Vagon> vagons = await _context.Vagon
-                                               .Where(v => v.TrainIndex == train.Index)
+                                               .Where(v => v.TrainId == train.Id)
                                                .ToListAsync();
             List<Path> sortPaths = await _context.Path
                                                  .Where(p => p.Sort)
@@ -451,7 +442,7 @@ namespace StationAssistant.Services
             }
             if (errors.Any())
                 throw new AggregateException(errors);
-            vagons.ForEach(v => v.TrainIndex = null);
+            vagons.ForEach(v => v.TrainIndexNavigation = null);
             _context.Path.Find(vagons[0].PathId).Occupation = 0;
             _context.Train.Remove(_context.Train.Find(train.Index));
             await _context.SaveChangesAsync();
@@ -473,7 +464,6 @@ namespace StationAssistant.Services
             {
                 DestinationStation = destination,
                 DateOper = DateTime.Now,
-                Ordinal = await _igvcData.GetNextOrdinal(),
                 FormStation = "161306",
                 FormTime = DateTime.Now,
                 Length = (short)vagons.Count(),
@@ -481,11 +471,12 @@ namespace StationAssistant.Services
                 PathId = vagons[0].PathId,
                 TrainKindId = trainKind
             };
-            train.TrainIndex = string.Format($"1613 { train.Ordinal.ToString().PadLeft(3, '0')} {destination.Substring(0, 4)}");
+            _context.Train.Add(train);
+            
             foreach (Vagon vagon in vagons)
             {
                 vagon.SequenceNum = sequenceNum++;
-                vagon.TrainIndex = train.TrainIndex;
+                vagon.TrainIndexNavigation = train;
                 vagon.DateOper = DateTime.Now;
             }
 
@@ -494,7 +485,6 @@ namespace StationAssistant.Services
             trainModel.Wagons = WagonModels;
 
             await _igvcData.SendTGNL(trainModel);
-            _context.Train.Add(train);
             await _context.SaveChangesAsync();
         }
 

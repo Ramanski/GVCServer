@@ -7,8 +7,6 @@ namespace StationAssistant.Data.Entities
     {
         public Path()
         {
-            Train = new HashSet<Train>();
-            Vagon = new HashSet<Vagon>();
         }
 
         public int Id { get; set; }

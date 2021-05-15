@@ -26,7 +26,7 @@ namespace GVCServer.Repositories
             _logger = logger;
         }
 
-        public async Task<Train> AddTrainAsync(TrainModel TrainModel, string station)
+        public async Task<TrainModel> AddTrainAsync(TrainModel TrainModel, string station)
         {
             _logger.LogInformation("Got trainModel to create " + TrainModel);
 
@@ -34,13 +34,13 @@ namespace GVCServer.Repositories
             train.Dislocation = station;
             train.Ordinal = await GetNextOrdinal(station);
 
-            _logger.LogInformation("Saving train", train);
+            _logger.LogInformation("Creating train {0}", train);
             _context.Train.Add(train);
 
             var result = await _context.SaveChangesAsync();
             _logger.LogInformation($"Saved {result} of 1 record");
 
-            return train;
+            return _imapper.Map<TrainModel>(train);
         }
 
         public async Task UpdateTrainParams(TrainModel actualTrainModel)

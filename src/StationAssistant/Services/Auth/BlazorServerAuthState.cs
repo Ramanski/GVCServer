@@ -24,7 +24,7 @@ namespace StationAssistant
         }
 
         protected override TimeSpan RevalidationInterval
-            => TimeSpan.FromSeconds(10); // TODO read from config
+            => TimeSpan.FromMinutes(10); // TODO read from config
 
         protected override Task<bool> ValidateAuthenticationStateAsync(AuthenticationState authenticationState, CancellationToken cancellationToken)
         {

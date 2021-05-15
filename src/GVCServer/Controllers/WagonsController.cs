@@ -16,7 +16,7 @@ namespace GVCServer.Controllers
 {
     [ApiController]
     [Authorize]
-    [Route("{trainIndex}/wagons")]
+    [Route("{trainId}/wagons")]
     public class WagonsController : ControllerBase
     {
         private readonly ILogger<TrainController> logger;

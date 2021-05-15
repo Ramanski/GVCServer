@@ -20,7 +20,7 @@ using ModelsLibrary.Codes;
 namespace GVCServer.Controllers
 {
     [ApiController]
-    [Route("{trainIndex}/operations")]
+    [Route("{trainId}/operations")]
     public class OperationsController : ControllerBase
     {
         private readonly TrainRepository _trainRepository;

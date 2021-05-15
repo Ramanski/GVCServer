@@ -432,5 +432,6 @@ namespace GVCServer.Data.Entities
         }
 
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+
     }
 }

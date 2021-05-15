@@ -67,7 +67,7 @@ namespace GVCServer.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Train>> CreateTrain([FromBody] ConsistList consistList)
+        public async Task<ActionResult<TrainModel>> CreateTrain([FromBody] ConsistList consistList)
         {
             return await _trainRepository.AddTrainAsync(consistList.TrainModel, station);
         }
@@ -75,7 +75,7 @@ namespace GVCServer.Controllers
         [HttpDelete]
         public async Task<ActionResult> CancelTrainCreation(ConsistList cancelMsg, [FromServices] TrainOperationsService trainOperationsService)
         {
-            await  trainOperationsService.DeleteLastTrainOperaion(cancelMsg.TrainModel.Index, cancelMsg.Code);
+            await  trainOperationsService.DeleteLastTrainOperaion(cancelMsg.TrainModel.Id, cancelMsg.Code);
             return Ok();
         }
 

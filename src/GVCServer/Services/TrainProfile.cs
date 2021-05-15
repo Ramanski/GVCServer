@@ -11,8 +11,7 @@ namespace GVCServer.Data
         {
             this.CreateMap<Train, TrainModel>()
                 .ForMember(ts => ts.Id, m => m.MapFrom(t => t.Uid))
-                .ForMember(ts => ts.Index, m => m.MapFrom(t => string.Format($"{t.FormStation.Substring(0,4)} {t.Ordinal.ToString().PadLeft(3,'0')} {t.DestinationStation.Substring(0,4)}")))
-                .ForMember(ts => ts.DateOper, m => m.MapFrom(t => t.OpTrain.First().Datop))
+                .ForMember(ts => ts.DateOper, m => m.MapFrom(t => t.FormTime))
                 .ForMember(tm => tm.Kind, m => m.MapFrom(t => t.TrainKindId));
             this.CreateMap<OpVag, WagonModel>()
                 .ForMember(vm => vm.Ksob, m => m.MapFrom(v => v.NumNavigation.Ksob))

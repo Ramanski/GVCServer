@@ -106,7 +106,7 @@
                             foreach (string track in tracks)
                             {
                                 var directionStations = directions.Where(d => d.Track == track).Select(d => d.StationDestination);
-                                var vagonsToDirection = vagons.Where(v => directionStations.Contains(v.PlanForm) && v.TrainIndex == null);
+                                var vagonsToDirection = vagons.Where(v => directionStations.Contains(v.PlanForm) && v.TrainIndexNavigation == null);
                                 <tr>
                                     <td>@track:</td>
                                     <td><strong>@(vagonsToDirection == null ? 0 : vagonsToDirection.Count())</strong> (порожних @(vagonsToDirection == null ? 0 : vagonsToDirection.Where(v => v.WeightNetto == 0).Count()))</td>

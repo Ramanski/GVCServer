@@ -225,7 +225,7 @@
         }
         try
         {
-            selectedTrainModel = await GvcDataFetch.GetTrainInfo(arrivingList.selectedTrain.Index);
+            selectedTrainModel = await GvcDataFetch.GetTrainInfo(arrivingList.selectedTrain.Id);
         }
         catch (Exception)
         {
@@ -308,8 +308,8 @@
 
         try
         {
-            await GvcDataFetch.SendTrainArrivedAsync(selectedTrainModel.Index, DateTime.Now);
-            await StationData.AddTrainAsync(selectedTrainModel.Index, DateTime.Now, selectedTrainModel.Path.Id);
+            await GvcDataFetch.SendTrainArrivedAsync(selectedTrainModel.Id, DateTime.Now);
+            await StationData.AddTrainAsync(selectedTrainModel.Id, DateTime.Now, selectedTrainModel.Path.Id);
             arrivingList.DeleteTrain(selectedTrainModel);
             selectedTrainModel.DateOper = DateTime.Now;
             arrivedList.AddTrain(selectedTrainModel);
@@ -352,8 +352,8 @@
 
         try
         {
-            await GvcDataFetch.CancelOperation(train.Index, 201);
-            await StationData.DeleteTrainAsync(train.Index);
+            await GvcDataFetch.CancelOperation(train.Id, ModelsLibrary.Codes.OperationCode.TrainArrival  );
+            await StationData.DeleteTrainAsync(train.Id);
             arrivedList.DeleteTrain(train);
             arrivingList.AddTrain(train);
             await arrivedList.DeselectRow();
@@ -378,7 +378,7 @@
     {
         try
         {
-            await GvcDataFetch.SendDisbanding(arrivedList.selectedTrain.Index, DateTime.Now);
+            await GvcDataFetch.SendDisbanding(arrivedList.selectedTrain.Id, DateTime.Now);
             await StationData.DisbandTrain(arrivedList.selectedTrain);
             NotificationService.SetMessage(TypeNotification.Success, $"Операция по расформированию поезда №{arrivedList.selectedTrain.Num} завершена");
             arrivedList.DeleteTrain(arrivedList.selectedTrain);

@@ -154,7 +154,7 @@
     void onOpenPath()
     {
         var train = departingList.selectedTrain;
-        Title = "Выбор пути отправления " + (train.Num == null ? train.Num : train.Index);
+        Title = "Выбор пути отправления " + (train.Num == 0 ? train.Num : train.Index);
         PathSelectorIsVisible = true;
         TrainListIsVisible = false;
     }
@@ -193,11 +193,11 @@
         try
         {
             TrainModel train = departingList.selectedTrain;
-            if (train.Num == null)
+            if (train.Num == 0)
             {
                 NotificationService.SetMessage(TypeNotification.Warning, "Не выбрана нитка отправления");
             }
-            await StationData.TrainDeparture(train.Index);
+            await StationData.TrainDeparture(train.Id);
             departingList.DeleteTrain(train);
             NotificationService.SetMessage(TypeNotification.Success, $"Операция по отправлению поезда №{train.Num} проведена успешно");
         }
