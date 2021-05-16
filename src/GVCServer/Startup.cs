@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using GVCServer.Repositories;
+using Microsoft.Extensions.Hosting;
 
 namespace GVCServer
 {
@@ -20,8 +21,7 @@ namespace GVCServer
 
         public void ConfigureServices(IServiceCollection services)                                                   
         {
-            services.AddControllers()//.AddControllers(options => 
-                //options.Filters.Add<TransactionFilter>())
+            services.AddControllers()
                 .AddJsonOptions(options =>
                     {
                         options.JsonSerializerOptions.IgnoreNullValues = true;
@@ -47,10 +47,10 @@ namespace GVCServer
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            // if (env.IsDevelopment())
-            // {
-            //     app.UseDeveloperExceptionPage();
-            // }
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
             //app.UseStaticFiles();
 
             app.UseHttpsRedirection();
