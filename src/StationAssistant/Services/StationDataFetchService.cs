@@ -378,7 +378,7 @@ namespace StationAssistant.Services
                     emptyPaths = emptyPaths.Where(p => p.Odd);
             }
 
-            var availablePaths = emptyPaths;// await emptyPaths.ToListAsync();
+            var availablePaths = await emptyPaths.ToListAsync();
 
             if (availablePaths.Any())
             {
