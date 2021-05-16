@@ -1,28 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using AutoMapper;
-using GVCServer.Data.Entities;
-using GVCServer.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.EntityFrameworkCore.SqlServer;
-using GVCServer.Data;
-using GVCServer.Helpers;
-using Microsoft.AspNetCore.Localization;
-using System.Globalization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using GVCServer.Repositories;
 
 namespace GVCServer
@@ -38,9 +20,9 @@ namespace GVCServer
 
         public void ConfigureServices(IServiceCollection services)                                                   
         {
-            services.AddControllers(options => 
-                options.Filters.Add<HttpResponseExceptionFilter>())
-                    .AddJsonOptions(options =>
+            services.AddControllers()//.AddControllers(options => 
+                //options.Filters.Add<TransactionFilter>())
+                .AddJsonOptions(options =>
                     {
                         options.JsonSerializerOptions.IgnoreNullValues = true;
                     });
@@ -51,11 +33,9 @@ namespace GVCServer
             services.AddScoped<WagonOperationsService>();
             services.AddScoped<TrainOperationsService>();
 
-            services.AddDbContext<IVCStorageContext>(options => {
-                    options.EnableDetailedErrors();
-                    options.EnableSensitiveDataLogging();
-                    options.UseSqlServer(Configuration.GetConnectionString("IVCStorage"));
-                    });
+            services
+                .UseRegisterDbContext(Configuration.GetConnectionString("IVCStorage"))
+                .UseOneTransactionPerHttpCall();
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, conf =>

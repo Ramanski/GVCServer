@@ -6,11 +6,11 @@ namespace GVCServer.Data.Entities
 {
     public partial class IVCStorageContext : DbContext
     {
-        public IVCStorageContext()
-        {
-        }
+        // public IVCStorageContext()
+        // {
+        // }
 
-        public IVCStorageContext(DbContextOptions<IVCStorageContext> options)
+        public IVCStorageContext(DbContextOptions options)
             : base(options)
         {
         }

@@ -6,7 +6,6 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using GVCServer.Data;
 using GVCServer.Data.Entities;
-using GVCServer.Models;
 using GVCServer.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

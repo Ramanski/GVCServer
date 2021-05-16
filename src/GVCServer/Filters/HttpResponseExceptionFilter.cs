@@ -7,7 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Net;
 
-namespace GVCServer.Models
+namespace GVCServer.Filters
 {
     public class HttpResponseException : Exception
     {

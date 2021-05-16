@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using AutoMapper.Internal;
 using GVCServer.Data;
 using GVCServer.Helpers;
-using GVCServer.Models;
 using GVCServer.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
