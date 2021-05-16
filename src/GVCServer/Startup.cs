@@ -53,6 +53,7 @@ namespace GVCServer
 
             services.AddDbContext<IVCStorageContext>(options => {
                     options.EnableDetailedErrors();
+                    options.EnableSensitiveDataLogging();
                     options.UseSqlServer(Configuration.GetConnectionString("IVCStorage"));
                     });
 

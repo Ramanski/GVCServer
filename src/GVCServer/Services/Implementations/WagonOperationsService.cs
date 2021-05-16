@@ -24,11 +24,7 @@ namespace GVCServer.Repositories
             _imapper = imapper;
             _logger = logger;
         }
-        public IQueryable<ActualWagonOperations> GetActualWagonOperationsQuery(string[] vagonNums)
-        {
-            return  _context.ActualWagOpers.Where(awo => vagonNums.Contains(awo.WagonNum));
-        }
-        public async Task AttachToTrain(Guid trainId, List<WagonModel> wagons, DateTime timeOper, string sourceStation, string destinationStation)
+        public async Task AttachToTrain(TrainModel train, IEnumerable<WagonModel> wagons, DateTime timeOper, string sourceStation)
         {
             var newWagOpers = _imapper.Map<List<OpVag>>(wagons);
             
@@ -38,14 +34,14 @@ namespace GVCServer.Repositories
             {
                 vagon.LastOper = true;
                 vagon.Source = sourceStation;
-                vagon.TrainId = trainId;
+                vagon.TrainId = train.Id;
                 vagon.DateOper = timeOper;
                 vagon.CodeOper = OperationCode.TrainComposition;
-                vagon.PlanForm = destinationStation;
+                vagon.PlanForm = train.DestinationStation;
                 vagon.NumNavigation = _context.Vagon.Where(v => v.Id == vagon.Num).FirstOrDefault();
             }
 
-            _context.Add(newWagOpers);
+            _context.AddRange(newWagOpers);
             var affected = await _context.SaveChangesAsync();
             _logger.LogInformation($"Saved {affected} of {newWagOpers.Count()} records");
         }
@@ -147,7 +143,7 @@ namespace GVCServer.Repositories
         {
             List<Exception> errors = new List<Exception>();
             var wagonNums = newWagOpers.Select(nwgo => nwgo.Num).ToArray();
-            var lastWagOpers = await GetActualWagonOperationsQuery(wagonNums).ToListAsync();
+            var lastWagOpers = await _context.OpVag.Where(ov => wagonNums.Contains(ov.Num) && ov.LastOper).ToListAsync();
 
             // Достали меньше записей по вагонам, чем заявлено в сообщении
             if (lastWagOpers.Count < newWagOpers.Count)
@@ -164,18 +160,18 @@ namespace GVCServer.Repositories
                 }
             }
 
-            foreach (ActualWagonOperations lastWgOper in lastWagOpers)
+            foreach (var lastWgOper in lastWagOpers)
             {
-                OpVag newWagOper = newWagOpers.Where(nwgo => lastWgOper.WagonNum.Equals(nwgo.Num)).First();
+                OpVag newWagOper = newWagOpers.Where(nwgo => lastWgOper.Num.Equals(nwgo.Num)).First();
 
-                if (!lastWgOper.Station.Equals(station))
-                    errors.Add(new ArgumentException($"Вагон {lastWgOper.WagonNum} на станции {lastWgOper.Station}"));
+                if (!lastWgOper.Source.Equals(station))
+                    errors.Add(new ArgumentException($"Вагон {lastWgOper.Num} на станции {lastWgOper.Source}"));
 
                 if (lastWgOper.TrainId != null)
-                    errors.Add(new ArgumentException($"Вагон {lastWgOper.WagonNum} в другом поезде"));
+                    errors.Add(new ArgumentException($"Вагон {lastWgOper.Num} в другом поезде"));
 
                 if (lastWgOper.DateOper > newWagOper.DateOper)
-                    errors.Add(new ArgumentException($"Для вагона {lastWgOper.WagonNum} после {lastWgOper.DateOper}"));
+                    errors.Add(new ArgumentException($"Для вагона {lastWgOper.Num} после {lastWgOper.DateOper}"));
             }
             if(errors.Any())
                 throw new AggregateException(errors);

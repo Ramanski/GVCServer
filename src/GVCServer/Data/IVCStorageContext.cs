@@ -106,7 +106,7 @@ namespace GVCServer.Data.Entities
                 entity.HasOne(d => d.Train)
                     .WithMany(p => p.OpTrain)
                     .HasForeignKey(d => d.TrainId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("FK_OP_TRAIN_Train");
             });
 

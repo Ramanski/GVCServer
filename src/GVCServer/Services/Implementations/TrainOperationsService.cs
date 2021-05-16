@@ -20,7 +20,7 @@ namespace GVCServer.Repositories
             _logger = logger;
         }
 
-        public async Task CreateTrain(Guid trainId, DateTime dateOper, string station)
+        public async Task CreateTrainAsync(Guid trainId, DateTime dateOper, string station)
         {
             var opTrain = new OpTrain
             {
@@ -33,7 +33,7 @@ namespace GVCServer.Repositories
             };
 
             _context.Add(opTrain);
-            _logger.LogInformation("Saving operation to train", opTrain);
+            _logger.LogInformation("Saving operation to train {0}", opTrain);
             var affected = await _context.SaveChangesAsync();
             _logger.LogInformation($"Saved {affected} of 1 records");
         }

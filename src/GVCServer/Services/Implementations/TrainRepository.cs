@@ -28,7 +28,7 @@ namespace GVCServer.Repositories
 
         public async Task<TrainModel> AddTrainAsync(TrainModel TrainModel, string station)
         {
-            _logger.LogInformation("Got trainModel to create " + TrainModel);
+            _logger.LogInformation("Got trainModel to create {0}", TrainModel);
 
             var train = _imapper.Map<Train>(TrainModel);
             train.Dislocation = station;
@@ -43,6 +43,28 @@ namespace GVCServer.Repositories
             return _imapper.Map<TrainModel>(train);
         }
 
+        public async Task CancelTrainCreation(Guid trainId, string station)
+        {
+            var train = await _context.Train
+                                               .Include(t => t.OpTrain
+                                                                .Where(ot => ot.LastOper))
+                                               .Include(t => t.OpVag
+                                                                .Where(ov => ov.LastOper))
+                                          .Where(t => t.Uid == trainId)
+                                          .FirstOrDefaultAsync();
+            if(train.OpTrain.FirstOrDefault().Kop == OperationCode.TrainComposition &&
+               train.OpVag.All(ov => ov.CodeOper == OperationCode.TrainComposition))
+            {
+                _context.Remove(train);
+                _logger.LogInformation("Canceling creation of train {0}", train);
+                 var affected = await _context.SaveChangesAsync();
+                _logger.LogInformation("Saved {0} of {1} records", affected, train.OpVag.Count() + 2);
+            }
+            else
+            {
+                throw new InvalidOperationException();
+            }
+        }
         public async Task UpdateTrainParams(TrainModel actualTrainModel)
         {
             _logger.LogInformation("Got trainModel to update " + actualTrainModel);

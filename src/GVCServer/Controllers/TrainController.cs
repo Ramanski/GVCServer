@@ -20,7 +20,6 @@ namespace GVCServer.Controllers
     {
         private readonly TrainRepository _trainRepository;
         private readonly WagonOperationsService wagonOperationsService;
-
         private string station { get; set; }
         private readonly ILogger<TrainController> _logger;
 
@@ -67,16 +66,21 @@ namespace GVCServer.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<TrainModel>> CreateTrain([FromBody] ConsistList consistList)
+        public async Task<ActionResult<TrainModel>> CreateTrain([FromBody] ConsistList consistList, 
+                                                                [FromServices] TrainOperationsService trainOperationsService,
+                                                                [FromServices] WagonOperationsService wagonOperationsService)
         {
-            return await _trainRepository.AddTrainAsync(consistList.TrainModel, station);
+            var createdTrain = await _trainRepository.AddTrainAsync(consistList.TrainModel, station);
+            await wagonOperationsService.AttachToTrain(createdTrain, consistList.TrainModel.Wagons, consistList.DatOper, station);
+            await trainOperationsService.CreateTrainAsync(createdTrain.Id, consistList.DatOper, station);
+            return createdTrain;
         }
 
         [HttpDelete]
-        public async Task<ActionResult> CancelTrainCreation(ConsistList cancelMsg, [FromServices] TrainOperationsService trainOperationsService)
+        public async Task<IActionResult> CancelTrainCreation(ConsistList cancelMsg)
         {
-            await  trainOperationsService.DeleteLastTrainOperaion(cancelMsg.TrainModel.Id, cancelMsg.Code);
-            return Ok();
+            await _trainRepository.CancelTrainCreation(cancelMsg.TrainModel.Id, station);
+            return Ok(); 
         }
 
         [HttpPut]
