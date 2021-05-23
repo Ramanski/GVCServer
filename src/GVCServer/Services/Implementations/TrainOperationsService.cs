@@ -84,9 +84,9 @@ namespace GVCServer.Repositories
             if(train == null)
                 throw new Exception("Поезд не найден");
 
-            var wagOpers = await _context.ActualWagOpers
-                                            .Where(wgo => wgo.TrainId == train.Uid)
-                                            .Select(op => new ActualWagonOperations(){ WeightNetto = op.WeightNetto, WagonNum = op.WagonNum })
+            var wagOpers = await _context.OpVag
+                                            .Where(ov => ov.TrainId == train.Uid && ov.LastOper)
+                                            .Select(op => new ActualWagonOperations(){ WeightNetto = op.WeightNetto, WagonNum = op.Num })
                                             .ToListAsync();
             var wagons = wagOpers.Select(wo => wo.WagonNum);
             var taraOverall = await _context.Vagon.Where(w => wagons.Contains(w.Id)).SumAsync(w => w.Tvag);
@@ -103,9 +103,8 @@ namespace GVCServer.Repositories
 
         public async Task DeleteLastTrainOperaion(Guid trainId, string operationCode)
         {
-            var trainModel = await _context.TrainModels.Where(t => t.Id == trainId).FirstOrDefaultAsync();
             var trainOperation = await _context.OpTrain
-                                          .Where(o => o.TrainId == trainModel.Id && (bool)o.LastOper)
+                                          .Where(o => o.TrainId == trainId && (bool)o.LastOper)
                                           .FirstOrDefaultAsync();
 
             if (operationCode.Equals(trainOperation.Kop))

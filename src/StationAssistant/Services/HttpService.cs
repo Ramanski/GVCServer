@@ -88,7 +88,7 @@ namespace StationAssistant.Services
                 case HttpStatusCode.Unauthorized:
                     throw new Exception("Нет доступа");
                 case HttpStatusCode.OK:
-                    return await response.Content.ReadFromJsonAsync<T>();
+                    return (response.Content.Headers.ContentLength > 0) ? await response.Content.ReadFromJsonAsync<T>(): default(T);
                 default:
                 {
                     var error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();

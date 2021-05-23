@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
 using GVCServer.Data.Entities;
 using GVCServer.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -14,7 +16,7 @@ using ModelsLibrary.Codes;
 namespace GVCServer.Controllers
 {
     [ApiController]
-    //[Authorize]
+    [Authorize]
     [Route("trains")]
     public class TrainController : ControllerBase
     {
@@ -30,32 +32,14 @@ namespace GVCServer.Controllers
             _logger = logger;
             _trainRepository = trainRepository;
             this.wagonOperationsService = wagonOperationsService;
-            station = "161306";//User?.Claims.Where(cl => cl.Type == ClaimTypes.Locality).FirstOrDefault()?.Value;
         }
 
         [HttpGet("coming")]
         public async Task<ActionResult<TrainModel[]>> Get()
         {
+            station = User?.Claims.Where(cl => cl.Type == ClaimTypes.Locality).FirstOrDefault()?.Value;
             TrainModel[] comingTrains = await _trainRepository.GetComingTrainsAsync(station);
             return (comingTrains.Length == 0) ? NoContent() : comingTrains;
-        }
-
-        [HttpGet("example")]
-        public ActionResult<ConsistList> GetExample()
-        {
-            List<WagonModel> wagons = new List<WagonModel>(){ new WagonModel(){Num = "12345678", WeightNetto = 1234}};
-            TrainModel model = new TrainModel(){
-                                    Id = new Guid(), 
-                                    DestinationStation = "161306", 
-                                    Dislocation = "140007", 
-                                    FormStation = "140007", 
-                                    Kind = 20,
-                                    Num = 1200,
-                                    WeightBrutto = 3624,
-                                    Wagons = wagons
-                                    };
-            
-            return Ok(new ConsistList(OperationCode.TrainComposition, model, DateTime.Now));
         }
 
         [HttpGet("{trainId}")]
@@ -70,6 +54,7 @@ namespace GVCServer.Controllers
                                                                 [FromServices] TrainOperationsService trainOperationsService,
                                                                 [FromServices] WagonOperationsService wagonOperationsService)
         {
+            station = User?.Claims.Where(cl => cl.Type == ClaimTypes.Locality).FirstOrDefault()?.Value;
             var createdTrain = await _trainRepository.AddTrainAsync(consistList.TrainModel, station);
             await wagonOperationsService.AttachToTrain(createdTrain, consistList.TrainModel.Wagons, consistList.DatOper, station);
             await trainOperationsService.CreateTrainAsync(createdTrain.Id, consistList.DatOper, station);
@@ -79,6 +64,7 @@ namespace GVCServer.Controllers
         [HttpDelete]
         public async Task<IActionResult> CancelTrainCreation(ConsistList cancelMsg)
         {
+            station = User?.Claims.Where(cl => cl.Type == ClaimTypes.Locality).FirstOrDefault()?.Value;
             await _trainRepository.CancelTrainCreation(cancelMsg.TrainModel.Id, station);
             return Ok(); 
         }

@@ -249,7 +249,7 @@ namespace StationAssistant.Services
         {
             List<TrainModel> arrivedTrainModels = new List<TrainModel>();
             var trains = await _context.Train
-                                        .Where(t => t.DestinationStation.Equals(_configuration["StationCode"]))
+                                        .Where(t => t.DestinationStation.Equals(_configuration["Auth:StationCode"]))
                                         .ToListAsync();
             foreach (Train train in trains)
             {

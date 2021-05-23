@@ -60,7 +60,7 @@ namespace StationAssistant.Services
 
             foreach (TrainModel train in trains)
             {
-                train.Dislocation = _context.Station.Find(train.Dislocation).Mnemonic;
+                train.Dislocation = _context.Station.Find(train.Dislocation)?.Mnemonic ?? "НЕОП";
             }
             return trains;
         }

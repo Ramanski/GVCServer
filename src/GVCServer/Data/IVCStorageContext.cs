@@ -27,23 +27,21 @@ namespace GVCServer.Data.Entities
         public virtual DbSet<TrainKind> TrainKind { get; set; }
         public virtual DbSet<Vagon> Vagon { get; set; }
         public virtual DbSet<VagonKind> VagonKind { get; set; }
-        public DbSet<ActualWagonOperations> ActualWagOpers {get;set;}
-        public DbSet<TrainModel> TrainModels {get; set;}
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<ActualWagonOperations>((awo =>
-            {
-                awo.HasNoKey();
-                awo.ToView("WagonModel");
-            }));
+            // modelBuilder.Entity<ActualWagonOperations>((awo =>
+            // {
+            //     awo.HasNoKey();
+            //     awo.ToView("WagonModel");
+            // }));
 
-            modelBuilder.Entity<TrainModel>(entity =>
-            {
-                entity.HasNoKey();
-                entity.ToView("TrainModel");
-            });
+            // modelBuilder.Entity<TrainModel>(entity =>
+            // {
+            //     entity.HasNoKey();
+            //     entity.ToView("TrainModel");
+            // });
 
             modelBuilder.Entity<Direction>(entity =>
             {

@@ -95,8 +95,8 @@ namespace GVCServer.Repositories
         }
         public async Task CorrectComposition(Guid trainId, List<string> newComposition, DateTime timeOper, string station)
         {
-            var oldComposition = await _context.ActualWagOpers.Where(op => op.TrainId == trainId)
-                                                              .Select(op => op.WagonNum)
+            var oldComposition = await _context.OpVag.Where(op => op.TrainId == trainId && op.LastOper)
+                                                              .Select(op => op.Num)
                                                              .ToListAsync();
             var attachedWagons = newComposition.Except(oldComposition).ToList();
             var detachedWagons = oldComposition.Except(newComposition).ToList();

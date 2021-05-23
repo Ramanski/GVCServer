@@ -83,7 +83,6 @@ public static class ServiceCollectionExtensions
                 .AddControllers(setup =>
                 {
                     setup.Filters.AddService<TransactionFilter>(1);
-                    //setup.Filters.AddService<HttpResponseExceptionFilter>(2);
                 });
 
             return serviceCollection;

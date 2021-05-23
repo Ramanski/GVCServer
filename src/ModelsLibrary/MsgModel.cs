@@ -41,6 +41,7 @@ namespace ModelsLibrary
                                                                 OperationCode.AdditionVagons, 
                                                                 OperationCode.CorrectingComposition
 																};
+        public CorrectMsg(){}
         public CorrectMsg(string correctionOper, Guid trainId, List<string> wagonList, DateTime timeCorrected)
         {
             if (!CorrectionOperations.Exists(oper => correctionOper.Equals(oper)))
@@ -62,12 +63,14 @@ namespace ModelsLibrary
 
     public class MovingMsg : MsgModel
     {
+        [JsonIgnore]
         List<string> MovingOperations = new List<string>(){ OperationCode.TrainArrival,
                                                             OperationCode.TrainDeparture,
                                                             OperationCode.TrainProceed,
 															OperationCode.TrainDisbanding															
 															};
 
+        public MovingMsg(){}
         public MovingMsg(string movingCode, Guid trainId, DateTime timeMoved)
         {
             if (!MovingOperations.Exists(oper => movingCode.Equals(oper)))

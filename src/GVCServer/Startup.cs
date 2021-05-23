@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using GVCServer.Repositories;
 using Microsoft.Extensions.Hosting;
+using Hellang.Middleware.ProblemDetails;
 
 namespace GVCServer
 {
@@ -26,6 +27,13 @@ namespace GVCServer
                     {
                         options.JsonSerializerOptions.IgnoreNullValues = true;
                     });
+            services.AddProblemDetails(opts => {
+                                        opts.IncludeExceptionDetails = (context, ex) =>
+                                        {
+                                            var environment = context.RequestServices.GetRequiredService<IHostEnvironment>();
+                                            return environment.IsDevelopment();
+                                        };
+                    });
 
             services.AddAutoMapper(typeof(Startup));
             services.AddScoped<TrainRepository>();
@@ -33,9 +41,11 @@ namespace GVCServer
             services.AddScoped<WagonOperationsService>();
             services.AddScoped<TrainOperationsService>();
 
+            services.AddDbContext<Data.Entities.IVCStorageContext>(options =>
+                    options.UseSqlServer(Configuration.GetConnectionString("IVCStorage")));
             services
-                .UseRegisterDbContext(Configuration.GetConnectionString("IVCStorage"))
-                .UseOneTransactionPerHttpCall();
+                 .UseRegisterDbContext(Configuration.GetConnectionString("IVCStorage"))
+                 .UseOneTransactionPerHttpCall();
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, conf =>
@@ -52,14 +62,15 @@ namespace GVCServer
                 app.UseDeveloperExceptionPage();
             }
             //app.UseStaticFiles();
+            app.UseProblemDetails();
 
             app.UseHttpsRedirection();
 
             app.UseRouting();
 
-            //app.UseAuthentication();
+            app.UseAuthentication();
 
-            //app.UseAuthorization();
+            app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {

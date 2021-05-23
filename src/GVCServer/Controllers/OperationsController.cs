@@ -18,6 +18,7 @@ using ModelsLibrary.Codes;
 
 namespace GVCServer.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("{trainId}/operations")]
     public class OperationsController : ControllerBase
@@ -38,12 +39,12 @@ namespace GVCServer.Controllers
             _trainRepository = trainRepository;
             this.wagonOperationsService = wagonOperationsService;
             this.trainOperationsService = trainOperationsService;
-            station = User?.Claims.Where(cl => cl.Type == ClaimTypes.Locality).FirstOrDefault()?.Value;
         }
 
         [HttpPost]
         public async Task<ActionResult> AddMovingOperation(MovingMsg movingMsg)
         {
+            station = User?.Claims.Where(cl => cl.Type == ClaimTypes.Locality).FirstOrDefault()?.Value;
             var train = await _trainRepository.FindTrain(Guid.Parse(movingMsg.TrainId));
             if (movingMsg.Code.Equals(OperationCode.TrainDisbanding))
             {

@@ -16,8 +16,9 @@ namespace StationAssistant.Data
                 .ReverseMap();
 
             this.CreateMap<TrainModel, Train>()
-                .ForMember(t => t.Ordinal, m => m.MapFrom(tl => short.Parse(tl.Index.Substring(5, 3))))
-                .ForMember(t => t.TrainKindId, m => m.MapFrom(tl =>tl.Kind));
+                .ForMember(t => t.Uid, m => m.MapFrom(tm => tm.Id))
+                .ForMember(t => t.TrainKindId, m => m.MapFrom(tl =>tl.Kind))
+                .ReverseMap();
 
             this.CreateMap<Path, PathModel>()
                 .ForMember(pm => pm.TrainLength, m => m.MapFrom(p => p.Train.Sum(t => t.Length)))

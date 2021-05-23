@@ -77,7 +77,11 @@ namespace StationAssistant
             services.AddScoped<NotificationService>();
             services.AddAutoMapper(typeof(Startup));
             services.AddDbContext<StationStorageContext>(options =>
-                    options.UseSqlServer(Configuration.GetConnectionString("StationStorage"))
+            {
+                options.EnableDetailedErrors();
+                options.EnableSensitiveDataLogging();
+                options.UseSqlServer(Configuration.GetConnectionString("StationStorage"));
+            }
                     );
 
             services.AddAuthentication( configureOptions =>

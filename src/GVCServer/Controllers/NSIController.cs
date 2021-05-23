@@ -22,7 +22,7 @@ namespace GVCServer.Controllers
         public NSIController(GuideRepository guideRepository)
         {
             _guideRepository = guideRepository;
-            station = "161306";//User?.Claims.Where(cl => cl.Type == ClaimTypes.Locality).FirstOrDefault()?.Value;
+            station = User?.Claims.Where(cl => cl.Type == ClaimTypes.Locality).FirstOrDefault()?.Value;
         }
 
         [HttpPost("pf")]

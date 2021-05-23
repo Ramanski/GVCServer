@@ -13,7 +13,7 @@ namespace GVCServer.Data.Entities
 
         public Guid Uid { get; set; }
         public short TrainNum { get; set; }
-        public byte? TrainKindId { get; set; }
+        public byte TrainKindId { get; set; }
         public string FormStation { get; set; }
         public short Ordinal { get; set; }
         public string DestinationStation { get; set; }

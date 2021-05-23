@@ -79,22 +79,23 @@ namespace GVCServer.Repositories
         }
         public async Task<TrainModel[]> GetComingTrainsAsync(string station)
         {
-            TrainModel[] trainModels = await _context.Train.Where(t => station.Equals(t.DestinationStation) && !t.Dislocation.Equals(station))
-                                                 .Include(t => t.OpTrain)
+            TrainModel[] trainModels = await _context.Train
+                                                 .Include(t => t.OpTrain.Where(ot => ot.LastOper))
+                                                 .Where(t => station.Equals(t.DestinationStation) && !t.OpTrain.First().SourceStation.Equals(station))
                                                  //.Include(t => t.Schedule)
                                                  .Select(t => new TrainModel
                                                  {
                                                      Id = t.Uid,
-                                                     Kind = t.TrainKindId ?? 0,
+                                                     Kind = t.TrainKindId,
                                                      Num = t.TrainNum,
                                                      FormStation = t.FormStation,
                                                      Ordinal = t.Ordinal,
                                                      DestinationStation = t.DestinationStation,
-                                                     Dislocation = t.OpTrain.OrderByDescending(t => t.Datop).First().SourceStation,
+                                                     Dislocation = t.OpTrain.First().SourceStation,
                                                      Length = t.Length,
-                                                     CodeOper = t.OpTrain.OrderByDescending(t => t.Datop).First().Kop,
+                                                     CodeOper = t.OpTrain.First().Kop,
                                                      WeightBrutto = t.WeightBrutto,
-                                                     DateOper = t.OpTrain.OrderByDescending(t => t.Datop).First().Datop
+                                                     DateOper = t.OpTrain.First().Datop
                                                  })
                                                  .ToArrayAsync();
             return trainModels;
@@ -137,22 +138,37 @@ namespace GVCServer.Repositories
         }
 
         public async Task<TrainModel> GetActualTrainAsync(Guid trainId){
-            var trainModel = await _context.TrainModels
-                                 .Where(t => t.Id == trainId).FirstOrDefaultAsync();
-            trainModel.Wagons = await _context.OpVag
-                                              .Include(v => v.NumNavigation)
-                                              .Where(t => t.TrainId == trainId )
-                                              .Select(wagon => new WagonModel(){
-                                                  Destination = wagon.Destination,
-                                                  Kind = wagon.NumNavigation.Kind,
-                                                  Ksob = wagon.NumNavigation.Ksob,
-                                                  Num = wagon.Num,
-                                                  Mark = wagon.Mark,
-                                                  SequenceNum = wagon.SequenceNum ?? 0,
-                                                  Tvag = wagon.NumNavigation.Tvag,
-                                                  WeightNetto = wagon.WeightNetto ?? 0
-                                              })
-                                              .ToListAsync();
+            var trainModel = await _context.Train
+                                    .Include(t => t.OpVag.Where(ov => ov.LastOper))
+                                    .ThenInclude(ov => ov.NumNavigation)
+                                    .Include(t => t.OpTrain.Where(ot => ot.LastOper))
+                                    .Where(t => t.Uid == trainId)
+                                    .Select(t => new TrainModel{
+                                        Id = t.Uid,
+                                        CodeOper = t.OpTrain.FirstOrDefault().Kop,
+                                        DateOper = t.OpTrain.FirstOrDefault().Datop,
+                                        DestinationStation = t.DestinationStation,
+                                        Dislocation = t.Dislocation,
+                                        FormStation = t.FormStation,
+                                        Kind = t.TrainKindId,
+                                        Length = t.Length,
+                                        Num = t.TrainNum,
+                                        Ordinal = t.Ordinal,
+                                        WeightBrutto = t.WeightBrutto,
+                                        Wagons = t.OpVag
+                                                    .Select(wagon => new WagonModel()
+                                                    {
+                                                        Destination = wagon.Destination,
+                                                        Kind = wagon.NumNavigation.Kind,
+                                                        Ksob = wagon.NumNavigation.Ksob,
+                                                        Num = wagon.Num,
+                                                        Mark = wagon.Mark,
+                                                        SequenceNum = wagon.SequenceNum ?? 0,
+                                                        Tvag = wagon.NumNavigation.Tvag,
+                                                        WeightNetto = wagon.WeightNetto ?? 0
+                                                    })
+                                    })
+                                    .FirstOrDefaultAsync();
             return trainModel;
         }
     }

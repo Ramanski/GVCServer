@@ -157,7 +157,6 @@
     {
         try
         {
-            var userId =
             arrivedTrains = await StationData.GetArrivedTrainsAsync();
             arrivingTrains = await GvcDataFetch.GetArrivingTrains();
         }
@@ -173,16 +172,16 @@
             }
         }
 
-        timer = new Timer();
+        //timer = new Timer();
         // 40 seconds between refreshing arriving trains list
-        timer.Interval = 40000;
-        timer.Elapsed += updateArrivingList;
-        timer.Start();
+        //timer.Interval = 40000;
+        //timer.Elapsed += updateArrivingList;
+        //timer.Start();
     }
 
     public void Dispose()
     {
-        timer.Stop();
+        //timer.Stop();
     }
 
     class CompareTrains : IEqualityComparer<TrainModel>
@@ -315,8 +314,6 @@
             arrivedList.AddTrain(selectedTrainModel);
             await StationData.UpdatePathOccupation(selectedTrainModel.Path.Id);
             NotificationService.SetMessage(TypeNotification.Success, $"Операция по прибытию поезда №{selectedTrainModel.Num} завершена");
-            await arrivingList.DeselectRow();
-            await arrivedList.DeselectRow();
         }
         catch (Exception e)
         {
@@ -328,7 +325,12 @@
             {
                 NotificationService.SetMessage(TypeNotification.Error, "Не удалось выполнить операцию");
             }
+            await CancelArrival();
             return;
+        }
+        finally{
+            await arrivingList.DeselectRow();
+            await arrivedList.DeselectRow();
         }
     }
 
@@ -361,16 +363,9 @@
             await StationData.UpdatePathOccupation(train.Path.Id);
             NotificationService.SetMessage(TypeNotification.Success, $"Операция по отмене прибытия поезда №{train.Num} проведена успешно");
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            if (e is HttpRequestException)
-            {
-                NotificationService.SetMessage(TypeNotification.Warning, e.Message);
-            }
-            else
-            {
-                NotificationService.SetMessage(TypeNotification.Error, "Не удалось выполнить операцию");
-            }
+            NotificationService.SetMessage(TypeNotification.Error, "Не удалось выполнить отмену прибытия");
         }
     }
 
