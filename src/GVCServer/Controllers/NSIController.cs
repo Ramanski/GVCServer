@@ -22,31 +22,49 @@ namespace GVCServer.Controllers
         public NSIController(GuideRepository guideRepository)
         {
             _guideRepository = guideRepository;
-            station = User?.Claims.Where(cl => cl.Type == ClaimTypes.Locality).FirstOrDefault()?.Value;
         }
 
+        [Microsoft.AspNetCore.Authorization.Authorize]
         [HttpPost("pf")]
         public async Task<ActionResult<List<string[]>>> GetPFStations(string[] destination)
         {
+            station = User.Claims.Where(cl => cl.Type == ClaimTypes.Locality).First().Value;
             if (destination.Length == 0)
                 return BadRequest();
             return await _guideRepository.GetPlanFormStations(station, destination);
         }
 
         [HttpGet("train-Kind")]
-        public async Task<ActionResult<byte>> GetTrainKind(string station, string destination) => await _guideRepository.GetTrainKind(station, destination);
+        public async Task<ActionResult<byte>> GetTrainKind(string destination) 
+        {
+            station = User.Claims.Where(cl => cl.Type == ClaimTypes.Locality).First().Value;
+            return await _guideRepository.GetTrainKind(station, destination);
+        }
 
+        [Microsoft.AspNetCore.Authorization.Authorize]
         [HttpGet("closest-departure")]
-        public async Task<ActionResult<string[]>> GetClosestDeparture(string station, int minsOffset, int direction, int kind) => await _guideRepository.GetClosestDeparture(station, kind, direction, minsOffset);
+        public async Task<ActionResult<string[]>> GetClosestDeparture(int minsOffset, int direction, int kind) 
+        {
+            string station = User.Claims.Where(cl => cl.Type == ClaimTypes.Locality).First().Value;
+            return await _guideRepository.GetClosestDeparture(station, kind, direction, minsOffset);
+        }
 
         [HttpGet("operations")]
-        public async Task<ActionResult<List<Operation>>> GetOperations(string station) => await _guideRepository.GetOperations();
+        public async Task<ActionResult<List<Operation>>> GetOperations() => await _guideRepository.GetOperations();
 
         [HttpGet("schedule")]
-        public async Task<ActionResult<List<Schedule>>> GetSchedule(string station) => await _guideRepository.GetSchedule(station);
+        public async Task<ActionResult<List<Schedule>>> GetSchedule()
+        {
+            station = User.Claims.Where(cl => cl.Type == ClaimTypes.Locality).First().Value;
+            return await _guideRepository.GetSchedule(station);
+        }    
 
         [HttpGet("pf/Claims")]
-        public async Task<ActionResult<List<Pfclaim>>> GetPFclaims(string station) => await _guideRepository.GetPlanFormClaims(station);
+        public async Task<ActionResult<List<Pfclaim>>> GetPFclaims() 
+        {
+            station = User.Claims.Where(cl => cl.Type == ClaimTypes.Locality).First().Value;
+            return await _guideRepository.GetPlanFormClaims(station);
+        }
 
         [HttpGet("wagon/kinds")]
         public async Task<ActionResult<List<VagonKind>>> GetVagonKinds() => await _guideRepository.GetVagonKinds();

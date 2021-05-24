@@ -186,6 +186,7 @@ namespace StationAssistant.Data.Entities
                 entity.HasOne(d => d.TrainIndexNavigation)
                     .WithMany(p => p.Vagon)
                     .HasForeignKey(d => d.TrainId)
+                    .OnDelete(DeleteBehavior.SetNull)
                     .HasConstraintName("FK_Vagon_Train");
 
                 entity.HasOne(d => d.VagonKind)

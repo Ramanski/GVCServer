@@ -215,7 +215,7 @@ else
 
     public async Task OnRelocateTrain()
     {
-        await StationData.RelocateTrain(targetTrainModel.Index, pathSelector.PathId);
+        await StationData.RelocateTrain(targetTrainModel.Id, pathSelector.PathId);
         NotificationService.SetMessage(TypeNotification.Success, $"Перестановка поезда №{targetTrainModel.Num} на другой путь завершена");
         this.UpdateState();
     }

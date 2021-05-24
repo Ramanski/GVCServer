@@ -82,17 +82,21 @@ namespace StationAssistant.Services
             }
 
             switch (response.StatusCode){
-                case HttpStatusCode.NotFound:
+                case HttpStatusCode.BadRequest:
+                {
+                    var reason = await response.Content.ReadFromJsonAsync<Microsoft.AspNetCore.Mvc.ProblemDetails>();
+                    throw new HttpRequestException(reason.Detail);
+                }
                 case HttpStatusCode.NoContent:
                     return default(T);
                 case HttpStatusCode.Unauthorized:
-                    throw new Exception("Нет доступа");
+                    throw new HttpRequestException("Нет доступа");
                 case HttpStatusCode.OK:
                     return (response.Content.Headers.ContentLength > 0) ? await response.Content.ReadFromJsonAsync<T>(): default(T);
                 default:
                 {
-                    var error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-                    throw new Exception(error["message"]);
+                    // log warning
+                    return default(T);
                 }
             }
         }

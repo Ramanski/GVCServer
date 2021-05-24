@@ -80,7 +80,7 @@
 
 @code{
     [Parameter] public PathModel path { get; set; }
-    [Parameter] public string trainIndex { get; set; }
+    [Parameter] public Guid trainId { get; set; }
     [Parameter] public EventCallback<Vagon> onUpdateVagon { get; set; }
     SfGrid<Vagon> Grid;
     SfDropDownList<byte, TrainKind> trainKindList;
@@ -97,8 +97,8 @@
         selectedVagons = new List<Vagon>();
         if (path != null)
             vagons = await StationData.GetVagonsOnPath(path.Id);
-        if (!string.IsNullOrEmpty(trainIndex))
-            vagons = await StationData.GetVagonsOfTrain(trainIndex);
+        if (trainId != null)
+            vagons = await StationData.GetVagonsOfTrain(trainId);
         weightSum = (int)vagons.Sum(v => v.WeightNetto) + vagons.Sum(v => v.Tvag);
         vagCount = vagons.Count;
         trainKinds = await StationData.GetTrainKinds();

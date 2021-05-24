@@ -32,6 +32,7 @@ namespace IdentityServer.Data
                     AllowedGrantTypes = GrantTypes.Code,
                     ClientId = "station_assistant_161306",
                     ClientSecrets = { new Secret( "MxMzgyZTMzMmUzMG9laG1XbUJkcnI0OHZpDE#F3t(@K2ZTMzBXRDE5aDlhcnhYSTF".Sha256()) },
+                    AllowAccessTokensViaBrowser = true,
                     AllowedScopes = {
                         IdentityServerConstants.StandardScopes.OpenId,
                         "gvc.read",
@@ -39,11 +40,11 @@ namespace IdentityServer.Data
                         "gvc.delete",
                         "user.read"
                     },
-                    UserSsoLifetime = 20,
+                    UserSsoLifetime = null,
                     PostLogoutRedirectUris = { "https://localhost:5001/index" },
                     RedirectUris = { "https://localhost:5001/signin-oidc" },
                     AllowOfflineAccess = true,
-                    AccessTokenLifetime = 32,
+                    AccessTokenLifetime = 3600,
                 },
 
                 new Client
@@ -52,11 +53,9 @@ namespace IdentityServer.Data
                     ClientName = "JavaScript Client",
                     AllowedGrantTypes = GrantTypes.Code,
                     RequireClientSecret = false,
-
                     RedirectUris =           { "https://localhost:5001/callback.html" },
                     AllowedCorsOrigins =     { "https://localhost:5001" },
                     PostLogoutRedirectUris = { "https://localhost:5001/index.html" },
-
                     AllowedScopes =
                     {
                         IdentityServerConstants.StandardScopes.OpenId,

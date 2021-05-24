@@ -263,7 +263,7 @@
                 else
                 {
                     var train = arrivedList.selectedTrain;
-                    await StationData.RelocateTrain(selectedTrainModel.Index, pathSelector.PathId);
+                    await StationData.RelocateTrain(selectedTrainModel.Id, pathSelector.PathId);
                     train.Path = await StationData.GetPathAsync(pathSelector.PathId);
                     arrivedList.UpdateSelectedRow(train);
                     NotificationService.SetMessage(TypeNotification.Success, $"Перестановка поезда №{selectedTrainModel.Num} на другой путь завершена");

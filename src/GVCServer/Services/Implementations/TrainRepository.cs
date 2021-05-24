@@ -62,7 +62,7 @@ namespace GVCServer.Repositories
             }
             else
             {
-                throw new InvalidOperationException();
+                throw new RailProcessException();
             }
         }
         public async Task UpdateTrainParams(TrainModel actualTrainModel)
@@ -70,7 +70,9 @@ namespace GVCServer.Repositories
             _logger.LogInformation("Got trainModel to update " + actualTrainModel);
             Train train = await FindTrain(actualTrainModel.Id);
 
-            train = _imapper.Map<Train>(actualTrainModel);
+            train.TrainNum = actualTrainModel.Num;
+            train.DestinationStation = actualTrainModel.DestinationStation;
+            train.TrainKindId = actualTrainModel.Kind;
 
             _context.Train.Update(train);
 
@@ -130,7 +132,7 @@ namespace GVCServer.Repositories
 
             if (train == null)
             {
-                throw new KeyNotFoundException($"Не найдена информация по поезду");
+                throw new RailProcessException($"Не найдена информация по поезду");
             }
 
             _logger.LogInformation("Found train", train.Uid);

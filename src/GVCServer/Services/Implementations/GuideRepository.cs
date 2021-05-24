@@ -1,5 +1,6 @@
 ﻿using GVCServer.Data.Entities;
 using Microsoft.EntityFrameworkCore;
+using ModelsLibrary;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,7 +33,7 @@ namespace GVCServer.Repositories
                                                         .Select(pf => new string[] { destinationStation, pf.TargetStation, pf.TrainKind.ToString() })
                                                         .FirstOrDefaultAsync();
                 if (target == null)
-                    throw new KeyNotFoundException($"Не найдено станции плана формирования для назначения {destinationStation}");
+                    throw new RailProcessException($"Не найдено станции плана формирования для назначения {destinationStation}");
                 groupPFStations.Add(target);
             }
             return groupPFStations;
@@ -45,7 +46,7 @@ namespace GVCServer.Repositories
                                                  .Select(p => p.TrainKind)
                                                  .FirstOrDefaultAsync();
             if (trainKindVal == 0)
-                throw new Exception($"Значение рода поезда не определено для назначения {destination}");
+                throw new RailProcessException($"Значение рода поезда не определено для назначения {destination}");
             return trainKindVal;
         }
 
@@ -55,7 +56,7 @@ namespace GVCServer.Repositories
                                           .Where(s => station.Equals(s.Station))
                                           .ToListAsync();
             if (stationSchedule.Count == 0)
-                throw new KeyNotFoundException($"Не найден ГДП для станции {station}");
+                throw new RailProcessException($"Не найден ГДП для станции {station}");
             return stationSchedule;
         }
 
@@ -64,7 +65,7 @@ namespace GVCServer.Repositories
             var operations = await _context.Operation
                                           .ToListAsync();
             if (operations.Count == 0)
-                throw new KeyNotFoundException($"Справочник не может быть получен");
+                throw new RailProcessException($"Справочник не может быть получен");
             return operations;
         }
 
@@ -75,7 +76,7 @@ namespace GVCServer.Repositories
                                         .Where(t => t.Code == trainKind)
                                         .FirstOrDefaultAsync();
             if (trainKindNums == null)
-                throw new ArgumentException($"Не найден род поезда {trainKind}");
+                throw new RailProcessException($"Не найден род поезда {trainKind}");
             var depatrureRouteQuery = _context.Schedule
                                          .Where(s => s.Station.Equals(station) &&
                                                 s.DirectionId == directionId &&
@@ -94,7 +95,7 @@ namespace GVCServer.Repositories
                 }
                 else
                 {
-                    throw new Exception("Не найдено ни одной подходящей нитки графика");
+                    throw new RailProcessException("Не найдено ни одной подходящей нитки графика");
                 }
             }
             else
@@ -110,7 +111,7 @@ namespace GVCServer.Repositories
                                 .Where(s => sourceStation.Equals(s.StaForm))
                                 .ToListAsync();
             if (claims.Result.Count == 0)
-                throw new KeyNotFoundException($"Не найдены нормативы ПФ для станции {sourceStation}");
+                throw new RailProcessException($"Не найдены нормативы ПФ для станции {sourceStation}");
             return await claims;
         }
 
@@ -119,7 +120,7 @@ namespace GVCServer.Repositories
             var vagonKinds = _context.VagonKind
                                      .ToListAsync();
             if (vagonKinds.Result.Count == 0)
-                throw new KeyNotFoundException("Справочник не может быть получен");
+                throw new RailProcessException("Справочник не может быть получен");
             return await vagonKinds;
         }
 
@@ -134,7 +135,7 @@ namespace GVCServer.Repositories
                                      })
                                      .ToListAsync();
             if (trainKinds.Result.Count == 0)
-                throw new KeyNotFoundException("Справочник не может быть получен");
+                throw new RailProcessException("Справочник не может быть получен");
             return await trainKinds;
         }
     }

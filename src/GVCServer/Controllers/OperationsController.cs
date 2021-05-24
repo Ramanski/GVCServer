@@ -45,12 +45,12 @@ namespace GVCServer.Controllers
         public async Task<ActionResult> AddMovingOperation(MovingMsg movingMsg)
         {
             station = User?.Claims.Where(cl => cl.Type == ClaimTypes.Locality).FirstOrDefault()?.Value;
-            var train = await _trainRepository.FindTrain(Guid.Parse(movingMsg.TrainId));
             if (movingMsg.Code.Equals(OperationCode.TrainDisbanding))
             {
+                var train = await _trainRepository.FindTrain(Guid.Parse(movingMsg.TrainId));
                 await wagonOperationsService.DisbandWagons(train, station, movingMsg.DatOper);
             }
-            await trainOperationsService.ProcessTrain(train.Uid, station, movingMsg.DatOper, movingMsg.Code);
+            await trainOperationsService.ProcessTrain(Guid.Parse(movingMsg.TrainId), station, movingMsg.DatOper, movingMsg.Code);
 
             return Ok();
         }

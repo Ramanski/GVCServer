@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using GVCServer.Repositories;
 using Microsoft.Extensions.Hosting;
 using Hellang.Middleware.ProblemDetails;
+using Microsoft.AspNetCore.Http;
 
 namespace GVCServer
 {
@@ -28,11 +29,12 @@ namespace GVCServer
                         options.JsonSerializerOptions.IgnoreNullValues = true;
                     });
             services.AddProblemDetails(opts => {
-                                        opts.IncludeExceptionDetails = (context, ex) =>
-                                        {
-                                            var environment = context.RequestServices.GetRequiredService<IHostEnvironment>();
-                                            return environment.IsDevelopment();
-                                        };
+                        opts.IncludeExceptionDetails = (context, ex) =>
+                        {
+                            var environment = context.RequestServices.GetRequiredService<IHostEnvironment>();
+                            return environment.IsDevelopment();
+                        };
+                        opts.MapToStatusCode<ModelsLibrary.RailProcessException>(StatusCodes.Status400BadRequest);
                     });
 
             services.AddAutoMapper(typeof(Startup));

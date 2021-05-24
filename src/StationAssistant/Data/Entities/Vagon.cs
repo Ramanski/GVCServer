@@ -7,7 +7,7 @@ namespace StationAssistant.Data.Entities
     {
         public string Num { get; set; }
         public DateTime DateOper { get; set; }
-        public Guid TrainId { get; set; }
+        public Guid? TrainId { get; set; }
         public string PlanForm { get; set; }
         public string Destination { get; set; }
         public byte? SequenceNum { get; set; }

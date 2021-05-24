@@ -57,8 +57,6 @@ namespace GVCServer.Data.Entities
             {
                 entity.HasKey(e => e.Uid);
 
-                entity.ToTable("OP_TRAIN");
-
                 entity.Property(e => e.Uid)
                     .HasColumnName("UID")
                     .HasDefaultValueSql("(newid())");
@@ -111,8 +109,6 @@ namespace GVCServer.Data.Entities
             modelBuilder.Entity<OpVag>(entity =>
             {
                 entity.HasKey(e => e.Uid);
-
-                entity.ToTable("OP_VAG");
 
                 entity.Property(e => e.Uid)
                     .HasColumnName("UID")

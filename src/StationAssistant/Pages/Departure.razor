@@ -39,7 +39,7 @@
         <ConfirmModal Title="@Title" DialogClose="onCloseModal" OverlayClick="onCloseModal" Width=@(FormationSheetIsVisible?"870":"550") Height="@(FormationSheetIsVisible?"80%":"180")" OKClick="onOK">
             @if (FormationSheetIsVisible)
             {
-                <FormationSheet trainIndex="@departingList.selectedTrain.Index"></FormationSheet>
+                <FormationSheet trainId="@departingList.selectedTrain.Id"></FormationSheet>
             }
             else if (PathSelectorIsVisible)
             {
@@ -130,7 +130,7 @@
             try
             {
                 var train = departingList.selectedTrain;
-                await StationData.RelocateTrain(train.Index, pathSelector.PathId);
+                await StationData.RelocateTrain(train.Id, pathSelector.PathId);
                 train.Path = await StationData.GetPathAsync(pathSelector.PathId);
                 departingList.UpdateSelectedRow(train);
                 NotificationService.SetMessage(TypeNotification.Success, $"Перестановка поезда №{train.Num} на путь отправления завершена");

@@ -21,14 +21,6 @@ else
             <td><SfSwitch @bind-Checked="@isEmpty" TChecked="bool" EnablePersistence="true" ValueChange="(async () => await onPathSortChange())"></SfSwitch></td>
         </tr>
     </table>
-    @*<div class="col-6 ml-1">
-        <label>Только сортировочные пути</label>
-        <SfSwitch @bind-Checked="@isSort" TChecked="bool" EnablePersistence="true" ValueChange="(async () => await onPathSortChange())"></SfSwitch>
-    </div>
-    <div class="col-6 ml-1">
-        <label>Только занятые пути</label>
-        <SfSwitch @bind-Checked="@isEmpty" TChecked="bool" EnablePersistence="true" ValueChange="(async () => await onPathSortChange())"></SfSwitch>
-    </div>*@
 </div>
     <SfTab @ref="Tab">
         <TabItems>

@@ -76,7 +76,7 @@ namespace GVCServer.Repositories
             {
                 if(codeOper == OperationCode.DetachWagons && wagOper.TrainId != trainId)
                 {
-                    throw new ArgumentException($"Вагона {wagOper.Num} в поезде нет!");
+                    throw new RailProcessException($"Вагона {wagOper.Num} в поезде нет!");
                 }
                 if(codeOper == OperationCode.AdditionVagons)
                 {
@@ -120,18 +120,18 @@ namespace GVCServer.Repositories
         }
         public void CheckWagonOperationsToCancel(List<ActualWagonOperations> wagonOperations, Guid trainId, string operationCode)
         {
-            var errors = new List<Exception>();
+            var errors = new List<RailProcessException>();
 
             foreach(ActualWagonOperations wagOper in wagonOperations)
             {
                 if(trainId != wagOper.TrainId)
-                    errors.Add(new Exception($"Вагон {wagOper.WagonNum} в поезде {wagOper.TrainNum}\n"));
+                    errors.Add(new RailProcessException($"Вагон {wagOper.WagonNum} в поезде {wagOper.TrainNum}\n"));
                 if(!operationCode.Equals(wagOper.CodeOper))
-                    errors.Add(new Exception($"Операция для вагона {wagOper.WagonNum} -> {wagOper.CodeOper}\n"));
+                    errors.Add(new RailProcessException($"Операция для вагона {wagOper.WagonNum} -> {wagOper.CodeOper}\n"));
             }
 
             if(errors.Any())
-                throw new AggregateException(errors);
+                throw new RailProcessException("Ошибки контроля операций с вагонами", new AggregateException(errors));
         }
         public async Task<string[]> GetOriginalWagons(Guid trainGui)
         {
@@ -141,7 +141,7 @@ namespace GVCServer.Repositories
         }
         public async Task CheckWagonOperationsToAdd(List<OpVag> newWagOpers, string station)
         {
-            List<Exception> errors = new List<Exception>();
+            List<RailProcessException> errors = new List<RailProcessException>();
             var wagonNums = newWagOpers.Select(nwgo => nwgo.Num).ToArray();
             var lastWagOpers = await _context.OpVag.Where(ov => wagonNums.Contains(ov.Num) && ov.LastOper).ToListAsync();
 
@@ -156,7 +156,7 @@ namespace GVCServer.Repositories
                 string[] notExistingWagons = wagonNums.Except(existingWagons).ToArray();
                 if (notExistingWagons.Length > 0)
                 {
-                    throw  new Exception($"Не найдены вагоны в картотеке БД: {string.Join(',', notExistingWagons)}");
+                    throw  new RailProcessException($"Не найдены вагоны в картотеке БД: {string.Join(',', notExistingWagons)}");
                 }
             }
 
@@ -165,16 +165,17 @@ namespace GVCServer.Repositories
                 OpVag newWagOper = newWagOpers.Where(nwgo => lastWgOper.Num.Equals(nwgo.Num)).First();
 
                 if (!lastWgOper.Source.Equals(station))
-                    errors.Add(new ArgumentException($"Вагон {lastWgOper.Num} на станции {lastWgOper.Source}"));
+                    errors.Add(new RailProcessException($"Вагон {lastWgOper.Num} на станции {lastWgOper.Source}"));
 
                 if (lastWgOper.TrainId != null)
-                    errors.Add(new ArgumentException($"Вагон {lastWgOper.Num} в другом поезде"));
+                    errors.Add(new RailProcessException($"Вагон {lastWgOper.Num} в другом поезде"));
 
                 if (lastWgOper.DateOper > newWagOper.DateOper)
-                    errors.Add(new ArgumentException($"Для вагона {lastWgOper.Num} после {lastWgOper.DateOper}"));
+                    errors.Add(new RailProcessException($"Для вагона {lastWgOper.Num} после {lastWgOper.DateOper}"));
             }
             if(errors.Any())
-                throw new AggregateException(errors);
+                throw new RailProcessException("Ошибки контроля операций с вагонами", new AggregateException(errors));
+
         }
         public IQueryable<OpVag> GetLastWagonOperationsQuery(Guid trainGuid, bool includeVagonParams)
         {

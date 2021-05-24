@@ -40,11 +40,11 @@ namespace StationAssistant.Services
 
         public Task<List<Vagon>> GetVagonsOnPath(int pathId);
 
-        public Task<List<Vagon>> GetVagonsOfTrain(string trainIndex);
+        public Task<List<Vagon>> GetVagonsOfTrain(Guid trainId);
 
         public Task<string[]> GetAreasAsync();
 
-        public Task RelocateTrain(string trainIndex, int pathId);
+        public Task RelocateTrain(Guid trainId, int pathId);
 
         public Task TrainDeparture(Guid trainId);
 
@@ -169,11 +169,11 @@ namespace StationAssistant.Services
 
         public async Task<TrainModel> SetDepartureRoute(TrainModel trainModel)
         {
-            Train train = await _context.FindAsync<Train>(trainModel.Index);
+            Train train = await _context.FindAsync<Train>(trainModel.Id);
             Direction dir = await _context.Direction.FindAsync(train.DestinationStation);
             string[] route = await _igvcData.GetNearestScheduleRoute(dir.DirectionId, train.TrainKindId);
             train.Num = route[0];
-            train.ScheduleTime = DateTime.Parse(route[1]);
+            train.ScheduleTime = DateTime.ParseExact(route[1], "M/d/yyyy h:mm:ss tt", System.Globalization.CultureInfo.InvariantCulture);
             await _context.SaveChangesAsync();
             return _imapper.Map<TrainModel>(train);
         }
@@ -216,7 +216,7 @@ namespace StationAssistant.Services
                 TrainModel trainModel = _imapper.Map<TrainModel>(train);
                 if (includeVagons)
                 {
-                    List<Vagon> vagons = await GetVagonsOfTrain(trainModel.Index);
+                    List<Vagon> vagons = await GetVagonsOfTrain(trainModel.Id);
                     trainModel.Wagons = _imapper.Map<List<WagonModel>>(vagons);
                 }
                 return trainModel;
@@ -231,7 +231,7 @@ namespace StationAssistant.Services
         {
             List<TrainModel> arrivedTrainModels = new List<TrainModel>();
             var trains = await _context.Train
-                                        .Where(t => t.FormStation.Equals(_configuration["StationCode"]))
+                                        .Where(t => t.FormStation.Equals(_configuration["Auth:StationCode"]))
                                         .ToListAsync();
             foreach (Train train in trains)
             {
@@ -301,9 +301,9 @@ namespace StationAssistant.Services
             return vagons;
         }
 
-        public async Task<List<Vagon>> GetVagonsOfTrain(string trainIndex)
+        public async Task<List<Vagon>> GetVagonsOfTrain(Guid trainId)
         {
-            List<Vagon> vagons = await _context.Vagon.Where(v => v.TrainId.Equals(trainIndex)).ToListAsync();
+            List<Vagon> vagons = await _context.Vagon.Where(v => v.TrainId.Equals(trainId)).ToListAsync();
 
             return vagons;
         }
@@ -313,12 +313,12 @@ namespace StationAssistant.Services
             return await _context.Path.Select(p => p.Area).Distinct().ToArrayAsync();
         }
 
-        public async Task RelocateTrain(string trainIndex, int pathId)
+        public async Task RelocateTrain(Guid trainId, int pathId)
         {
+            Train train = await _context.Train.FindAsync(trainId);
             int newPath = pathId;
-            Train train = _context.Train.Find(trainIndex);
             int oldPath = (int)train.PathId;
-            Path path = _context.Path.Find(newPath);
+            Path path = await _context.Path.FindAsync(newPath);
             if (train.Length > (path.Length - path.Occupation))
                 throw new Exception("Длина состава превышает длину свободной части пути");
             train.Path = path;
@@ -442,9 +442,9 @@ namespace StationAssistant.Services
             }
             if (errors.Any())
                 throw new AggregateException(errors);
-            vagons.ForEach(v => v.TrainIndexNavigation = null);
+            //vagons.ForEach(v => v.TrainIndexNavigation = null);
             _context.Path.Find(vagons[0].PathId).Occupation = 0;
-            _context.Train.Remove(_context.Train.Find(train.Index));
+            _context.Train.Remove(_context.Train.Find(train.Id));
             await _context.SaveChangesAsync();
             return vagons;
         }

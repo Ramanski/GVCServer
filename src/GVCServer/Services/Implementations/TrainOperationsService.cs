@@ -5,6 +5,7 @@ using AutoMapper;
 using GVCServer.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using ModelsLibrary;
 using ModelsLibrary.Codes;
 
 namespace GVCServer.Repositories
@@ -82,7 +83,7 @@ namespace GVCServer.Repositories
         {
             var train = await _context.Train.FindAsync(trainId);
             if(train == null)
-                throw new Exception("Поезд не найден");
+                throw new RailProcessException("Поезд не найден");
 
             var wagOpers = await _context.OpVag
                                             .Where(ov => ov.TrainId == train.Uid && ov.LastOper)
@@ -116,7 +117,7 @@ namespace GVCServer.Repositories
             {
                 var operationName = _context.Operation.Where(o => o.Code.Equals(trainOperation.Kop))
                                                       .Select(o => o.Name).FirstOrDefault();
-                throw new MethodAccessException($"Последняя операция для поезда -> {trainOperation.Kop}");
+                throw new RailProcessException($"Последняя операция для поезда -> {trainOperation.Kop}");
             }
 
             var affected = await _context.SaveChangesAsync();
