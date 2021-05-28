@@ -162,7 +162,7 @@
         }
         catch (Exception e)
         {
-            if (e is HttpRequestException)
+            if (e is RailProcessException)
             {
                 NotificationService.SetMessage(TypeNotification.Warning, e.Message);
             }
@@ -380,7 +380,7 @@
         }
         catch (Exception e)
         {
-            if (e is HttpRequestException)
+            if (e is RailProcessException)
             {
                 NotificationService.SetMessage(TypeNotification.Warning, e.Message);
             }

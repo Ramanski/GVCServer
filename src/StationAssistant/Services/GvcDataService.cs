@@ -56,7 +56,7 @@ namespace StationAssistant.Services
             trains = await httpService.Get<List<TrainModel>>("trains/coming");
 
             if(trains == null)
-                throw new Exception("Нет поездов на подходе");
+                throw new RailProcessException("Нет поездов на подходе");
 
             foreach (TrainModel train in trains)
             {

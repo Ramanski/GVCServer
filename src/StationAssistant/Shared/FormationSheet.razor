@@ -19,7 +19,7 @@
 </div>
 @if(dataLoaded)
 {
-    if(vagons != null && vagons[0].TrainIndexNavigation == null)
+    if(vagons.Any() && vagons[0].TrainIndexNavigation == null)
     {
     <div class="row">
         <div class="col-6">
@@ -97,7 +97,7 @@
         selectedVagons = new List<Vagon>();
         if (path != null)
             vagons = await StationData.GetVagonsOnPath(path.Id);
-        if (trainId != null)
+        if (trainId != default(Guid) && trainId != null)
             vagons = await StationData.GetVagonsOfTrain(trainId);
         weightSum = (int)vagons.Sum(v => v.WeightNetto) + vagons.Sum(v => v.Tvag);
         vagCount = vagons.Count;

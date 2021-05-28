@@ -82,9 +82,9 @@ namespace GVCServer.Repositories
         public async Task<TrainModel[]> GetComingTrainsAsync(string station)
         {
             TrainModel[] trainModels = await _context.Train
-                                                 .Include(t => t.OpTrain.Where(ot => ot.LastOper))
-                                                 .Where(t => station.Equals(t.DestinationStation) && !t.OpTrain.First().SourceStation.Equals(station))
                                                  //.Include(t => t.Schedule)
+                                                 .Where(t => station.Equals(t.DestinationStation))
+                                                 .Include(t => t.OpTrain.Where(ot => ot.LastOper))
                                                  .Select(t => new TrainModel
                                                  {
                                                      Id = t.Uid,
@@ -99,6 +99,7 @@ namespace GVCServer.Repositories
                                                      WeightBrutto = t.WeightBrutto,
                                                      DateOper = t.OpTrain.First().Datop
                                                  })
+                                                 .Where(t => t.Dislocation != station)
                                                  .ToArrayAsync();
             return trainModels;
         }
