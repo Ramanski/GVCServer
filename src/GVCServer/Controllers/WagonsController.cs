@@ -1,10 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
-using System.Text.Json;
 using System.Threading.Tasks;
-using GVCServer.Data;
 using GVCServer.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +17,6 @@ namespace GVCServer.Controllers
     public class WagonsController : ControllerBase
     {
         private readonly ILogger<TrainController> logger;
-        private readonly TrainRepository _trainRepository;
         private readonly WagonOperationsService wagonOperationsService;
 
         private string station { get; set; }
@@ -28,7 +24,6 @@ namespace GVCServer.Controllers
         public WagonsController(ILogger<TrainController> logger, TrainRepository trainRepository, WagonOperationsService wagonOperationsService)
         {
             this.logger = logger;
-            this._trainRepository = trainRepository;
             this.wagonOperationsService = wagonOperationsService;
             station = User?.Claims.Where(cl => cl.Type == ClaimTypes.Locality).FirstOrDefault()?.Value;
         }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -12,19 +13,16 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
-using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
-using StationAssistant.Data;
 using StationAssistant.Data.Entities;
 using StationAssistant.Services;
-using StationAssistant.Shared;
 using Syncfusion.Blazor;
 
 namespace StationAssistant
@@ -40,12 +38,13 @@ namespace StationAssistant
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddRazorPages()
-                    .AddJsonOptions(options =>
-                    {
-                        options.JsonSerializerOptions.IgnoreNullValues = true;
-                    });
+            services.AddSignalR();
+            services.AddRazorPages();
             services.AddServerSideBlazor();
+            services.AddResponseCompression( opt =>
+            {
+                opt.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new []{"application/octet-stream"});
+            });
             services.AddLocalization(opt => opt.ResourcesPath = "Resources");
             services.AddSyncfusionBlazor();
             services.AddSingleton(typeof(ISyncfusionStringLocalizer), typeof(SyncfusionLocalizer));
@@ -61,7 +60,6 @@ namespace StationAssistant
             }
 
             );
-            // ����� �������� �� HttpClientFactory ��������
             services.AddTransient(sp => new HttpClient 
                 { 
                     BaseAddress = new Uri(Configuration["GVCServer:BaseAddress"]) 
@@ -70,7 +68,6 @@ namespace StationAssistant
             services.AddScoped<IHttpService, HttpService>();
             services.AddHttpContextAccessor();
 
-            // ������, ��� ������ �������� ���
             services.AddScoped<INSIUpdateService, NsiUpdateService>();
             services.AddScoped<IGvcDataService, GvcDataService>();
             services.AddScoped<IStationDataService, StationDataService>();
@@ -114,7 +111,6 @@ namespace StationAssistant
                         conf.Scope.Add("gvc.delete");
                         conf.Scope.Add("user.read");
 
-                        // � Blazor ����� �� ���������. ����� ��-������� ��������� expiration �� ������� �������
                         conf.Events = new OpenIdConnectEvents
                         {
                             // that event is called after the OIDC middleware received the auhorisation code,
@@ -145,6 +141,8 @@ namespace StationAssistant
         {
             Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzM1ODEwQDMxMzgyZTMzMmUzMG9laG1XbUJkcnI0OHZpYTdicFdQVDdYK2ZTMzBXRDE5aDlhcnhYSTF0Y2c9");
 
+            app.UseResponseCompression();
+
             app.UseRequestLocalization(app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>().Value);
             if (env.IsDevelopment())
             {
@@ -167,6 +165,7 @@ namespace StationAssistant
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapBlazorHub();
+                endpoints.MapHub<TrainsHub>("/trainshub");
                 endpoints.MapFallbackToPage("/_Host");
             });
         }

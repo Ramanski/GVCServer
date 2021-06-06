@@ -43,8 +43,6 @@ namespace GVCServer
             services.AddScoped<WagonOperationsService>();
             services.AddScoped<TrainOperationsService>();
 
-            services.AddDbContext<Data.Entities.IVCStorageContext>(options =>
-                    options.UseSqlServer(Configuration.GetConnectionString("IVCStorage")));
             services
                  .UseRegisterDbContext(Configuration.GetConnectionString("IVCStorage"))
                  .UseOneTransactionPerHttpCall();
@@ -59,11 +57,6 @@ namespace GVCServer
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
-            //app.UseStaticFiles();
             app.UseProblemDetails();
 
             app.UseHttpsRedirection();

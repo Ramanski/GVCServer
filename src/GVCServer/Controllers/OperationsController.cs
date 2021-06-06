@@ -1,16 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Security.Claims;
-using System.Text.Json;
 using System.Threading.Tasks;
-using AutoMapper.Internal;
-using GVCServer.Data;
-using GVCServer.Helpers;
 using GVCServer.Repositories;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using ModelsLibrary;
@@ -27,11 +20,11 @@ namespace GVCServer.Controllers
         private readonly WagonOperationsService wagonOperationsService;
         private readonly TrainOperationsService trainOperationsService;
 
-        private string station {get ;set;}
+        private string station { get; set; }
         private readonly ILogger<TrainController> _logger;
 
-        public OperationsController(ILogger<TrainController> logger, 
-                                    TrainRepository trainRepository, 
+        public OperationsController(ILogger<TrainController> logger,
+                                    TrainRepository trainRepository,
                                     WagonOperationsService wagonOperationsService,
                                     TrainOperationsService trainOperationsService)
         {

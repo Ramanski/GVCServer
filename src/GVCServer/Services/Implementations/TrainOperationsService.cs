@@ -82,18 +82,18 @@ namespace GVCServer.Repositories
         public async Task UpdateTrainParameters(Guid trainId)
         {
             var train = await _context.Train.FindAsync(trainId);
-            if(train == null)
+            if (train == null)
                 throw new RailProcessException("Поезд не найден");
 
             var wagOpers = await _context.OpVag
                                             .Where(ov => ov.TrainId == train.Uid && ov.LastOper)
-                                            .Select(op => new ActualWagonOperations(){ WeightNetto = op.WeightNetto, WagonNum = op.Num })
+                                            .Select(op => new { WeightNetto = op.WeightNetto, WagonNum = op.Num })
                                             .ToListAsync();
             var wagons = wagOpers.Select(wo => wo.WagonNum);
             var taraOverall = await _context.Vagon.Where(w => wagons.Contains(w.Id)).SumAsync(w => w.Tvag);
-            
-            train.Length = (short) (wagOpers.Count());
-            train.WeightBrutto = (short) (wagOpers.Sum(o => o.WeightNetto) + taraOverall);
+
+            train.Length = (short)(wagOpers.Count());
+            train.WeightBrutto = (short)(wagOpers.Sum(o => o.WeightNetto) + taraOverall);
 
             _context.Update(train);
             _logger.LogInformation("Updating train info", train);

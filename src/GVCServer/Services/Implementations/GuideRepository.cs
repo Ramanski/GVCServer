@@ -20,13 +20,13 @@ namespace GVCServer.Repositories
         public async Task<List<string[]>> GetPlanFormStations(string sourceStation, string[] destinationStations)
         {
             List<string[]> groupPFStations = new List<string[]>();
-            foreach(string destinationStation in destinationStations)
+            foreach (string destinationStation in destinationStations)
             {
-                if(sourceStation.Equals(destinationStation))
+                if (sourceStation.Equals(destinationStation))
                 {
                     groupPFStations.Add(new string[] { sourceStation, sourceStation, null });
                     continue;
-                }    
+                }
                 int destinationInt;
                 int.TryParse(destinationStation, out destinationInt);
                 string[] target = await _context.PlanForm.Where(pf => sourceStation.Equals(pf.FormStation) && destinationInt >= pf.LowRange && destinationInt <= pf.HighRange)
@@ -86,10 +86,10 @@ namespace GVCServer.Repositories
             var timeStart = (DateTime.Now.AddMinutes(minutesOffset)).TimeOfDay;
             var depatureRoute = await depatrureRouteQuery.Where(s => s.DepartureTime > timeStart)
                                                     .FirstOrDefaultAsync();
-            if(depatureRoute == null)
+            if (depatureRoute == null)
             {
                 depatureRoute = await depatrureRouteQuery.Where(s => s.DepartureTime != null).FirstOrDefaultAsync();
-                if(depatureRoute != null)
+                if (depatureRoute != null)
                 {
                     departureTime = (DateTime)(DateTime.Today.AddDays(1) + depatureRoute.DepartureTime);
                 }
@@ -102,7 +102,7 @@ namespace GVCServer.Repositories
             {
                 departureTime = (DateTime)(DateTime.Today + depatureRoute.DepartureTime);
             }
-            return new string[] { depatureRoute.TrainNum.ToString(), departureTime.ToString()};
+            return new string[] { depatureRoute.TrainNum.ToString(), departureTime.ToString() };
         }
 
         public async Task<List<Pfclaim>> GetPlanFormClaims(string sourceStation)

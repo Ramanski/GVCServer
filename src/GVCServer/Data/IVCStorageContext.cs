@@ -31,18 +31,6 @@ namespace GVCServer.Data.Entities
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // modelBuilder.Entity<ActualWagonOperations>((awo =>
-            // {
-            //     awo.HasNoKey();
-            //     awo.ToView("WagonModel");
-            // }));
-
-            // modelBuilder.Entity<TrainModel>(entity =>
-            // {
-            //     entity.HasNoKey();
-            //     entity.ToView("TrainModel");
-            // });
-
             modelBuilder.Entity<Direction>(entity =>
             {
                 entity.Property(e => e.Id).ValueGeneratedNever();

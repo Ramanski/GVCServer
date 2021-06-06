@@ -104,13 +104,12 @@ namespace GVCServer.Repositories
             await AddWagonOperations(trainId, OperationCode.DetachWagons, detachedWagons, timeOper, station);
             await AddWagonOperations(trainId, OperationCode.AdditionVagons, detachedWagons, timeOper, station);
         }
-        async Task DeleteWagonOperations(List<ActualWagonOperations> actualWagonOperations)
+        async Task DeleteWagonOperations(List<OpVag> actualWagonOperations)
         {
-            var deleteWagOpers = actualWagonOperations.Select(op => new OpVag{ Uid = op.OperId });
-            _context.OpVag.RemoveRange(deleteWagOpers);
+            _context.OpVag.RemoveRange(actualWagonOperations);
 
             var affected = await _context.SaveChangesAsync();
-            _logger.LogInformation($"Removed {affected} of {deleteWagOpers.Count()} records");
+            _logger.LogInformation($"Removed {affected} of {actualWagonOperations.Count()} records");
 
             /// !!! Не забыть обновить параметры поезда
             // if (assignedTrain != null)
@@ -118,16 +117,25 @@ namespace GVCServer.Repositories
             //     await trainRepository.UpdateTrainParameters(assignedTrain.First());
             // }
         }
-        public void CheckWagonOperationsToCancel(List<ActualWagonOperations> wagonOperations, Guid trainId, string operationCode)
+        public void CheckWagonOperationsToCancel(List<string> wagons, Guid trainId, string operationCode)
         {
             var errors = new List<RailProcessException>();
+            var wagonOperations = _context.OpVag
+                                          .Where(wo => wo.LastOper && wagons.Contains(wo.Num))
+                                          .Include(wo => wo.Train)
+                                          .Select(wo => new OpVag(){
+                                                        Num = wo.Num,
+                                                        TrainId = wo.TrainId,
+                                                        Train = wo.Train,
+                                                        CodeOper = wo.CodeOper
+                                          });
 
-            foreach(ActualWagonOperations wagOper in wagonOperations)
+            foreach(OpVag wagOper in wagonOperations)
             {
                 if(trainId != wagOper.TrainId)
-                    errors.Add(new RailProcessException($"Вагон {wagOper.WagonNum} в поезде {wagOper.TrainNum}\n"));
+                    errors.Add(new RailProcessException($"Вагон {wagOper.Num} в поезде {wagOper.Train.TrainNum}\n"));
                 if(!operationCode.Equals(wagOper.CodeOper))
-                    errors.Add(new RailProcessException($"Операция для вагона {wagOper.WagonNum} -> {wagOper.CodeOper}\n"));
+                    errors.Add(new RailProcessException($"Операция для вагона {wagOper.Num} -> {wagOper.CodeOper}\n"));
             }
 
             if(errors.Any())

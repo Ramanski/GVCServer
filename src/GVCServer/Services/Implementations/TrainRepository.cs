@@ -52,12 +52,12 @@ namespace GVCServer.Repositories
                                                                 .Where(ov => ov.LastOper))
                                           .Where(t => t.Uid == trainId)
                                           .FirstOrDefaultAsync();
-            if(train.OpTrain.FirstOrDefault().Kop == OperationCode.TrainComposition &&
+            if (train.OpTrain.FirstOrDefault().Kop == OperationCode.TrainComposition &&
                train.OpVag.All(ov => ov.CodeOper == OperationCode.TrainComposition))
             {
                 _context.Remove(train);
                 _logger.LogInformation("Canceling creation of train {0}", train);
-                 var affected = await _context.SaveChangesAsync();
+                var affected = await _context.SaveChangesAsync();
                 _logger.LogInformation("Saved {0} of {1} records", affected, train.OpVag.Count() + 2);
             }
             else
@@ -82,7 +82,6 @@ namespace GVCServer.Repositories
         public async Task<TrainModel[]> GetComingTrainsAsync(string station)
         {
             TrainModel[] trainModels = await _context.Train
-                                                 //.Include(t => t.Schedule)
                                                  .Where(t => station.Equals(t.DestinationStation))
                                                  .Include(t => t.OpTrain.Where(ot => ot.LastOper))
                                                  .Select(t => new TrainModel
@@ -93,11 +92,11 @@ namespace GVCServer.Repositories
                                                      FormStation = t.FormStation,
                                                      Ordinal = t.Ordinal,
                                                      DestinationStation = t.DestinationStation,
-                                                     Dislocation = t.OpTrain.First().SourceStation,
+                                                     Dislocation = t.OpTrain.Where(ot => ot.LastOper).First().SourceStation,
                                                      Length = t.Length,
-                                                     CodeOper = t.OpTrain.First().Kop,
+                                                     CodeOper = t.OpTrain.Where(ot => ot.LastOper).First().Kop,
                                                      WeightBrutto = t.WeightBrutto,
-                                                     DateOper = t.OpTrain.First().Datop
+                                                     DateOper = t.OpTrain.Where(ot => ot.LastOper).First().Datop
                                                  })
                                                  .Where(t => t.Dislocation != station)
                                                  .ToArrayAsync();
@@ -118,7 +117,8 @@ namespace GVCServer.Repositories
             }
         }
 
-        private async Task<short> GetNextOrdinal(string formStation){
+        private async Task<short> GetNextOrdinal(string formStation)
+        {
             short lastOrdinal = await _context.Train
                                               .Where(t => formStation.Equals(t.FormStation))
                                               .OrderByDescending(t => t.FormTime)
@@ -140,13 +140,15 @@ namespace GVCServer.Repositories
             return train;
         }
 
-        public async Task<TrainModel> GetActualTrainAsync(Guid trainId){
+        public async Task<TrainModel> GetActualTrainAsync(Guid trainId)
+        {
             var trainModel = await _context.Train
                                     .Include(t => t.OpVag.Where(ov => ov.LastOper))
                                     .ThenInclude(ov => ov.NumNavigation)
                                     .Include(t => t.OpTrain.Where(ot => ot.LastOper))
                                     .Where(t => t.Uid == trainId)
-                                    .Select(t => new TrainModel{
+                                    .Select(t => new TrainModel
+                                    {
                                         Id = t.Uid,
                                         CodeOper = t.OpTrain.FirstOrDefault().Kop,
                                         DateOper = t.OpTrain.FirstOrDefault().Datop,
