@@ -65,23 +65,60 @@ namespace IdentityServer
                     context.SaveChanges();
                 }
 
-                    var manager = serviceScope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
-                    
-                if(!manager.Users.Any())
+                var manager = serviceScope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+
+                if (!manager.Users.Any())
                 {
-                    IdentityUser user = new IdentityUser()
+                    IdentityUser admin = new IdentityUser()
                     {
-                        UserName = "test", Email = "test@test.com", Id = "001", EmailConfirmed = true
+                        UserName = "admin",
+                        Email = "test@test.com",
+                        Id = "001",
+                        EmailConfirmed = true
                     };
 
-                    IEnumerable<Claim> claims = new List<Claim>() {
+                    IEnumerable<Claim> claimsAdmin = new List<Claim>() {
                         new Claim(ClaimTypes.Locality, "161306"),
                         new Claim(ClaimTypes.Role, Role.Admin),
-                        new Claim(ClaimTypes.Name, "�������� �.�.")
+                        new Claim(ClaimTypes.Name, "Администратор")
                     };
 
-                    manager.CreateAsync(user, "password").GetAwaiter().GetResult();
-                    manager.AddClaimsAsync(user, claims).GetAwaiter().GetResult();
+                    IdentityUser polatsk = new IdentityUser()
+                    {
+                        UserName = "polatsk",
+                        Email = "test@test.com",
+                        Id = "002",
+                        EmailConfirmed = true
+                    };
+
+                    IEnumerable<Claim> claimsPolatsk = new List<Claim>() {
+                        new Claim(ClaimTypes.Locality, "161306"),
+                        new Claim(ClaimTypes.Role, Role.DSP),
+                        new Claim(ClaimTypes.Name, "ДСП Иванов")
+                    };
+
+                    IdentityUser vitebsk = new IdentityUser()
+                    {
+                        UserName = "vitebsk",
+                        Email = "test@test.com",
+                        Id = "003",
+                        EmailConfirmed = true
+                    };
+
+                    IEnumerable<Claim> claimsVitebsk = new List<Claim>() {
+                        new Claim(ClaimTypes.Locality, "160002"),
+                        new Claim(ClaimTypes.Role, Role.DSC ),
+                        new Claim(ClaimTypes.Name, "ДСЦ Сидоров")
+                    };
+
+                    manager.CreateAsync(admin, "password").GetAwaiter().GetResult();
+                    manager.AddClaimsAsync(admin, claimsAdmin).GetAwaiter().GetResult();
+
+                    manager.CreateAsync(vitebsk, "password").GetAwaiter().GetResult();
+                    manager.AddClaimsAsync(vitebsk, claimsVitebsk).GetAwaiter().GetResult();
+
+                    manager.CreateAsync(polatsk, "password").GetAwaiter().GetResult();
+                    manager.AddClaimsAsync(polatsk, claimsPolatsk).GetAwaiter().GetResult();
                 }
             }
 
