@@ -10,12 +10,15 @@ namespace StationAssistant.Services
             Info,
             Success,
             Warning,
-            Error
+            Error, 
+            SignalR
     }
 
     public class NotificationService
     {
         public string Message { get; private set; }
+
+        public string Sender {get; private set; }
 
         public TypeNotification MessageType { get; private set; }
 
@@ -25,6 +28,14 @@ namespace StationAssistant.Services
         {
             Message = message;
             MessageType = typeNotification;
+            NotifyStateChanged();
+        }
+
+        public void SetMessage(string sender, string message)
+        {
+            Sender = sender;
+            Message = message;
+            MessageType = TypeNotification.SignalR;
             NotifyStateChanged();
         }
 

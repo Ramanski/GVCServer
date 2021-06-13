@@ -63,13 +63,11 @@
     public void OnDataBoundHandler(BeforeDataBoundArgs<TrainModel> args)
     {
         SpinnerObj.Show();
-        //SpinnerObj.ShowSpinner(Target);
     }
 
     public void DataBoundHandler(object args)
     {
         SpinnerObj.Hide();
-        //SpinnerObj.HideSpinner(Target);
     }
 
     public void ActionCompleted(ActionEventArgs<TrainModel> args)
@@ -83,8 +81,7 @@
 
     public void AddTrain(TrainModel train)
     {
-        //this.trainList.Add(train);
-        Grid.AddRecord(train);
+            Grid.AddRecord(train);
     }
 
     public async Task StateChanged()
@@ -95,7 +92,6 @@
 
     public void DeleteTrain(TrainModel train)
     {
-        //trainList.Remove(train);
-        Grid.DeleteRecord();
+        Grid.DeleteRecord(null, train);
     }
 }

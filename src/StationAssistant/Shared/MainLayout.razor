@@ -72,7 +72,7 @@
     }
 </style>
 
-@code{
+@code {
     SfToast ToastObj;
     public string Message { get; set; }
 
@@ -108,6 +108,20 @@
                     ToastModel toastModel = new ToastModel()
                     {
                         Title = "Успех",
+                        Content = NotificationService.Message,
+                        CssClass = "e-toast-success",
+                        Icon = "e-success toast-icons",
+                        Timeout = 10000,
+                        ShowCloseButton = true
+                    };
+                    await this.ToastObj.Show(toastModel);
+                }
+                break;
+            case TypeNotification.SignalR:
+                {
+                    ToastModel toastModel = new ToastModel()
+                    {
+                        Title = NotificationService.Sender,
                         Content = NotificationService.Message,
                         CssClass = "e-toast-success",
                         Icon = "e-success toast-icons",
