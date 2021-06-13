@@ -97,7 +97,7 @@
         selectedVagons = new List<Vagon>();
         if (path != null)
             vagons = await StationData.GetVagonsOnPath(path.Id);
-        if (trainId != default(Guid) && trainId != null)
+        if (trainId != default(Guid))
             vagons = await StationData.GetVagonsOfTrain(trainId);
         weightSum = (int)vagons.Sum(v => v.WeightNetto) + vagons.Sum(v => v.Tvag);
         vagCount = vagons.Count;

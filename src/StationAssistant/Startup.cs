@@ -64,7 +64,6 @@ namespace StationAssistant
                 { 
                     BaseAddress = new Uri(Configuration["GVCServer:BaseAddress"]) 
                 });
-            services.AddHttpClient();
             services.AddScoped<IHttpService, HttpService>();
             services.AddHttpContextAccessor();
 
@@ -72,6 +71,7 @@ namespace StationAssistant
             services.AddScoped<IGvcDataService, GvcDataService>();
             services.AddScoped<IStationDataService, StationDataService>();
             services.AddScoped<NotificationService>();
+            
             services.AddAutoMapper(typeof(Startup));
             services.AddDbContext<StationStorageContext>(options =>
             {
@@ -139,7 +139,7 @@ namespace StationAssistant
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MzM1ODEwQDMxMzgyZTMzMmUzMG9laG1XbUJkcnI0OHZpYTdicFdQVDdYK2ZTMzBXRDE5aDlhcnhYSTF0Y2c9");
+            Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense(Configuration["Syncfusion:LicenceKey"]);
 
             app.UseResponseCompression();
 

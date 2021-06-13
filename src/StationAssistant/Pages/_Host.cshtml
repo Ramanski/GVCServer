@@ -20,8 +20,6 @@
     <link href="css/site.css" rel="stylesheet" />
 </head>
 <body>
-@*    @if (User.Identity.IsAuthenticated)
-    {*@
         <app>
             <component type="typeof(App)" render-mode="Server" />
         </app>
@@ -38,16 +36,6 @@
         </div>
 
         <script src="_framework/blazor.server.js"></script>
-@*    }
-    else
-    {
-        <h3>You are not logged into this application.</h3>
-
-        <p>
-            <a href="/Login">Login</a>
-        </p>
-    }*@
-
 </body>
 </html>
 
