@@ -12,7 +12,6 @@ namespace StationAssistant.Data.Entities
         public int Id { get; set; }
         public string Area { get; set; }
         public string PathNum { get; set; }
-        public short Occupation { get; set; }
         public short Length { get; set; }
         public short? Pfdirection { get; set; }
         public bool Arrival { get; set; }

@@ -14,10 +14,6 @@ namespace StationAssistant.Services
     {
         public Task<List<TrainModel>> GetDepartingTrains();
 
-        public Task UpdatePathOccupation(int pathId);
-
-        public Task UpdatePaths(string area);
-
         public Task AddTrainAsync(Guid trainId, DateTime timeArrived, int pathId);
 
         public Task DeleteTrainAsync(Guid trainId);
@@ -82,23 +78,6 @@ namespace StationAssistant.Services
             _context = context;
         }
 
-        public async Task UpdatePathOccupation(int pathId)
-        {
-            Path path = await _context.Path.Include(p => p.Vagon).Where(p => pathId.Equals(p.Id)).FirstAsync();
-            path.Occupation = (short)path.Vagon.Count();
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task UpdatePaths(string area)
-        {
-            var pathsQuery = _context.Path.Select(p => new Path { Id = p.Id, Occupation = (short)p.Vagon.Count() });
-            if (!string.IsNullOrEmpty(area))
-                pathsQuery.Where(p => area.Equals(p.Area));
-            await pathsQuery.LoadAsync();
-            _context.UpdateRange(pathsQuery);
-            await _context.SaveChangesAsync();
-        }
-
         public async Task AddTrainAsync(Guid trainId, DateTime timeArrived, int pathId)
         {
             TrainModel trainModel = await _igvcData.GetTrainInfo(trainId);
@@ -160,6 +139,7 @@ namespace StationAssistant.Services
         public async Task<PathModel> GetPathAsync(int pathId)
         {
             var path = await _context.Path
+                                    .Include(p => p.Vagon)
                                     .Where(p => p.Id == pathId)
                                     .SingleOrDefaultAsync();
             if (path.Pfdirection.HasValue)
@@ -184,6 +164,7 @@ namespace StationAssistant.Services
 
             var pathsQuery = _context.Path
                                     .Include(p => p.Train)
+                                    .Include(p => p.Vagon)
                                     .Where(p => area.Equals(p.Area));
 
             if (sort)
@@ -318,16 +299,19 @@ namespace StationAssistant.Services
             Train train = await _context.Train.FindAsync(trainId);
             int newPath = pathId;
             int oldPath = (int)train.PathId;
-            Path path = await _context.Path.FindAsync(newPath);
-            if (train.Length > (path.Length - path.Occupation))
-                throw new Exception("Длина состава превышает длину свободной части пути");
-            train.Path = path;
+            Path path = await _context.Path
+                                      .Include(p => p.Vagon)
+                                      .Where(p => p.Id == newPath)
+                                      .FirstOrDefaultAsync();
+            var pathModel = _imapper.Map<PathModel>(path);
+
+            if (train.Length > (pathModel.Length - pathModel.Occupation))
+                throw new RailProcessException("Длина состава превышает длину свободной части пути");
+            train.PathId = pathModel.Id;
             await _context.Vagon
                           .Where(v => train == v.TrainIndexNavigation)
-                          .ForEachAsync(v => v.Path = path);
+                          .ForEachAsync(v => v.PathId = pathModel.Id);
             await _context.SaveChangesAsync();
-            await UpdatePathOccupation(oldPath);
-            await UpdatePathOccupation(newPath);
         }
 
         public async Task TrainDeparture(Guid trainId)
@@ -347,19 +331,19 @@ namespace StationAssistant.Services
             _context.RemoveRange(vagons);
             _context.Remove(train);
             await _context.SaveChangesAsync();
-            await UpdatePathOccupation((int)train.PathId);
         }
 
         public async Task<List<PathModel>> GetPaths()
         {
-            List<Path> paths = await _context.Path.ToListAsync();
+            List<Path> paths = await _context.Path.Include(p => p.Vagon).ToListAsync();
             return (paths.Any() ? _imapper.Map<List<PathModel>>(paths) : null);
         }
 
         public async Task<List<PathModel>> GetAvailablePaths(TrainModel train, bool arriving = false, bool departing = false)
         {
             var emptyPaths = _context.Path
-                                     .Where(p => p.Occupation == 0 && !p.Main && p.Length >= train.Length);
+                                     .Include(p => p.Vagon)
+                                     .Where(p => p.Vagon.Count == 0 && !p.Main && p.Length >= train.Length);
 
             if (arriving)
             {
@@ -425,10 +409,10 @@ namespace StationAssistant.Services
 
                 foreach (Path planPath in planPaths)
                 {
-                    if (planPath.Occupation < planPath.Length)
+                    if (planPath.Vagon.Count < planPath.Length)
                     {
-                        vagon.Path = planPath;
-                        planPath.Occupation++;
+                        //vagon.Path = planPath;
+                        planPath.Vagon.Add(vagon);
                         freeSpotFound = true;
                         break;
                     }
@@ -442,8 +426,6 @@ namespace StationAssistant.Services
             }
             if (errors.Any())
                 throw new AggregateException(errors);
-            //vagons.ForEach(v => v.TrainIndexNavigation = null);
-            _context.Path.Find(vagons[0].PathId).Occupation = 0;
             _context.Train.Remove(_context.Train.Find(train.Id));
             await _context.SaveChangesAsync();
             return vagons;

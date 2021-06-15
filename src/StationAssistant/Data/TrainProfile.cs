@@ -22,6 +22,7 @@ namespace StationAssistant.Data
 
             this.CreateMap<Path, PathModel>()
                 .ForMember(pm => pm.TrainLength, m => m.MapFrom(p => p.Train.Sum(t => t.Length)))
+                .ForMember(pm => pm.Occupation, m => m.MapFrom(p => p.Vagon.Count()))
                 .ForMember(pm => pm.AnyTrain, m => m.MapFrom(p => p.Train.Any()));
         }
     }

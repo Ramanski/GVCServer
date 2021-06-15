@@ -85,18 +85,17 @@ namespace StationAssistant.Services
                 case HttpStatusCode.BadRequest:
                 {
                     var reason = await response.Content.ReadFromJsonAsync<Microsoft.AspNetCore.Mvc.ProblemDetails>();
-                    throw new HttpRequestException(reason.Detail);
+                    throw new RailProcessException(reason.Detail);
                 }
                 case HttpStatusCode.NoContent:
                     return default(T);
                 case HttpStatusCode.Unauthorized:
-                    throw new HttpRequestException("Нет доступа");
+                    throw new UnauthorizedAccessException("Нет доступа");
                 case HttpStatusCode.OK:
                     return (response.Content.Headers.ContentLength > 0) ? await response.Content.ReadFromJsonAsync<T>(): default(T);
                 default:
                 {
-                    // log warning
-                    return default(T);
+                    throw new Exception("Unexpected error");
                 }
             }
         }

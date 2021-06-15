@@ -139,7 +139,7 @@
     private bool TrainListVisible { get; set; } = false;
     private bool PathSelectorVisible { get; set; } = false;
     private bool CancelConfirmVisible { get; set; } = false;
-    //    private bool DataIsLoaded = false;
+
     private bool ShowArrivingPathsOnly = false;
     public bool ArrivingTrainIsSelected { get; set; } = false;
     public bool ArrivedTrainIsSelected { get; set; } = false;
@@ -189,18 +189,20 @@
     }
     private async Task GetDetails()
     {
-        if (arrivingList.selectedTrain == null)
-        {
-            NotificationService.SetMessage(TypeNotification.Info, "Выберите поезд из списка");
-            return;
-        }
         try
         {
             selectedTrainModel = await GvcDataFetch.GetTrainInfo(arrivingList.selectedTrain.Id);
         }
-        catch (Exception)
+        catch (Exception e)
         {
-            NotificationService.SetMessage(TypeNotification.Error, "Не удалось выполнить операцию");
+             if (e is RailProcessException)
+            {
+                NotificationService.SetMessage(TypeNotification.Warning, e.Message);
+            }
+            else
+            {
+                NotificationService.SetMessage(TypeNotification.Error, "Не удалось выполнить операцию");
+            }
         }
         onOpenList();
         StateHasChanged();
@@ -277,7 +279,6 @@
             await GvcDataFetch.SendTrainArrivedAsync(selectedTrainModel.Id, DateTime.Now);
             await StationData.AddTrainAsync(selectedTrainModel.Id, DateTime.Now, selectedTrainModel.Path.Id);
             await NotifyArrived();
-            await StationData.UpdatePathOccupation(selectedTrainModel.Path.Id);
         }
         catch (Exception e)
         {
@@ -290,7 +291,6 @@
                 NotificationService.SetMessage(TypeNotification.Error, "Не удалось выполнить операцию");
             }
             await CancelArrival();
-            return;
         }
         await arrivingList.DeselectRow();
         await arrivedList.DeselectRow();
@@ -322,7 +322,6 @@
             arrivingList.AddTrain(train);
             await arrivedList.DeselectRow();
             await arrivingList.DeselectRow();
-            await StationData.UpdatePathOccupation(train.Path.Id);
             NotificationService.SetMessage(TypeNotification.Success, $"Операция по отмене прибытия поезда №{train.Num} проведена успешно");
         }
         catch (Exception)
