@@ -26,11 +26,11 @@ namespace GVCServer.Repositories
             _logger = logger;
         }
 
-        public async Task<TrainModel> AddTrainAsync(TrainModel TrainModel, string station)
+        public async Task<TrainModel> AddTrainAsync(TrainModel trainModel, string station)
         {
-            _logger.LogInformation("Got trainModel to create {0}", TrainModel);
+            _logger.LogInformation("Got trainModel to create {0}", trainModel);
 
-            var train = _imapper.Map<Train>(TrainModel);
+            var train = new Train(trainModel);
             train.Dislocation = station;
             train.Ordinal = await GetNextOrdinal(station);
 

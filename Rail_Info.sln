@@ -9,6 +9,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModelsLibrary", "src\Models
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StationAssistant", "src\StationAssistant\StationAssistant.csproj", "{74871DF1-7AB4-4385-989A-3D14A671BBFF}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{C5570867-7607-4469-B955-5E58AA35F78C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GvcApiUnitTests", "test\GvcApiUnitTests\GvcApiUnitTests.csproj", "{B50EACAA-19B1-48C5-B902-E51B3F1CA361}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -58,5 +62,20 @@ Global
 		{74871DF1-7AB4-4385-989A-3D14A671BBFF}.Release|x64.Build.0 = Release|Any CPU
 		{74871DF1-7AB4-4385-989A-3D14A671BBFF}.Release|x86.ActiveCfg = Release|Any CPU
 		{74871DF1-7AB4-4385-989A-3D14A671BBFF}.Release|x86.Build.0 = Release|Any CPU
+		{B50EACAA-19B1-48C5-B902-E51B3F1CA361}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B50EACAA-19B1-48C5-B902-E51B3F1CA361}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B50EACAA-19B1-48C5-B902-E51B3F1CA361}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B50EACAA-19B1-48C5-B902-E51B3F1CA361}.Debug|x64.Build.0 = Debug|Any CPU
+		{B50EACAA-19B1-48C5-B902-E51B3F1CA361}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B50EACAA-19B1-48C5-B902-E51B3F1CA361}.Debug|x86.Build.0 = Debug|Any CPU
+		{B50EACAA-19B1-48C5-B902-E51B3F1CA361}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B50EACAA-19B1-48C5-B902-E51B3F1CA361}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B50EACAA-19B1-48C5-B902-E51B3F1CA361}.Release|x64.ActiveCfg = Release|Any CPU
+		{B50EACAA-19B1-48C5-B902-E51B3F1CA361}.Release|x64.Build.0 = Release|Any CPU
+		{B50EACAA-19B1-48C5-B902-E51B3F1CA361}.Release|x86.ActiveCfg = Release|Any CPU
+		{B50EACAA-19B1-48C5-B902-E51B3F1CA361}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{B50EACAA-19B1-48C5-B902-E51B3F1CA361} = {C5570867-7607-4469-B955-5E58AA35F78C}
 	EndGlobalSection
 EndGlobal

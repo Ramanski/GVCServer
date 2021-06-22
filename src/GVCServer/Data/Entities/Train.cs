@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using ModelsLibrary;
 
 namespace GVCServer.Data.Entities
 {
@@ -9,6 +10,20 @@ namespace GVCServer.Data.Entities
         {
             OpTrain = new HashSet<OpTrain>();
             OpVag = new HashSet<OpVag>();
+        }
+
+        public Train(TrainModel trainModel)
+        {
+            Uid = trainModel.Id;
+            TrainNum = trainModel.Num;
+            TrainKindId = trainModel.Kind;
+            FormStation = trainModel.FormStation;
+            Ordinal = trainModel.Ordinal;
+            DestinationStation = trainModel.DestinationStation;
+            FormTime = trainModel.DateOper;
+            Dislocation = trainModel.Dislocation;
+            Length = trainModel.Length;
+            WeightBrutto = trainModel.WeightBrutto;
         }
 
         public Guid Uid { get; set; }

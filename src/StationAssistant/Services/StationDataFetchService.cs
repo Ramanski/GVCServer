@@ -446,7 +446,7 @@ namespace StationAssistant.Services
             {
                 DestinationStation = destination,
                 DateOper = DateTime.Now,
-                FormStation = "161306",
+                FormStation = _configuration["Auth:StationCode"],
                 FormTime = DateTime.Now,
                 Length = (short)vagons.Count(),
                 WeightBrutto = (short)((vagons.Sum(v => v.Tvag) + vagons.Sum(v => v.WeightNetto)) / 10),

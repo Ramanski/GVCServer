@@ -1,15 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net.Http;
-using System.Security.Claims;
-using System.Threading.Tasks;
 using AutoMapper;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Hosting;
@@ -20,7 +14,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using StationAssistant.Data.Entities;
 using StationAssistant.Services;
 using Syncfusion.Blazor;
@@ -78,58 +71,9 @@ namespace StationAssistant
                 options.EnableDetailedErrors();
                 options.EnableSensitiveDataLogging();
                 options.UseSqlServer(Configuration.GetConnectionString("StationStorage"));
-            }
-                    );
+            });
 
-            services.AddAuthentication( configureOptions =>
-                    {
-                        configureOptions.DefaultScheme = "AppCookie";
-                        configureOptions.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
-                    })
-                    .AddCookie("AppCookie", conf =>
-                    {
-                        conf.Cookie.Name = "StationAssist.Cookie";
-                    })
-                    .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, conf =>
-                    {
-                        conf.Authority = Configuration["Auth:IdenServer"];
-                        conf.ClientId = Configuration["Auth:Id"];
-                        conf.ClientSecret = Configuration["Auth:Secret"];
-                        conf.ResponseType = OpenIdConnectResponseType.Code;
-                        conf.SaveTokens = true;
-                        conf.GetClaimsFromUserInfoEndpoint = true;
-                        conf.SignedOutCallbackPath = "/index";
-
-                        conf.ClaimActions.MapUniqueJsonKey(ClaimTypes.Role, ClaimTypes.Role);
-                        conf.ClaimActions.MapUniqueJsonKey(ClaimTypes.Name, ClaimTypes.Name);
-                        
-                        conf.Scope.Clear();
-                        conf.Scope.Add(OpenIdConnectScope.OpenId);
-                        conf.Scope.Add(OpenIdConnectScope.OfflineAccess);
-                        conf.Scope.Add("gvc.read");
-                        conf.Scope.Add("gvc.write");
-                        conf.Scope.Add("gvc.delete");
-                        conf.Scope.Add("user.read");
-
-                        conf.Events = new OpenIdConnectEvents
-                        {
-                            // that event is called after the OIDC middleware received the auhorisation code,
-                            // redeemed it for an access token and a refresh token,
-                            // and validated the identity token
-                            OnTokenValidated = x =>
-                            {
-                                // so that we don't issue a session cookie but one with a fixed expiration
-                                x.Properties.IsPersistent = true;
-
-                                // align expiration of the cookie with expiration of the
-                                // access token
-                                var accessToken = new JwtSecurityToken(x.TokenEndpointResponse.AccessToken);
-                                x.Properties.ExpiresUtc = accessToken.ValidTo;
-
-                                return Task.CompletedTask;
-                            }
-                        };
-                    });
+            services.AddStationAuthentication(Configuration.GetSection("Auth"));
 
             services.AddSingleton<BlazorServerAuthStateCache>();
             services.AddScoped<AuthenticationStateProvider, BlazorServerAuthState>();
