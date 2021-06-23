@@ -33,9 +33,12 @@ namespace GVCServer.Repositories
             var train = new Train(trainModel);
             train.Dislocation = station;
             train.Ordinal = await GetNextOrdinal(station);
+            train.OpTrain = new List<OpTrain>(){ new OpTrain(){ Datop = trainModel.DateOper, 
+                                                                Kop = OperationCode.TrainComposition,
+                                                                SourceStation = station } };
 
             _logger.LogInformation("Creating train {0}", train);
-            _context.Train.Add(train);
+            _context.Add(train);
 
             var result = await _context.SaveChangesAsync();
             _logger.LogInformation($"Saved {result} of 1 record");
