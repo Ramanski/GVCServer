@@ -27,7 +27,6 @@ bld/
 [Oo]bj/
 [Ll]og/
 [Mm]igrations
-[Rr]esources
 [Pp]roperties
 
 # Visual Studio 2015/2017 cache/options directory
@@ -341,5 +340,3 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
-/appsettings.json
-/appsettings.Development.json
