@@ -60,7 +60,6 @@ namespace StationAssistant
             services.AddScoped<IHttpService, HttpService>();
             services.AddHttpContextAccessor();
 
-            services.AddScoped<INSIUpdateService, NsiUpdateService>();
             services.AddScoped<IGvcDataService, GvcDataService>();
             services.AddScoped<IStationDataService, StationDataService>();
             services.AddScoped<NotificationService>();

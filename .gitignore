@@ -1,3 +1,9 @@
-.vs
-.vscode
-build/
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs/Rail_Info
+/build
+/.vscode
+/test/StationAssistantTests/obj
+/test/StationAssistantTests/bin

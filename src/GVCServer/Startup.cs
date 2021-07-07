@@ -44,6 +44,7 @@ namespace GVCServer
             services.AddScoped<TrainOperationsService>();
 
             services
+                 //.AddDbContext<Data.Entities.IVCStorageContext>(opt => opt.UseSqlServer(Configuration.GetConnectionString("IVCStorage")));
                  .UseRegisterDbContext(Configuration.GetConnectionString("IVCStorage"))
                  .UseOneTransactionPerHttpCall();
 
