@@ -39,6 +39,9 @@ namespace GVCServer.Data.Entities
                     .IsRequired()
                     .HasMaxLength(100)
                     .IsFixedLength();
+
+                entity.HasOne(e => e.ArrivalStation);
+                entity.HasOne(e => e.DepartureStation);
             });
 
             modelBuilder.Entity<OpTrain>(entity =>

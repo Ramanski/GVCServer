@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using GVCServer.Data.Entities;
 using GVCServer.Repositories;
 using Microsoft.AspNetCore.Mvc;
+using ModelsLibrary;
 
 namespace GVCServer.Controllers
 {
@@ -30,7 +31,7 @@ namespace GVCServer.Controllers
             return await _guideRepository.GetPlanFormStations(station, destination);
         }
 
-        [HttpGet("train-Kind")]
+        [HttpGet("train-kind")]
         public async Task<ActionResult<byte>> GetTrainKind(string destination) 
         {
             station = User.Claims.Where(cl => cl.Type == ClaimTypes.Locality).First().Value;
@@ -38,8 +39,8 @@ namespace GVCServer.Controllers
         }
 
         [Microsoft.AspNetCore.Authorization.Authorize]
-        [HttpGet("closest-departure")]
-        public async Task<ActionResult<string[]>> GetClosestDeparture(int minsOffset, int direction, int kind) 
+        [HttpGet("closest-train-route")]
+        public async Task<ActionResult<TrainRoute>> GetClosestDeparture(int minsOffset, int direction, int kind) 
         {
             string station = User.Claims.Where(cl => cl.Type == ClaimTypes.Locality).First().Value;
             return await _guideRepository.GetClosestDeparture(station, kind, direction, minsOffset);
@@ -55,7 +56,7 @@ namespace GVCServer.Controllers
             return await _guideRepository.GetSchedule(station);
         }    
 
-        [HttpGet("pf/Claims")]
+        [HttpGet("pf/claims")]
         public async Task<ActionResult<List<Pfclaim>>> GetPFclaims() 
         {
             station = User.Claims.Where(cl => cl.Type == ClaimTypes.Locality).First().Value;

@@ -30,7 +30,7 @@ namespace GVCServer.Repositories
         {
             _logger.LogInformation("Got trainModel to create {0}", trainModel);
 
-            var train = new Train(trainModel);
+            var train = Train.FromTrainModel(trainModel);
             train.Dislocation = station;
             train.Ordinal = await GetNextOrdinal(station);
             train.OpTrain = new List<OpTrain>(){ new OpTrain(){ Datop = trainModel.DateOper, 

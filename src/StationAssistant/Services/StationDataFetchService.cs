@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using ModelsLibrary;
@@ -12,7 +13,7 @@ namespace StationAssistant.Services
 {
     public interface IStationDataService
     {
-        public Task<List<TrainModel>> GetDepartingTrains();
+        public Task<List<TrainModel>> GetDepartingTrains([FromServices] IConfiguration configuration);
 
         public Task AddTrainAsync(Guid trainId, DateTime timeArrived, int pathId);
 
@@ -48,7 +49,7 @@ namespace StationAssistant.Services
 
         public Task<TrainModel> SetDepartureRoute(TrainModel trainModel);
 
-        public Task<List<TrainModel>> GetArrivedTrainsAsync();
+        public Task<List<TrainModel>> GetArrivedTrainsAsync([FromServices] IConfiguration configuration);
 
         public Task<List<TrainKind>> GetTrainKinds();
 
@@ -58,7 +59,7 @@ namespace StationAssistant.Services
 
         public Task<List<Vagon>> DisbandTrain(TrainModel train);
 
-        public Task FormTrain(List<Vagon> vagons, byte trainKind, bool checkPFclaims);
+        public Task FormTrain([FromServices] IConfiguration configuration, List<Vagon> vagons, byte trainKind, bool checkPFclaims);
 
         public void CheckPFclaimsAsync(string destination, ref List<Vagon> vagons);
     }
@@ -70,9 +71,8 @@ namespace StationAssistant.Services
         private readonly IGvcDataService _igvcData;
         private readonly IConfiguration _configuration;
 
-        public StationDataService(StationStorageContext context, IMapper imapper, IGvcDataService igvcData, IConfiguration configuration)
+        public StationDataService(StationStorageContext context, IMapper imapper, IGvcDataService igvcData)
         {
-            _configuration = configuration;
             _igvcData = igvcData;
             _imapper = imapper;
             _context = context;
@@ -86,38 +86,38 @@ namespace StationAssistant.Services
             train.PathId = pathId;
             train.DateOper = timeArrived;
 
-            List<Vagon> vagons = _imapper.Map<List<Vagon>>(trainModel.Wagons);
-            foreach (Vagon vagon in vagons)
+            List<Vagon> wagons = _imapper.Map<List<Vagon>>(trainModel.Wagons);
+            foreach (Vagon wagon in wagons)
             {
-                vagon.TrainId = train.Uid;
-                vagon.PathId = pathId;
-                vagon.DateOper = timeArrived;
+                wagon.TrainId = train.Uid;
+                wagon.PathId = pathId;
+                wagon.DateOper = timeArrived;
             }
 
             _context.Train.Add(train);
-            _context.Vagon.AddRange(vagons);
+            _context.Vagon.AddRange(wagons);
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateTrain(TrainModel updatedModel)
+        public async Task UpdateTrain(TrainModel updatedTrainModel)
         {
-            Train train = _context.Train.Find(updatedModel.Id);
-            train.Num = updatedModel.Num.ToString();
-            train.ScheduleTime = updatedModel.DateOper;
+            Train train = _context.Train.Find(updatedTrainModel.Id);
+            train.Num = updatedTrainModel.Num.ToString();
+            train.ScheduleTime = updatedTrainModel.DateOper;
             await _context.SaveChangesAsync();
         }
 
         public async Task UpdateVagon(Vagon updatedVagon)
         {
-            Vagon vagon = _context.Vagon
+            Vagon wagon = _context.Vagon
                                   .Find(updatedVagon.Num);
-            Path path = vagon.Path;
-            vagon.WeightNetto = updatedVagon.WeightNetto;
-            vagon.Mark = updatedVagon.Mark;
-            vagon.Ksob = updatedVagon.Ksob;
-            vagon.Path = null;
+            Path path = wagon.Path;
+            wagon.WeightNetto = updatedVagon.WeightNetto;
+            wagon.Mark = updatedVagon.Mark;
+            wagon.Ksob = updatedVagon.Ksob;
+            wagon.Path = null;
             await _context.SaveChangesAsync();
-            vagon.PathId = path.Id;
+            wagon.PathId = path.Id;
             await _context.SaveChangesAsync();
         }
 
@@ -150,10 +150,12 @@ namespace StationAssistant.Services
         public async Task<TrainModel> SetDepartureRoute(TrainModel trainModel)
         {
             Train train = await _context.FindAsync<Train>(trainModel.Id);
-            Direction dir = await _context.Direction.FindAsync(train.DestinationStation);
-            string[] route = await _igvcData.GetNearestScheduleRoute(dir.DirectionId, train.TrainKindId);
-            train.Num = route[0];
-            train.ScheduleTime = DateTime.ParseExact(route[1], "M/d/yyyy h:mm:ss tt", System.Globalization.CultureInfo.InvariantCulture);
+            var departureDirectionId = await _context.Direction.Where(d => d.StationDestination == train.DestinationStation)
+                                                                .Select(d => d.DirectionId)
+                                                                .FirstOrDefaultAsync();
+            TrainRoute route = await _igvcData.GetNearestScheduleRoute(departureDirectionId, train.TrainKindId);
+            train.Num = route.TrainNumber.ToString();
+            train.ScheduleTime = route.DepartureTime; // DateTime.ParseExact(route[1], "M/d/yyyy h:mm:ss tt", System.Globalization.CultureInfo.InvariantCulture);
             await _context.SaveChangesAsync();
             return _imapper.Map<TrainModel>(train);
         }
@@ -208,7 +210,7 @@ namespace StationAssistant.Services
             }
         }
 
-        public async Task<List<TrainModel>> GetDepartingTrains()
+        public async Task<List<TrainModel>> GetDepartingTrains([FromServices] IConfiguration configuration)
         {
             List<TrainModel> arrivedTrainModels = new List<TrainModel>();
             var trains = await _context.Train
@@ -226,7 +228,7 @@ namespace StationAssistant.Services
             return arrivedTrainModels;
         }
 
-        public async Task<List<TrainModel>> GetArrivedTrainsAsync()
+        public async Task<List<TrainModel>> GetArrivedTrainsAsync([FromServices] IConfiguration configuration)
         {
             List<TrainModel> arrivedTrainModels = new List<TrainModel>();
             var trains = await _context.Train
@@ -431,7 +433,7 @@ namespace StationAssistant.Services
             return vagons;
         }
 
-        public async Task FormTrain(List<Vagon> vagons, byte trainKind, bool checkPFclaims = true)
+        public async Task FormTrain([FromServices] IConfiguration configuration, List<Vagon> vagons, byte trainKind, bool checkPFclaims = true)
         {
             string destination = vagons[0].PlanForm;
             byte sequenceNum = 1;
@@ -466,7 +468,7 @@ namespace StationAssistant.Services
             TrainModel trainModel = _imapper.Map<TrainModel>(train);
             trainModel.Wagons = WagonModels;
 
-            await _igvcData.SendTGNL(trainModel);
+            await _igvcData.SendTrainCompositionAsync(trainModel);
             await _context.SaveChangesAsync();
         }
 

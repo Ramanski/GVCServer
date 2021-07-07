@@ -69,40 +69,39 @@ namespace GVCServer.Repositories
             return operations;
         }
 
-        public async Task<string[]> GetClosestDeparture(string station, int trainKind, int directionId, int minutesOffset = 30)
+        public async Task<TrainRoute> GetClosestDeparture(string station, int trainKind, int directionId, int minutesOffset = 30)
         {
-            DateTime departureTime;
+            // TODO: merge two queries. Connect trainKind and schedule tables
             var trainKindNums = await _context.TrainKind
                                         .Where(t => t.Code == trainKind)
                                         .FirstOrDefaultAsync();
-            if (trainKindNums == null)
-                throw new RailProcessException($"Не найден род поезда {trainKind}");
-            var depatrureRouteQuery = _context.Schedule
-                                         .Where(s => s.Station.Equals(station) &&
-                                                s.DirectionId == directionId &&
-                                                trainKindNums.TrainNumLow <= s.TrainNum &&
-                                                trainKindNums.TrainNumHigh >= s.TrainNum)
-                                         .OrderBy(s => s.DepartureTime);
+
             var timeStart = (DateTime.Now.AddMinutes(minutesOffset)).TimeOfDay;
-            var depatureRoute = await depatrureRouteQuery.Where(s => s.DepartureTime > timeStart)
-                                                    .FirstOrDefaultAsync();
-            if (depatureRoute == null)
+            
+            var departureRoutes = await _context.Schedule
+                                                          .Include(s => s.Direction)
+                                                             .Where(s => s.DepartureTime != null &&
+                                                                      s.DirectionId == directionId &&
+                                                                      trainKindNums.TrainNumLow <= s.TrainNum &&
+                                                                      trainKindNums.TrainNumHigh >= s.TrainNum &&
+                                                                      s.Station.Equals(station))
+                                                          .ToListAsync();
+            var closestDepartureRoute = departureRoutes
+                                                    .Select(s => new TrainRoute()
+                                                    {
+                                                        TrainNumber = s.TrainNum,
+                                                        DepartureStation = s.Station,
+                                                        DepartureTime = s.DepartureTime > timeStart ? DateTime.Today.Add((TimeSpan)s.DepartureTime) : DateTime.Today.AddDays(1).Add((TimeSpan)s.DepartureTime),
+                                                        ArrivalStation = s.Direction.ArrivalStationId,
+                                                        ArrivalTime = s.ArrivalTime > timeStart ? DateTime.Today.Add(s.ArrivalTime ?? TimeSpan.Zero) : DateTime.Today.AddDays(1).Add(s.ArrivalTime ?? TimeSpan.Zero)
+                                                    })
+                                                    .OrderBy(tr => tr.DepartureTime)
+                                                    .FirstOrDefault();
+            if (closestDepartureRoute == null)
             {
-                depatureRoute = await depatrureRouteQuery.Where(s => s.DepartureTime != null).FirstOrDefaultAsync();
-                if (depatureRoute != null)
-                {
-                    departureTime = (DateTime)(DateTime.Today.AddDays(1) + depatureRoute.DepartureTime);
-                }
-                else
-                {
-                    throw new RailProcessException("Не найдено ни одной подходящей нитки графика");
-                }
+                throw new RailProcessException("Не найдено ни одной подходящей нитки графика");
             }
-            else
-            {
-                departureTime = (DateTime)(DateTime.Today + depatureRoute.DepartureTime);
-            }
-            return new string[] { depatureRoute.TrainNum.ToString(), departureTime.ToString() };
+            return closestDepartureRoute;
         }
 
         public async Task<List<Pfclaim>> GetPlanFormClaims(string sourceStation)

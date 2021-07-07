@@ -308,15 +308,9 @@
         TrainModel train = arrivedList.selectedTrain;
         CancelConfirmVisible = true;
 
-        if (train == null)
-        {
-            NotificationService.SetMessage(TypeNotification.Info, "Выберите поезд из списка прибывших");
-            return;
-        }
-
         try
         {
-            await GvcDataFetch.CancelOperation(train.Id, ModelsLibrary.Codes.OperationCode.TrainArrival  );
+            await GvcDataFetch.CancelOperation(train.Id, ModelsLibrary.Codes.OperationCode.TrainArrival);
             await StationData.DeleteTrainAsync(train.Id);
             arrivedList.DeleteTrain(train);
             arrivingList.AddTrain(train);
@@ -324,9 +318,16 @@
             await arrivingList.DeselectRow();
             NotificationService.SetMessage(TypeNotification.Success, $"Операция по отмене прибытия поезда №{train.Num} проведена успешно");
         }
-        catch (Exception)
+        catch (Exception exception)
         {
-            NotificationService.SetMessage(TypeNotification.Error, "Не удалось выполнить отмену прибытия");
+            if (exception is RailProcessException)
+            {
+                NotificationService.SetMessage(TypeNotification.Warning, e.Message);
+            }
+            else
+            {
+                NotificationService.SetMessage(TypeNotification.Error, "Не удалось выполнить отмену прибытия");
+            }
         }
     }
 

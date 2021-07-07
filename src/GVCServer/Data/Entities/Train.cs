@@ -4,7 +4,7 @@ using ModelsLibrary;
 
 namespace GVCServer.Data.Entities
 {
-    public partial class Train
+    public class Train
     {
         public Train()
         {
@@ -12,18 +12,20 @@ namespace GVCServer.Data.Entities
             OpVag = new HashSet<OpVag>();
         }
 
-        public Train(TrainModel trainModel)
+        public static Train FromTrainModel(TrainModel trainModel)
         {
-            Uid = trainModel.Id;
-            TrainNum = trainModel.Num;
-            TrainKindId = trainModel.Kind;
-            FormStation = trainModel.FormStation;
-            Ordinal = trainModel.Ordinal;
-            DestinationStation = trainModel.DestinationStation;
-            FormTime = trainModel.DateOper;
-            Dislocation = trainModel.Dislocation;
-            Length = trainModel.Length;
-            WeightBrutto = trainModel.WeightBrutto;
+            return new Train(){
+                            Uid = trainModel.Id,
+                            TrainNum = trainModel.Num,
+                            TrainKindId = trainModel.Kind,
+                            FormStation = trainModel.FormStation,
+                            Ordinal = trainModel.Ordinal,
+                            DestinationStation = trainModel.DestinationStation,
+                            FormTime = trainModel.DateOper,
+                            Dislocation = trainModel.Dislocation,
+                            Length = trainModel.Length,
+                            WeightBrutto = trainModel.WeightBrutto
+            };
         }
 
         public Guid Uid { get; set; }

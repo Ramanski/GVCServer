@@ -30,39 +30,34 @@ namespace StationAssistant.Services
 
         public Task SendDeparting(Guid trainId, DateTime timeDeparted);
 
-        public Task<string[]> GetNearestScheduleRoute(int directionId, byte trainKind, int minutesOffset = 30);
+        public Task<TrainRoute> GetNearestScheduleRoute(int directionId, byte trainKind, int minutesOffset = 30);
 
-        public Task<byte> GetTrainKind(string destination); 
-        public Task SendTGNL(TrainModel train);
+        public Task SendTrainCompositionAsync(TrainModel train);
     }
 
     public class GvcDataService : IGvcDataService
     {
         private readonly StationStorageContext _context;
-        private readonly IMapper _imapper;
         private readonly IHttpService httpService;
 
-        public GvcDataService(StationStorageContext context, IMapper imapper, IHttpService httpService)
+        public GvcDataService(StationStorageContext context, IHttpService httpService)
         {
             _context = context;
-            _imapper = imapper;
             this.httpService = httpService;
         }
 
         public async Task<List<TrainModel>> GetArrivingTrains()
         {
-            List<TrainModel> trains;
+            var comingTrains = await httpService.Get<List<TrainModel>>("trains/coming");
 
-            trains = await httpService.Get<List<TrainModel>>("trains/coming");
-
-            if(trains == null)
+            if(!comingTrains.Any())
                 throw new RailProcessException("Нет поездов на подходе");
 
-            foreach (TrainModel train in trains)
+            foreach (TrainModel train in comingTrains)
             {
                 train.Dislocation = _context.Station.Find(train.Dislocation)?.Mnemonic ?? "НЕОП";
             }
-            return trains;
+            return comingTrains;
         }
 
         public async Task<TrainModel> GetTrainInfo(Guid trainId) => await httpService.Get<TrainModel>($"trains/{trainId.ToString()}");
@@ -73,53 +68,41 @@ namespace StationAssistant.Services
             await httpService.Post<object>($"{trainId}/operations", msgArrive);
         }
 
-        public async Task<List<string[]>> GetNextDestinationStationsAsync(List<Vagon> vagons)
+        public async Task<List<string[]>> GetNextDestinationStationsAsync(List<Vagon> wagons)
         {
-            string[] destinations = vagons.Select(v => v.Destination).Distinct().ToArray();
+            string[] destinations = wagons.Select(w => w.Destination).Distinct().ToArray();
             return await httpService.Post<List<string[]>>("nsi/pf", destinations);
         }
 
-        //TODO: Change to delete action
         public async Task CancelOperation(Guid trainId, string operCode)
         {
-            ConsistList cancelMsg = new ConsistList();
-            await httpService.Delete<object>("train", cancelMsg);
-        }
-
-        public async Task CancelCreation(Guid trainId)
-        {
-            ConsistList cancelMsg = new ConsistList();
+            ConsistList cancelMsg = new();
             await httpService.Delete<object>("train", cancelMsg);
         }
 
         public async Task SendDisbanding(Guid trainId, DateTime timeDisbanded)
         {
-            MovingMsg msgDisband = new MovingMsg(OperationCode.TrainDisbanding, trainId, timeDisbanded);
-            await httpService.Post<object>($"{trainId}/operations", msgDisband);
+            MovingMsg msgDisbanding = new MovingMsg(OperationCode.TrainDisbanding, trainId, timeDisbanded);
+            await httpService.Post<object>($"{trainId}/operations", msgDisbanding);
         }
 
         public async Task SendDeparting(Guid trainId, DateTime timeDeparted)
         {
-            MovingMsg msgDepart = new MovingMsg(OperationCode.TrainDeparture, trainId, timeDeparted);
-            await httpService.Post<object>($"{trainId}/operations", msgDepart);
+            MovingMsg msgDeparting = new MovingMsg(OperationCode.TrainDeparture, trainId, timeDeparted);
+            await httpService.Post<object>($"{trainId}/operations", msgDeparting);
         }
 
-        public async Task<string[]> GetNearestScheduleRoute(int directionId, byte trainKind, int minutesOffset = 30)
+        public async Task<TrainRoute> GetNearestScheduleRoute(int directionId, byte trainKind, int minutesOffset = 30)
         {
             QueryBuilder query = new QueryBuilder();
             query.Add("direction", directionId.ToString());
             query.Add("kind", trainKind.ToString());
             query.Add("minsOffset", minutesOffset.ToString());
 
-            return await httpService.Get<string[]>("nsi/closest-departure" + query.ToString());
+            return await httpService.Get<TrainRoute>("nsi/closest-train-route" + query.ToString());
         }
 
-        public async Task<byte> GetTrainKind(string destination)
-        {
-            return await httpService.Get<byte>($"nsi/train-kind?destination={destination}");
-        }
-
-        public async Task SendTGNL(TrainModel trainModel)
+        public async Task SendTrainCompositionAsync(TrainModel trainModel)
         {
             ConsistList consistList = new ConsistList(OperationCode.TrainComposition, trainModel, DateTime.Now);
             await httpService.Post<object>("train", consistList);

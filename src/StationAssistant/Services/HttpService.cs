@@ -18,14 +18,14 @@ namespace StationAssistant.Services
     public interface IHttpService
     {
         Task<T> Get<T>(string uri);
-        Task<T> Post<T>(string uri, object value);
-        Task<T> Delete<T>(string uri, object value);
+        Task<T> Post<T>(string uri, object valueToPost);
+        Task<T> Delete<T>(string uri, object valueToDelete);
     }
 
     public class HttpService : IHttpService
     {
         private HttpClient _httpClient;
-        private readonly IHttpContextAccessor httpContext;
+        private readonly IHttpContextAccessor _httpContext;
         private HttpResponseMessage response;
         private readonly BlazorServerAuthStateCache _cache;
 
@@ -36,7 +36,7 @@ namespace StationAssistant.Services
         )
         {
             _httpClient = httpClient;
-            this.httpContext = httpContext;
+            _httpContext = httpContext;
             _cache = cache;
         }
 
@@ -46,30 +46,30 @@ namespace StationAssistant.Services
             return await sendRequest<T>(request);
         }
 
-        public async Task<T> Post<T>(string uri, object value)
+        public async Task<T> Post<T>(string uri, object valueToPost)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, uri);
-            request.Content = new StringContent(JsonSerializer.Serialize(value), Encoding.UTF8, "application/json");
+            request.Content = new StringContent(JsonSerializer.Serialize(valueToPost), Encoding.UTF8, "application/json");
             return await sendRequest<T>(request);
         }
 
-        public async Task<T> Delete<T>(string uri, object value)
+        public async Task<T> Delete<T>(string uri, object valueToDelete)
         {
             var request = new HttpRequestMessage(HttpMethod.Delete, uri);
-            request.Content = new StringContent(JsonSerializer.Serialize(value), Encoding.UTF8, "application/json");
+            request.Content = new StringContent(JsonSerializer.Serialize(valueToDelete), Encoding.UTF8, "application/json");
             return await sendRequest<T>(request);
         }
 
         private async Task<T> sendRequest<T>(HttpRequestMessage request)
         {
-            var sid = httpContext.HttpContext.User.Claims
+            var sessionId = _httpContext.HttpContext.User.Claims
                                                   .Where(c => c.Type.Equals("sid"))
                                                   .Select(c => c.Value)
                                                   .FirstOrDefault();
             // Attach access token to header if exists
-            if (sid != null && _cache.HasSubjectId(sid))
+            if (sessionId != null && _cache.HasSubjectId(sessionId))
             {
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _cache.Get(sid)?.AccessToken);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _cache.Get(sessionId)?.AccessToken);
             }
             
             try
