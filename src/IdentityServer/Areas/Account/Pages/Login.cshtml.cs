@@ -50,7 +50,7 @@ namespace IdentityServer.Areas.Account.Pages
 
             public string ReturnUrl { get; set; }
 
-            [Display(Name = "Remember me?")]
+            [Display(Name = "Запомнить на этом ПК?")]
             public bool RememberMe { get; set; }
         }
 

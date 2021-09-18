@@ -94,7 +94,7 @@ namespace IdentityServer
                     IEnumerable<Claim> claimsPolatsk = new List<Claim>() {
                         new Claim(ClaimTypes.Locality, "161306"),
                         new Claim(ClaimTypes.Role, Role.DSP),
-                        new Claim(ClaimTypes.Name, "ДСП Иванов")
+                        new Claim(ClaimTypes.Name, "ДСП Марковская")
                     };
 
                     IdentityUser vitebsk = new IdentityUser()
