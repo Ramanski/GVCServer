@@ -322,7 +322,7 @@
         {
             if (exception is RailProcessException)
             {
-                NotificationService.SetMessage(TypeNotification.Warning, e.Message);
+                NotificationService.SetMessage(TypeNotification.Warning, exception.Message);
             }
             else
             {

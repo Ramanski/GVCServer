@@ -32,7 +32,7 @@ namespace StationAssistant.Services
 
         public Task<TrainRoute> GetNearestScheduleRoute(int directionId, byte trainKind, int minutesOffset = 30);
 
-        public Task SendTrainCompositionAsync(TrainModel train);
+        public Task<TrainModel> SendTrainCompositionAsync(TrainModel train);
     }
 
     public class GvcDataService : IGvcDataService
@@ -50,7 +50,7 @@ namespace StationAssistant.Services
         {
             var comingTrains = await httpService.Get<List<TrainModel>>("trains/coming");
 
-            if(!comingTrains.Any())
+            if(comingTrains == null || !comingTrains.Any())
                 throw new RailProcessException("Нет поездов на подходе");
 
             foreach (TrainModel train in comingTrains)
@@ -102,10 +102,10 @@ namespace StationAssistant.Services
             return await httpService.Get<TrainRoute>("nsi/closest-train-route" + query.ToString());
         }
 
-        public async Task SendTrainCompositionAsync(TrainModel trainModel)
+        public async Task<TrainModel> SendTrainCompositionAsync(TrainModel trainModel)
         {
             ConsistList consistList = new ConsistList(OperationCode.TrainComposition, trainModel, DateTime.Now);
-            await httpService.Post<object>("train", consistList);
+            return await httpService.Post<TrainModel>("trains", consistList);
         }
     }
 }

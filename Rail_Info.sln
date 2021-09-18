@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.6.30114.105
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31612.314
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GVCServer", "src\GVCServer\GVCServer.csproj", "{97393231-B05D-456A-80B8-07079D9ECE92}"
 EndProject
@@ -14,6 +14,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GvcApiUnitTests", "test\GvcApiUnitTests\GvcApiUnitTests.csproj", "{B50EACAA-19B1-48C5-B902-E51B3F1CA361}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StationAssistantTests", "test\StationAssistantTests\StationAssistantTests.csproj", "{2B53A37F-8F10-4A61-82C3-5A2529926AEB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IdentityServer", "src\IdentityServer\IdentityServer.csproj", "{8E3ADC80-91B2-47DE-9CEE-10D84FDCF446}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -85,6 +87,18 @@ Global
 		{2B53A37F-8F10-4A61-82C3-5A2529926AEB}.Release|x64.Build.0 = Release|Any CPU
 		{2B53A37F-8F10-4A61-82C3-5A2529926AEB}.Release|x86.ActiveCfg = Release|Any CPU
 		{2B53A37F-8F10-4A61-82C3-5A2529926AEB}.Release|x86.Build.0 = Release|Any CPU
+		{8E3ADC80-91B2-47DE-9CEE-10D84FDCF446}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E3ADC80-91B2-47DE-9CEE-10D84FDCF446}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E3ADC80-91B2-47DE-9CEE-10D84FDCF446}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8E3ADC80-91B2-47DE-9CEE-10D84FDCF446}.Debug|x64.Build.0 = Debug|Any CPU
+		{8E3ADC80-91B2-47DE-9CEE-10D84FDCF446}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8E3ADC80-91B2-47DE-9CEE-10D84FDCF446}.Debug|x86.Build.0 = Debug|Any CPU
+		{8E3ADC80-91B2-47DE-9CEE-10D84FDCF446}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E3ADC80-91B2-47DE-9CEE-10D84FDCF446}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E3ADC80-91B2-47DE-9CEE-10D84FDCF446}.Release|x64.ActiveCfg = Release|Any CPU
+		{8E3ADC80-91B2-47DE-9CEE-10D84FDCF446}.Release|x64.Build.0 = Release|Any CPU
+		{8E3ADC80-91B2-47DE-9CEE-10D84FDCF446}.Release|x86.ActiveCfg = Release|Any CPU
+		{8E3ADC80-91B2-47DE-9CEE-10D84FDCF446}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

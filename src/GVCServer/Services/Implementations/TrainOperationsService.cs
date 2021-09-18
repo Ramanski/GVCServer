@@ -42,6 +42,11 @@ namespace GVCServer.Repositories
         public async Task ProcessTrain(Guid trainId, string station, DateTime timeOper, string operationCode)
         {
             _logger.LogInformation($"Processing operation {operationCode} for train {trainId}");
+            
+            var train = await _context.Train.FirstOrDefaultAsync(t => t.Uid == trainId);
+
+            if(train == null)
+                throw new RailProcessException($"Указанного поезда не существует");
 
             OpTrain newOperation = new OpTrain()
             {
@@ -52,7 +57,7 @@ namespace GVCServer.Repositories
                 TrainId = trainId
             };
 
-            _context.OpTrain.Add(newOperation);
+            train.OpTrain.Add(newOperation);
             _logger.LogInformation("Saving operation to train", newOperation);
 
             var affected = await _context.SaveChangesAsync();

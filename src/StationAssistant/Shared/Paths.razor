@@ -51,7 +51,7 @@ else
                 <AccordionItems @ref="AccordionItemRef" @key="Area">
                     @foreach (PathModel path in paths)
                     {
-                        <AccordionItem Expanded="@(path.Occupation!=0)" CssClass="border-1" Visible="@(!isEmpty?true:path.Occupation!=0)" @key="path.Id">
+                        <AccordionItem Expanded="@(path.Occupation != 0)" CssClass="border-1" Visible="@(!isEmpty ? true : path.Occupation!=0)" @key="path.Id">
                             <HeaderTemplate>
                                 <h6 class="ml-1"> Путь №@path.PathNum (@path.Length)   @path.Marks </h6>
                             </HeaderTemplate>
@@ -160,7 +160,6 @@ else
         try
         {
             byte trainKind = formationSheet.GetSelectedTrainKind();
-            //if (trainKind == 0) trainKind = 20;
             await StationData.FormTrain(formationSheet.selectedVagons, trainKind, formationSheet.PFclaimsOn);
             NotificationService.SetMessage(TypeNotification.Success, $"Операция по формированию поезда проведена успешно");
             await Task.Delay(2500);
@@ -175,6 +174,10 @@ else
             else if (e is HttpRequestException)
             {
                 var code = e.HResult;
+                NotificationService.SetMessage(TypeNotification.Warning, e.Message);
+            }
+            else if (e is RailProcessException)
+            {
                 NotificationService.SetMessage(TypeNotification.Warning, e.Message);
             }
             else

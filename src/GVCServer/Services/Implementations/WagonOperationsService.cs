@@ -28,12 +28,15 @@ namespace GVCServer.Repositories
         {
             var newWagOpers = _imapper.Map<List<OpVag>>(wagons);
             
-            await CheckWagonOperationsToAdd(newWagOpers, sourceStation);
+            //await CheckWagonOperationsToAdd(newWagOpers, sourceStation);
 
             foreach (OpVag vagon in newWagOpers)
             {
                 vagon.LastOper = true;
+                vagon.Msgid = DateTime.Now;
                 vagon.Source = sourceStation;
+                // TODO: solve problem with empty train in wagons
+                vagon.Train = null;
                 vagon.TrainId = train.Id;
                 vagon.DateOper = timeOper;
                 vagon.CodeOper = OperationCode.TrainComposition;

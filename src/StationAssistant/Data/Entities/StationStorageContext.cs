@@ -85,8 +85,7 @@ namespace StationAssistant.Data.Entities
                 entity.HasKey(e => e.Uid);
 
                 entity.Property(e => e.Uid)
-                    .HasColumnName("UID")
-                    .HasDefaultValueSql("(newid())");
+                    .HasColumnName("UID");
 
                 entity.Property(e => e.DateOper).HasColumnType("datetime");
 
