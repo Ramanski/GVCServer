@@ -86,7 +86,6 @@ namespace StationAssistant
 
             app.UseResponseCompression();
 
-            app.UseRequestLocalization(app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>().Value);
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -99,9 +98,13 @@ namespace StationAssistant
             }
 
             app.UseHttpsRedirection();
+            
+            app.UseRequestLocalization(app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>().Value);
+
             app.UseStaticFiles();
 
             app.UseRouting();
+
             app.UseAuthentication();
             app.UseAuthorization();
 

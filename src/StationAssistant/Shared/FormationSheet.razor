@@ -4,6 +4,8 @@
 @using StationAssistant.Data.Entities
 @inject StationAssistant.Services.IStationDataService StationData
 
+@if(dataLoaded)
+{
 <div class="row">
     <div class="col-6">
         @if (path != null)
@@ -13,18 +15,16 @@
         }
     </div>
     <div class="col-6">
-        <p>Длина : @vagCount</p>
-        <p>Общий вес : @(weightSum/10)</p>
+        <p>Длина : @vagons.Count </p>
+        <p>Общий вес : @(((int) vagons.Sum(v => v.WeightNetto + v.Tvag))/10)</p>
     </div>
 </div>
-@if(dataLoaded)
-{
     if(vagons.Any() && vagons[0].TrainIndexNavigation == null)
     {
     <div class="row">
         <div class="col-6">
             <SfSwitch @bind-Checked="@PFclaimsOn"></SfSwitch>
-            <label>Контроль требований ПФ</label>
+            <label>Контроль полносоставности</label>
         </div>
         <div class="col-6">
             <SfDropDownList @ref="trainKindList" TItem="TrainKind" TValue="byte" Placeholder="Выберите вид поезда" PopupHeight="auto" DataSource="@trainKinds">
@@ -87,9 +87,8 @@
     public List<Vagon> vagons { get; set; }
     public List<Vagon> selectedVagons { get; set; }
     public List<TrainKind> trainKinds { get; set; }
-    public bool PFclaimsOn = true;
+    public bool PFclaimsOn = false;
     private int weightSum { get; set; }
-    private int vagCount { get; set; }
     private bool dataLoaded = false;
 
     protected async override Task OnInitializedAsync()
@@ -99,8 +98,6 @@
             vagons = await StationData.GetVagonsOnPath(path.Id);
         if (trainId != default(Guid))
             vagons = await StationData.GetVagonsOfTrain(trainId);
-        weightSum = (int)vagons.Sum(v => v.WeightNetto) + vagons.Sum(v => v.Tvag);
-        vagCount = vagons.Count;
         trainKinds = await StationData.GetTrainKinds();
         dataLoaded = true;
     }

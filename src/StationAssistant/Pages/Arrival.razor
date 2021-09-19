@@ -73,7 +73,7 @@
                     <table class="border container-fluid">
                         <thead>
                             <tr>
-                                <td>Голова 1 Хвост 2</td>
+                                <td>Списывание</td>
                                 <td>Число</td>
                                 <td>Месяц</td>
                                 <td>Часы</td>
@@ -84,7 +84,7 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td>1</td>
+                                <td>с головы</td>
                                 <td>@selectedTrainModel.DateOper.Day</td>
                                 <td>@selectedTrainModel.DateOper.Month</td>
                                 <td>@selectedTrainModel.DateOper.Hour</td>
@@ -96,15 +96,15 @@
                     </table>
                 </div>
             }
-            <SfGrid DataSource="@selectedTrainModel.Wagons" EnableVirtualization="false" AllowSorting="true">
+            <SfGrid DataSource="@selectedTrainModel.Wagons.OrderBy(w => w.SequenceNum)" EnableVirtualization="false" AllowSorting="true">
                 <GridColumns>
-                    <GridColumn Field=@nameof(WagonModel.SequenceNum) HeaderText="№" Width="25"></GridColumn>
+                    <GridColumn Field=@nameof(WagonModel.SequenceNum) HeaderText="№" Width="35"></GridColumn>
                     <GridColumn Field=@nameof(WagonModel.Num) HeaderText="Номер" TextAlign="TextAlign.Left" IsPrimaryKey="true" Width="60"></GridColumn>
                     <GridColumn Field=@nameof(WagonModel.Kind) HeaderText="Род" Width="45"></GridColumn>
                     <GridColumn Field=@nameof(WagonModel.Destination) HeaderText="Назначение" Width="70"></GridColumn>
                     <GridColumn Field=@nameof(WagonModel.Ksob) HeaderText="Собств" Width="55"></GridColumn>
                     <GridColumn Field=@nameof(WagonModel.Tvag) HeaderText="Тара" Width="45"></GridColumn>
-                    <GridColumn Field=@nameof(WagonModel.WeightNetto) HeaderText="Вес" Width="50"></GridColumn>
+                    <GridColumn Field=@nameof(WagonModel.WeightNetto) HeaderText="Вес" Width="45"></GridColumn>
                     <GridColumn Field=@nameof(WagonModel.Mark) HeaderText="Отметки" Width="75"></GridColumn>
                 </GridColumns>
             </SfGrid>
@@ -128,7 +128,6 @@
 
 
 @code {
-
     PathSelector pathSelector;
     TrainList arrivingList;
     TrainList arrivedList;

@@ -14,11 +14,11 @@ else
     <table>
         <tr>
             <td>Только сортировочные пути</td>
-            <td><SfSwitch @bind-Checked="@isSort" TChecked="bool" EnablePersistence="true" ValueChange="(async () => await onPathSortChange())"></SfSwitch></td>
+            <td><SfSwitch @bind-Checked="@onlySort" TChecked="bool" EnablePersistence="true"/></td>
         </tr>
         <tr>
             <td>Только занятые пути</td>
-            <td><SfSwitch @bind-Checked="@isEmpty" TChecked="bool" EnablePersistence="true" ValueChange="(async () => await onPathSortChange())"></SfSwitch></td>
+            <td><SfSwitch @bind-Checked="@onlyOccupied" TChecked="bool" EnablePersistence="true"/></td>
         </tr>
     </table>
 </div>
@@ -31,21 +31,36 @@ else
                         <TabHeader Text="@area"></TabHeader>
                     </ChildContent>
                     <ContentTemplate>
-                        <Paths Area="@area" @ref="pathsComoponent" @key="@area" isSort="isSort" isEmpty="isEmpty"></Paths>
+                        <Paths Area="@area" @key="@area" onlySort="onlySort" onlyOccupied="onlyOccupied"></Paths>
                     </ContentTemplate>
                 </TabItem>
             }
         </TabItems>
     </SfTab>
-
 }
+
+<style>
+    .e-tab .e-tab-header .e-toolbar-item.e-active .e-tab-wrap {
+    background: #57d2c1;
+    }
+
+    .e-tab .e-tab-header .e-toolbar-item .e-tab-wrap {
+    border-radius: 1px;
+    border: groove;
+    color: rgb(255 255 255);
+}
+
+.e-tab .e-tab-header .e-toolbar-item.e-active.e-ileft .e-tab-text, .e-tab .e-tab-header .e-toolbar-item.e-active.e-iright .e-tab-text {
+    color: #ff0000;
+    font-weight: 600;
+}
+</style>
 
 
 @code {
-    Paths pathsComoponent;
     SfTab Tab;
-    public bool isSort { get; set; } = false;
-    public bool isEmpty { get; set; } = false;
+    public bool onlySort { get; set; } = false;
+    public bool onlyOccupied { get; set; } = false;
     private string[] areas { get; set; }
     private string currentArea { get; set; }
     bool dataIsLoaded = false;
@@ -55,10 +70,5 @@ else
         areas = await StationData.GetAreasAsync();
         currentArea = areas[0];
         dataIsLoaded = true;
-    }
-
-    private async Task onPathSortChange()
-    {
-        await pathsComoponent.GetPaths(isSort, isEmpty);
     }
 }

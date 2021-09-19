@@ -1,8 +1,5 @@
-using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Configuration;
 using ModelsLibrary;
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -24,43 +21,50 @@ namespace StationAssistant.Services
 
     public class HttpService : IHttpService
     {
-        private HttpClient _httpClient;
+        private readonly HttpClient _httpClient;
         private readonly IHttpContextAccessor _httpContext;
         private HttpResponseMessage response;
         private readonly BlazorServerAuthStateCache _cache;
+        private readonly NotificationService _notificationService;
 
         public HttpService(
             HttpClient httpClient,
             IHttpContextAccessor httpContext,
-            BlazorServerAuthStateCache cache
+            BlazorServerAuthStateCache cache,
+            NotificationService notificationService
         )
         {
             _httpClient = httpClient;
             _httpContext = httpContext;
             _cache = cache;
+            _notificationService = notificationService;
         }
 
         public async Task<T> Get<T>(string uri)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
-            return await sendRequest<T>(request);
+            return await SendRequest<T>(request);
         }
 
         public async Task<T> Post<T>(string uri, object valueToPost)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, uri);
-            request.Content = new StringContent(JsonSerializer.Serialize(valueToPost), Encoding.UTF8, "application/json");
-            return await sendRequest<T>(request);
+            HttpRequestMessage request = new (HttpMethod.Post, uri)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(valueToPost), Encoding.UTF8, "application/json")
+            };
+            return await SendRequest<T>(request);
         }
 
         public async Task<T> Delete<T>(string uri, object valueToDelete)
         {
-            var request = new HttpRequestMessage(HttpMethod.Delete, uri);
-            request.Content = new StringContent(JsonSerializer.Serialize(valueToDelete), Encoding.UTF8, "application/json");
-            return await sendRequest<T>(request);
+            HttpRequestMessage request = new (HttpMethod.Delete, uri)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(valueToDelete), Encoding.UTF8, "application/json")
+            };
+            return await SendRequest<T>(request);
         }
 
-        private async Task<T> sendRequest<T>(HttpRequestMessage request)
+        private async Task<T> SendRequest<T>(HttpRequestMessage request)
         {
             var sessionId = _httpContext.HttpContext.User.Claims
                                                   .Where(c => c.Type.Equals("sid"))
@@ -78,7 +82,8 @@ namespace StationAssistant.Services
             }
             catch (HttpRequestException)
             {
-                throw new HttpRequestException("Произошла ошибка при обращении к серверу ГВЦ");
+                _notificationService.SetMessage(TypeNotification.Error, "Нет связи с сервером ГВЦ");
+                throw new Exception();
             }
 
             switch (response.StatusCode){
@@ -88,11 +93,11 @@ namespace StationAssistant.Services
                     throw new RailProcessException(reason.Detail);
                 }
                 case HttpStatusCode.NoContent:
-                    return default(T);
+                    return default;
                 case HttpStatusCode.Unauthorized:
                     throw new UnauthorizedAccessException("Нет доступа");
                 case HttpStatusCode.OK:
-                    return (response.Content.Headers.ContentLength > 0) ? await response.Content.ReadFromJsonAsync<T>(): default(T);
+                    return (response.Content.Headers.ContentLength > 0) ? await response.Content.ReadFromJsonAsync<T>(): default;
                 default:
                 {
                     throw new Exception("Unexpected error");

@@ -8,7 +8,7 @@
 @inject NavigationManager NavigationManager
 @attribute [AuthorizeRoles(Role.Admin, Role.DSC)]
 
-@if (PathsHided)
+@if (paths == null)
 {
     <p>Загрузка...</p>
 }
@@ -29,7 +29,7 @@ else
     if (TrainListIsVisible)
     {
         <ConfirmModal Title="Натурный лист" DialogClose="(() => TrainListIsVisible = false)" OverlayClick="(() => TrainListIsVisible = false)" OKButtonName="ОК" OKClick="(() => TrainListIsVisible = false)">
-            <SfGrid DataSource="targetTrainModel.Wagons" EnableVirtualization="false" AllowSorting="true" TValue="WagonModel">
+            <SfGrid DataSource="targetTrainModel?.Wagons" EnableVirtualization="false" AllowSorting="true" TValue="WagonModel">
                 <GridColumns>
                     <GridColumn Field=@nameof(WagonModel.SequenceNum) HeaderText="№" Width="25"></GridColumn>
                     <GridColumn Field=@nameof(WagonModel.Num) HeaderText="Номер" TextAlign="TextAlign.Left" IsPrimaryKey="true" Width="50"></GridColumn>
@@ -45,13 +45,11 @@ else
     }
     <div class="control-section">
         <div class="control_wrapper accordion-control-section">
-            @if(!AccordionStateChanged)
-             {
              <SfAccordion @ref="Accordion" @key="Area">
-                <AccordionItems @ref="AccordionItemRef" @key="Area">
-                    @foreach (PathModel path in paths)
+                <AccordionItems @key="Area">
+                    @foreach (PathModel path in paths.Where(p => (!onlySort || p.Sort) && (!onlyOccupied || p.Occupation != 0) ))
                     {
-                        <AccordionItem Expanded="@(path.Occupation != 0)" CssClass="border-1" Visible="@(!isEmpty ? true : path.Occupation!=0)" @key="path.Id">
+                        <AccordionItem Expanded="@(path.Occupation != 0)" CssClass="border-1" @key="path.Id">
                             <HeaderTemplate>
                                 <h6 class="ml-1"> Путь №@path.PathNum (@path.Length)   @path.Marks </h6>
                             </HeaderTemplate>
@@ -92,7 +90,6 @@ else
                     }
                 </AccordionItems>
             </SfAccordion>
-            }
         </div>
     </div>
     <style>
@@ -111,20 +108,18 @@ else
 
     [Parameter] 
     public string Area { get; set; }
+    [Parameter] 
+    public bool onlySort { get; set; }
+    [Parameter] 
+    public bool onlyOccupied { get; set; }
+
     FormationSheet formationSheet;
     SfAccordion Accordion;
-    AccordionItems AccordionItemRef;
     SfProgressBar sfProgress;
     PathSelector pathSelector;
     TrainModel targetTrainModel;
     public List<PathModel> paths { get; set; }
     private PathModel selectedPathItem = null;
-    private bool PathsHided { get; set; } = true;
-    private bool AccordionStateChanged { get; set; } = false;
-    [Parameter] 
-    public bool isSort { get; set; }
-    [Parameter] 
-    public bool isEmpty { get; set; }
     private bool FormationIsVisible = false;
     private bool TrainListIsVisible = false;
     private bool PathSelectorVisible { get; set; } = false;
@@ -132,8 +127,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        paths = await StationData.GetPathsOnAreaAsync(Area, isSort);
-        PathsHided = false;
+        paths = await StationData.GetPathsOnAreaAsync(Area);
     }
 
     private async Task OnPathSelect(int pathId)
@@ -160,13 +154,18 @@ else
         try
         {
             byte trainKind = formationSheet.GetSelectedTrainKind();
+            //#warning Mocking FormTrain is present!!!
             await StationData.FormTrain(formationSheet.selectedVagons, trainKind, formationSheet.PFclaimsOn);
             NotificationService.SetMessage(TypeNotification.Success, $"Операция по формированию поезда проведена успешно");
-            await Task.Delay(2500);
-            NavigationManager.NavigateTo("paths", true);
+            // TODO: consider using watcher for selectedPathItem
+            #region
+            selectedPathItem.AnyTrain = true;
+            selectedPathItem.TrainLength = formationSheet.selectedVagons.Count();
+            #endregion
+            StateHasChanged();
         }
         catch (Exception e)
-        {
+        {            
             if (e is ArgumentException)
             {
                 NotificationService.SetMessage(TypeNotification.Warning, (e as ArgumentException).ParamName);
@@ -199,16 +198,6 @@ else
         {
             NotificationService.SetMessage(TypeNotification.Error, $"Не удалось сохранить изменения");
         }
-    }
-
-    public async Task GetPaths(bool isSort, bool isEmpty)
-    {
-        this.isEmpty = isEmpty;
-        AccordionStateChanged = true;
-        StateHasChanged();
-        paths = await StationData.GetPathsOnAreaAsync(Area, isSort);
-        AccordionStateChanged = false;
-        StateHasChanged();
     }
 
     public void UpdateState()

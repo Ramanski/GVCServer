@@ -28,7 +28,7 @@ namespace GVCServer.Repositories
         {
             var newWagOpers = _imapper.Map<List<OpVag>>(wagons);
             
-            //await CheckWagonOperationsToAdd(newWagOpers, sourceStation);
+            await CheckWagonOperationsToAdd(newWagOpers, sourceStation);
 
             foreach (OpVag vagon in newWagOpers)
             {
@@ -107,19 +107,7 @@ namespace GVCServer.Repositories
             await AddWagonOperations(trainId, OperationCode.DetachWagons, detachedWagons, timeOper, station);
             await AddWagonOperations(trainId, OperationCode.AdditionVagons, detachedWagons, timeOper, station);
         }
-        async Task DeleteWagonOperations(List<OpVag> actualWagonOperations)
-        {
-            _context.OpVag.RemoveRange(actualWagonOperations);
 
-            var affected = await _context.SaveChangesAsync();
-            _logger.LogInformation($"Removed {affected} of {actualWagonOperations.Count()} records");
-
-            /// !!! Не забыть обновить параметры поезда
-            // if (assignedTrain != null)
-            // {
-            //     await trainRepository.UpdateTrainParameters(assignedTrain.First());
-            // }
-        }
         public void CheckWagonOperationsToCancel(List<string> wagons, Guid trainId, string operationCode)
         {
             var errors = new List<RailProcessException>();

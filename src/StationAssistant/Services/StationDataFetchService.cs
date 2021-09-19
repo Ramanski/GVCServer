@@ -27,7 +27,7 @@ namespace StationAssistant.Services
 
         public Task<Direction[]> GetDirections();
 
-        public Task<List<PathModel>> GetPathsOnAreaAsync(string area, bool sort);
+        public Task<List<PathModel>> GetPathsOnAreaAsync(string area);
 
         public Task<TrainModel> GetTrainOnPath(int pathId, bool includeVagons = false);
 
@@ -134,7 +134,6 @@ namespace StationAssistant.Services
                 _context.Remove(train);
                 await _context.SaveChangesAsync();
             }
-            else throw new ArgumentNullException();
         }
 
         public async Task<PathModel> GetPathAsync(int pathId)
@@ -161,33 +160,17 @@ namespace StationAssistant.Services
             return _imapper.Map<TrainModel>(train);
         }
 
-        public async Task<List<PathModel>> GetPathsOnAreaAsync(string area, bool sort)
+        public async Task<List<PathModel>> GetPathsOnAreaAsync(string area)
         {
-            Dictionary<short, string> directions = new Dictionary<short, string>();
+            Dictionary<short, string> directions = new();
 
-            var pathsQuery = _context.Path
+            var paths = await _context.Path
                                     .Include(p => p.Train)
                                     .Include(p => p.Vagon)
-                                    .Where(p => area.Equals(p.Area));
+                                    .Where(p => area.Equals(p.Area))
+                                    .ToListAsync();
 
-            if (sort)
-            {
-                pathsQuery = pathsQuery.Where(p => p.Sort);
-                directions = await _context.Direction
-                    .Select(d => new Direction() { DirectionId = d.DirectionId, Track = d.Track })
-                    .Distinct()
-                    .ToDictionaryAsync(d => d.DirectionId, d => d.Track);
-            }
-
-            List<Path> paths = await pathsQuery.ToListAsync();
-            var pathModels = _imapper.Map<List<PathModel>>(paths);
-            foreach (PathModel pathModel in pathModels)
-            {
-                if (sort)
-                    pathModel.Marks = directions[(short)paths.Find(p => p.Id == pathModel.Id).Pfdirection];
-            }
-
-            return pathModels;
+            return _imapper.Map<List<PathModel>>(paths);
         }
 
         public async Task<TrainModel> GetTrainOnPath(int pathId, bool includeVagons)
@@ -213,7 +196,7 @@ namespace StationAssistant.Services
 
         public async Task<List<TrainModel>> GetDepartingTrains()
         {
-            List<TrainModel> arrivedTrainModels = new List<TrainModel>();
+            List<TrainModel> arrivedTrainModels = new();
             var trains = await _context.Train
                                         .Where(t => t.FormStation.Equals(_configuration["Auth:StationCode"]))
                                         .ToListAsync();
@@ -231,7 +214,7 @@ namespace StationAssistant.Services
 
         public async Task<List<TrainModel>> GetArrivedTrainsAsync()
         {
-            List<TrainModel> arrivedTrainModels = new List<TrainModel>();
+            List<TrainModel> arrivedTrainModels = new();
             var trains = await _context.Train
                                         .Where(t => t.DestinationStation.Equals(_configuration["Auth:StationCode"]))
                                         .ToListAsync();
@@ -387,7 +370,7 @@ namespace StationAssistant.Services
                                                  .Include(p => p.Vagon)
                                                  .ToListAsync();
 
-            List<Exception> errors = new List<Exception>();
+            List<Exception> errors = new();
 
             List<string[]> nextDestinationStations = await _igvcData.GetNextDestinationStationsAsync(vagons);
 
@@ -446,13 +429,13 @@ namespace StationAssistant.Services
                 CheckPFclaimsAsync(destination, ref vagons);
             }
 
-            Train train = new Train()
+            Train train = new()
             {
                 DestinationStation = destination,
                 DateOper = DateTime.Now,
                 FormStation = _configuration["Auth:StationCode"],
                 FormTime = DateTime.Now,
-                Length = (short)vagons.Count(),
+                Length = (short) vagons.Count,
                 WeightBrutto = (short)((vagons.Sum(v => v.Tvag) + vagons.Sum(v => v.WeightNetto)) / 10),
                 PathId = vagons[0].PathId,
                 TrainKindId = trainKind
@@ -479,8 +462,8 @@ namespace StationAssistant.Services
         public void CheckPFclaimsAsync(string destination, ref List<Vagon> vagons)
         {
             Direction direction = _context.Direction.Find(destination);
-            int length = vagons.Count();
-            int weightSum = (int)(vagons.Sum(v => v.Tvag) + vagons.Sum(v => v.WeightNetto));
+            int length = vagons.Count;
+            int weightSum = (int) (vagons.Sum(v => v.Tvag + v.WeightNetto));
 
             if (direction == null)
                 throw new ArgumentOutOfRangeException($"Не определены требования ПФ по направлению {destination}");
