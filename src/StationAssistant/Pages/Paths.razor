@@ -1,0 +1,249 @@
+﻿@page "/paths"
+@using Syncfusion.Blazor.Navigations
+@using Syncfusion.Blazor.ProgressBar
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Grids
+@using StationAssistant.Data.Entities;
+@inject StationAssistant.Services.NotificationService NotificationService
+@inject NavigationManager NavigationManager
+@inject StationAssistant.Services.IStationDataService StationData
+@attribute [AuthorizeRoles(Role.Admin, Role.DSC, Role.DSP)]
+
+@if (!dataIsLoaded)
+{
+    <p>Загрузка...</p>
+}
+else
+{
+    <div class="container my-1">
+        <table>
+            <tr>
+                <td>Только сортировочные пути</td>
+                <td><SfSwitch @bind-Checked="@onlySort" TChecked="bool" EnablePersistence="true" /></td>
+            </tr>
+            <tr>
+                <td>Только занятые пути</td>
+                <td><SfSwitch @bind-Checked="@onlyOccupied" TChecked="bool" EnablePersistence="true" /></td>
+            </tr>
+        </table>
+    </div>
+    <SfTab @ref="Tab">
+        <TabItems>
+            @foreach (string area in paths.Select(p => p.Area).Distinct())
+            {
+                <TabItem Content="@area">
+                    <ChildContent>
+                        <TabHeader Text="@area"></TabHeader>
+                    </ChildContent>
+                    <ContentTemplate>
+                        <div class="control-section">
+                            <div class="control_wrapper accordion-control-section">
+                                <SfAccordion @ref="Accordion" @key="area">
+                                    <AccordionItems @key="area">
+                                        @foreach (PathModel path in paths.Where(p => (p.Area == area) && (!onlySort || p.Sort) && (!onlyOccupied || p.Occupation != 0)))
+                                        {
+                                            <AccordionItem Expanded="@(path.Occupation != 0)" CssClass="border-1" @key="path.Id">
+                                                <HeaderTemplate>
+                                                    <h6 class="ml-1"> Путь №@path.PathNum (@path.Length)   @path.Marks </h6>
+                                                </HeaderTemplate>
+                                                <ContentTemplate>
+                                                    <div class="container">
+                                                        <div class="row">
+                                                            @if (path.AnyTrain)
+                                                            {
+                                                                <div class="col-2 align-content-start">
+                                                                    <SfButton OnClick="async () => await OnPathSelect(path.Id)">Перестановка</SfButton>
+                                                                </div>
+                                                                <div class="col-2 align-content-start">
+                                                                    <SfButton OnClick="@(() => {NavigationManager.NavigateTo("departure");})">Отправление</SfButton>
+                                                                </div>
+                                                                <div class="col-2">
+                                                                    <SfButton OnClick="(async() => await OnTrainListCall(path.Id))">Натурный лист</SfButton>
+                                                                </div>
+                                                            }
+                                                            else if (path.Occupation != 0)
+                                                            {
+                                                                <div class="col-2">
+                                                                    <SfButton OnClick="(() => { FormationIsVisible = true; selectedPathItem = path; })">@(path.Sort ? "Накопительная ведомость" : "Ведомость вагонов")</SfButton>
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                        <div>
+                                                            @{
+                                                                <SfProgressBar Type="ProgressType.Linear" Height="38" @ref="sfProgress" IsStriped="true"
+                                                               SegmentCount="@path.Length" Value="path.TrainLength" SecondaryProgress="@path.Occupation" Minimum="0" Maximum="@path.Length"
+                                                               Theme="@ProgressTheme.Material" ProgressThickness="30" ProgressColor="#337ab7" TrackThickness="32" TrackColor="#94b4dd" @key="path.Id">
+                                                                    <ProgressBarAnimation Enable="false" />
+                                                                </SfProgressBar>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </ContentTemplate>
+                                            </AccordionItem>
+                                        }
+                                    </AccordionItems>
+                                </SfAccordion>
+                            </div>
+                        </div>
+                    </ContentTemplate>
+                </TabItem>
+            }
+        </TabItems>
+    </SfTab>
+    @if (PathSelectorVisible)
+    {
+        <ConfirmModal Title="Путь перестановки" DialogClose="() => { PathSelectorVisible = false; }" OverlayClick="() => { PathSelectorVisible = false; }" OKClick="(async () => { PathSelectorVisible = false; await OnRelocateTrain(); })" Width="450" Height="180">
+            <PathSelector @ref="pathSelector" selectedTrain="targetTrainModel" />
+        </ConfirmModal>
+    }
+    @if (FormationIsVisible)
+    {
+        <ConfirmModal Title="Накопительная ведомость" DialogClose="(() => FormationIsVisible = false)" OverlayClick="(() => FormationIsVisible = false)" OKButtonName="Сформировать" OKClick="OnFormTrain">
+            <FormationSheet @ref="formationSheet" path="selectedPathItem" onUpdateVagon="onUpdateVagon"></FormationSheet>
+        </ConfirmModal>
+    }
+    @if (TrainListIsVisible)
+    {
+        <ConfirmModal Title="Натурный лист" DialogClose="(() => TrainListIsVisible = false)" OverlayClick="(() => TrainListIsVisible = false)" OKButtonName="ОК" OKClick="(() => TrainListIsVisible = false)">
+            <SfGrid DataSource="targetTrainModel?.Wagons" EnableVirtualization="false" AllowSorting="true" TValue="WagonModel">
+                <GridColumns>
+                    <GridColumn Field=@nameof(WagonModel.SequenceNum) HeaderText="№" Width="25"></GridColumn>
+                    <GridColumn Field=@nameof(WagonModel.Num) HeaderText="Номер" TextAlign="TextAlign.Left" IsPrimaryKey="true" Width="50"></GridColumn>
+                    <GridColumn Field=@nameof(WagonModel.Kind) HeaderText="Род" Width="40"></GridColumn>
+                    <GridColumn Field=@nameof(WagonModel.Destination) HeaderText="Назначение" Width="60"></GridColumn>
+                    <GridColumn Field=@nameof(WagonModel.Ksob) HeaderText="Собственник" Width="70"></GridColumn>
+                    <GridColumn Field=@nameof(WagonModel.Tvag) HeaderText="Тара" Width="40"></GridColumn>
+                    <GridColumn Field=@nameof(WagonModel.WeightNetto) HeaderText="Вес" Width="40"></GridColumn>
+                    <GridColumn Field=@nameof(WagonModel.Mark) HeaderText="Отметки" Width="60"></GridColumn>
+                </GridColumns>
+            </SfGrid>
+        </ConfirmModal>
+    }
+}
+
+<style>
+    .e-tab .e-tab-header .e-toolbar-item.e-active .e-tab-wrap {
+        background: #57d2c1;
+    }
+
+    .e-tab .e-tab-header .e-toolbar-item .e-tab-wrap {
+        border-radius: 1px;
+        border: groove;
+        color: rgb(255 255 255);
+    }
+
+    .e-tab .e-tab-header .e-toolbar-item.e-active.e-ileft .e-tab-text, .e-tab .e-tab-header .e-toolbar-item.e-active.e-iright .e-tab-text {
+        color: #ff0000;
+        font-weight: 600;
+    }
+
+    .progressbar-label-bootstrap {
+        text-align: left;
+        font-family: Roboto-Regular;
+        font-size: 14px;
+        color: #3D3E3C;
+        margin-left: 10px;
+        padding: 0px;
+    }
+</style>
+
+
+@code {
+    SfTab Tab;
+    private bool FormationIsVisible = false;
+    private bool TrainListIsVisible = false;
+    private bool PathSelectorVisible { get; set; } = false;
+    public bool onlySort { get; set; } = false;
+    public bool onlyOccupied { get; set; } = false;
+    bool dataIsLoaded = false;
+    SfAccordion Accordion;
+    SfProgressBar sfProgress;
+    FormationSheet formationSheet;
+    PathSelector pathSelector;
+    TrainModel targetTrainModel;
+    public List<PathModel> paths { get; set; }
+    private PathModel selectedPathItem = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        paths = await StationData.GetPathsAsync();
+        dataIsLoaded = true;
+    }
+
+    private async Task OnPathSelect(int pathId)
+    {
+        targetTrainModel = await StationData.GetTrainOnPath(pathId);
+        PathSelectorVisible = true;
+    }
+
+    [AuthorizeRoles(Role.DSC)]
+    private async Task OnTrainListCall(int pathId)
+    {
+        targetTrainModel = await StationData.GetTrainOnPath(pathId, true);
+        TrainListIsVisible = true;
+    }
+
+    private async Task OnFormTrain()
+    {
+        FormationIsVisible = false;
+        if (!formationSheet.selectedVagons.Any())
+        {
+            NotificationService.SetMessage(TypeNotification.Warning, "Не выделено ни одного вагона для формирования поезда");
+            return;
+        }
+        try
+        {
+            byte trainKind = formationSheet.GetSelectedTrainKind();
+            //#warning Mocking FormTrain is present!!!
+            await StationData.FormTrain(formationSheet.selectedVagons, trainKind, formationSheet.PFclaimsOn);
+            NotificationService.SetMessage(TypeNotification.Success, $"Операция по формированию поезда проведена успешно");
+            // TODO: consider using watcher for selectedPathItem
+            #region
+            selectedPathItem.AnyTrain = true;
+            selectedPathItem.TrainLength = formationSheet.selectedVagons.Count();
+            #endregion
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            if (e is ArgumentException)
+            {
+                NotificationService.SetMessage(TypeNotification.Warning, (e as ArgumentException).ParamName);
+            }
+            else if (e is HttpRequestException)
+            {
+                var code = e.HResult;
+                NotificationService.SetMessage(TypeNotification.Warning, e.Message);
+            }
+            else if (e is RailProcessException)
+            {
+                NotificationService.SetMessage(TypeNotification.Warning, e.Message);
+            }
+            else
+            {
+                NotificationService.SetMessage(TypeNotification.Error, "Не удалось выполнить операцию");
+            }
+            return;
+        }
+    }
+
+    private async Task onUpdateVagon(Vagon updatedVagon)
+    {
+        try
+        {
+            await StationData.UpdateVagon(updatedVagon);
+            NotificationService.SetMessage(TypeNotification.Success, $"Для вагона №{updatedVagon.Num} внесены корректировки");
+        }
+        catch (Exception)
+        {
+            NotificationService.SetMessage(TypeNotification.Error, $"Не удалось сохранить изменения");
+        }
+    }
+
+    public async Task OnRelocateTrain()
+    {
+        await StationData.RelocateTrain(targetTrainModel.Id, pathSelector.PathId);
+        NotificationService.SetMessage(TypeNotification.Success, $"Перестановка поезда №{targetTrainModel.Num} на другой путь завершена");
+        NavigationManager.NavigateTo("paths", true);
+    }
+}

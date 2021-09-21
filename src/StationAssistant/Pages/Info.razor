@@ -6,14 +6,14 @@
 
 @if (isLoading)
 {
-    <p>Loading...</p>
+    <p>Загрузка...</p>
 }
 else
 {
     <div class="control-section">
-        <SfChart Title="Рода вагонов по станции" Theme="ChartTheme.Bootstrap4">
+        <SfChart Title="Рода вагонов по станции" Theme="ChartTheme.Bootstrap4" Height="100%">
             <ChartArea><ChartAreaBorder Width="1"></ChartAreaBorder></ChartArea>
-            <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" Interval="1" LabelIntersectAction="LabelIntersectAction.Rotate45">
+            <ChartPrimaryXAxis ValueType="Syncfusion.Blazor.Charts.ValueType.Category" Interval="1" LabelIntersectAction="LabelIntersectAction.Wrap">
                 <ChartAxisMajorGridLines Width="0"></ChartAxisMajorGridLines>
                 <ChartAxisMinorGridLines Width="0"></ChartAxisMinorGridLines>
                 <ChartAxisMajorTickLines Width="0"></ChartAxisMajorTickLines>
@@ -68,7 +68,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        paths = await StationData.GetPaths();
+        paths = await StationData.GetPathsAsync();
         await SetupGraphic();
         isLoading = false;
     }
@@ -84,7 +84,7 @@ else
 
             StackedColumnChartData data = new StackedColumnChartData()
             {
-                xname = $"{path.Area}-{path.PathNum} ({path.Marks?.Trim()})",
+                xname = $"{path.Area}№{path.PathNum} ({path.Marks?.Trim()})",
                 ps = vagonsOnPath.Where(v => v.Kind == 1).Count(),
                 kr = vagonsOnPath.Where(v => v.Kind == 20).Count(),
                 pl = vagonsOnPath.Where(v => v.Kind == 40).Count(),

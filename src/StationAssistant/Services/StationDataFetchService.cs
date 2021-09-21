@@ -23,7 +23,7 @@ namespace StationAssistant.Services
 
         public Task<PathModel> GetPathAsync(int pathId);
 
-        public Task<List<PathModel>> GetPaths();
+        public Task<List<PathModel>> GetPathsAsync();
 
         public Task<Direction[]> GetDirections();
 
@@ -319,7 +319,7 @@ namespace StationAssistant.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task<List<PathModel>> GetPaths()
+        public async Task<List<PathModel>> GetPathsAsync()
         {
             List<Path> paths = await _context.Path.Include(p => p.Vagon).ToListAsync();
             return (paths.Any() ? _imapper.Map<List<PathModel>>(paths) : null);
@@ -453,7 +453,7 @@ namespace StationAssistant.Services
             trainModel.Wagons = WagonModels;
 
             var createdTrain = await _igvcData.SendTrainCompositionAsync(trainModel);
-            train.Uid = createdTrain.Id;
+            _imapper.Map<Train>(createdTrain);
 
             _context.Train.Add(train);
             await _context.SaveChangesAsync();

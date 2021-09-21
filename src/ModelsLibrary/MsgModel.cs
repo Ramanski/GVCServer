@@ -64,11 +64,10 @@ namespace ModelsLibrary
     public class MovingMsg : MsgModel
     {
         [JsonIgnore]
-        List<string> MovingOperations = new List<string>(){ OperationCode.TrainArrival,
-                                                            OperationCode.TrainDeparture,
-                                                            OperationCode.TrainProceed,
-															OperationCode.TrainDisbanding															
-															};
+        List<string> MovingOperations = new(){ OperationCode.TrainArrival,
+                                               OperationCode.TrainDeparture,
+                                               OperationCode.TrainProceed,
+											   OperationCode.TrainDisbanding};
 
         public MovingMsg(){}
         public MovingMsg(string movingCode, Guid trainId, DateTime timeMoved)

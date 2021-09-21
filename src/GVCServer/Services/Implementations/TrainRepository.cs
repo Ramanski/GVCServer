@@ -70,7 +70,7 @@ namespace GVCServer.Repositories
         }
         public async Task UpdateTrainParams(TrainModel actualTrainModel)
         {
-            _logger.LogInformation("Got trainModel to update " + actualTrainModel);
+            _logger.LogInformation("Got train to update " + actualTrainModel);
             Train train = await FindTrain(actualTrainModel.Id);
 
             train.TrainNum = actualTrainModel.Num;
@@ -87,6 +87,7 @@ namespace GVCServer.Repositories
             TrainModel[] trainModels = await _context.Train
                                                  .Where(t => station.Equals(t.DestinationStation))
                                                  .Include(t => t.OpTrain.Where(ot => ot.LastOper))
+                                                    .ThenInclude(op => op.KopNavigation)
                                                  .Select(t => new TrainModel
                                                  {
                                                      Id = t.Uid,
@@ -97,27 +98,13 @@ namespace GVCServer.Repositories
                                                      DestinationStation = t.DestinationStation,
                                                      Dislocation = t.OpTrain.Where(ot => ot.LastOper).First().SourceStation,
                                                      Length = t.Length,
-                                                     CodeOper = t.OpTrain.Where(ot => ot.LastOper).First().Kop,
+                                                     CodeOper = t.OpTrain.Where(ot => ot.LastOper).First().KopNavigation.Mnemonic,
                                                      WeightBrutto = t.WeightBrutto,
                                                      DateOper = t.OpTrain.Where(ot => ot.LastOper).First().Datop
                                                  })
                                                  .Where(t => t.Dislocation != station)
                                                  .ToArrayAsync();
             return trainModels;
-        }
-
-        // TODO: Call from client
-        private async void StickScheduleTime(TrainModel trainModel)
-        {
-            var timeToArrive = await _context.Schedule
-                              .Where(s => s.TrainNum == trainModel.Num)
-                              .Select(s => s.ArrivalTime)
-                              .FirstOrDefaultAsync();
-            if (timeToArrive.HasValue)
-            {
-                var dateTime = DateTime.Today.AddTicks(timeToArrive.Value.Ticks);
-                trainModel.DateOper = (dateTime > DateTime.Now ? dateTime : dateTime.AddDays(1));
-            }
         }
 
         private async Task<short> GetNextOrdinal(string formStation)

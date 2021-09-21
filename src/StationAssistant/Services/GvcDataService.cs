@@ -24,7 +24,7 @@ namespace StationAssistant.Services
 
         public Task SendTrainArrivedAsync(Guid trainId, DateTime timeArrived);
 
-        public Task CancelOperation(Guid trainId, string msgCode);
+        public Task CancelMovingOperation(Guid trainId, string msgCode);
 
         public Task SendDisbanding(Guid trainId, DateTime timeDisbanded);
 
@@ -74,10 +74,10 @@ namespace StationAssistant.Services
             return await httpService.Post<List<string[]>>("nsi/pf", destinations);
         }
 
-        public async Task CancelOperation(Guid trainId, string operCode)
+        public async Task CancelMovingOperation(Guid trainId, string operCode)
         {
-            ConsistList cancelMsg = new();
-            await httpService.Delete<object>("train", cancelMsg);
+            MovingMsg movingMsg = new(operCode, trainId, DateTime.Now);
+            await httpService.Delete<object>($"{trainId}/operations", movingMsg);
         }
 
         public async Task SendDisbanding(Guid trainId, DateTime timeDisbanded)
