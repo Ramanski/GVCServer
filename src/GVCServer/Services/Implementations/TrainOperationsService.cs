@@ -15,7 +15,7 @@ namespace GVCServer.Repositories
         private readonly IVCStorageContext _context;
         private readonly ILogger _logger;
         public TrainOperationsService(IVCStorageContext context,
-                                    ILogger<WagonOperationsService> logger)
+                                    ILogger<TrainOperationsService> logger)
         {
             _context = context;
             _logger = logger;
@@ -62,6 +62,25 @@ namespace GVCServer.Repositories
 
             var affected = await _context.SaveChangesAsync();
             _logger.LogInformation($"Saved {affected} of 1 record");
+        }
+
+        public async Task DeleteTrainOperation(Guid trainId, string station, string operationCode)
+        {
+            var trainOperationToDelete = await _context.OpTrain
+                .Where(ot => ot.LastOper && ot.TrainId == trainId)
+                .FirstOrDefaultAsync();
+
+            if (trainOperationToDelete.Kop == operationCode && trainOperationToDelete.SourceStation == station)
+            {
+                _context.Remove(trainOperationToDelete);
+                _logger.LogInformation("Canceling operation for train {0}", trainOperationToDelete);
+                var affected = await _context.SaveChangesAsync();
+                _logger.LogInformation("Saved {0} of {1} records", affected, 1);
+            }
+            else
+            {
+                throw new RailProcessException("Нет прав на отмену операции");
+            }
         }
 
         public async Task CorrectComposition(Guid trainId, DateTime timeOper, string station)
