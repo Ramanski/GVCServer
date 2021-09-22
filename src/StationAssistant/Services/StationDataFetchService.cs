@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using ModelsLibrary;
+using ModelsLibrary.Codes;
 using StationAssistant.Data.Entities;
 using System;
 using System.Collections.Generic;
@@ -429,31 +430,30 @@ namespace StationAssistant.Services
                 CheckPFclaimsAsync(destination, ref vagons);
             }
 
-            Train train = new()
-            {
-                DestinationStation = destination,
-                DateOper = DateTime.Now,
-                FormStation = _configuration["Auth:StationCode"],
-                FormTime = DateTime.Now,
-                Length = (short) vagons.Count,
-                WeightBrutto = (short)((vagons.Sum(v => v.Tvag) + vagons.Sum(v => v.WeightNetto)) / 10),
-                PathId = vagons[0].PathId,
-                TrainKindId = trainKind
-            };
-            
             foreach (Vagon vagon in vagons)
             {
                 vagon.SequenceNum = sequenceNum++;
-                vagon.TrainIndexNavigation = train;
                 vagon.DateOper = DateTime.Now;
             }
 
-            List<WagonModel> WagonModels = _imapper.Map<List<WagonModel>>(vagons);
-            TrainModel trainModel = _imapper.Map<TrainModel>(train);
-            trainModel.Wagons = WagonModels;
+            List<WagonModel> wagonModels = _imapper.Map<List<WagonModel>>(vagons);
 
-            var createdTrain = await _igvcData.SendTrainCompositionAsync(trainModel);
-            _imapper.Map<Train>(createdTrain);
+            TrainModel trainModel = new()
+            {
+                DateOper = DateTime.Now,
+                CodeOper = OperationCode.TrainComposition,
+                FormStation = _configuration["Auth:StationCode"],
+                DestinationStation = destination,
+                Length = (short)vagons.Count,
+                WeightBrutto = (short)((vagons.Sum(v => v.Tvag) + vagons.Sum(v => v.WeightNetto)) / 10),
+                Kind = trainKind,
+                Wagons = wagonModels,
+            };
+
+            var createdTrainModel = await _igvcData.SendTrainCompositionAsync(trainModel);
+            var train = _imapper.Map<Train>(createdTrainModel);
+            train.Path = vagons.First().Path;
+
 
             _context.Train.Add(train);
             await _context.SaveChangesAsync();

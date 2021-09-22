@@ -1,0 +1,73 @@
+﻿@using Syncfusion.Blazor.Grids
+
+<div class="container-fluid mb-2" id="tbl" style="text-align: center;font-size: medium;">
+    <table class="border container-fluid">
+        <thead>
+            <tr>
+                <td>Станция формирования</td>
+                <td>№ состава</td>
+                <td>Станция назначения</td>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    @trainModel.Index?.Substring(0, 4)
+                </td>
+                <td>
+                    @trainModel.Index?.Substring(5, 3)
+                </td>
+                <td>
+                    @trainModel.Index?.Substring(9, 4)
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="border container-fluid">
+        <thead>
+            <tr>
+                <td>Списывание</td>
+                <td>Число</td>
+                <td>Месяц</td>
+                <td>Часы</td>
+                <td>Мин</td>
+                <td>Условная длина</td>
+                <td>Масса брутто</td>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>с головы</td>
+                <td>@trainModel.DateOper.Day</td>
+                <td>@trainModel.DateOper.Month</td>
+                <td>@trainModel.DateOper.Hour</td>
+                <td>@trainModel.DateOper.Minute</td>
+                <td>@trainModel.Length</td>
+                <td>@trainModel.WeightBrutto</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<SfGrid DataSource="@trainModel.Wagons.OrderBy(w => w.SequenceNum)" EnableVirtualization="false" AllowSorting="true">
+    <GridColumns>
+        <GridColumn Field=@nameof(WagonModel.SequenceNum) HeaderText="№" Width="35"></GridColumn>
+        <GridColumn Field=@nameof(WagonModel.Num) HeaderText="Номер" TextAlign="TextAlign.Left" IsPrimaryKey="true" Width="60"></GridColumn>
+        <GridColumn Field=@nameof(WagonModel.Kind) HeaderText="Род" Width="45"></GridColumn>
+        <GridColumn Field=@nameof(WagonModel.Destination) HeaderText="Назначение" Width="70"></GridColumn>
+        <GridColumn Field=@nameof(WagonModel.Ksob) HeaderText="Собств" Width="55"></GridColumn>
+        <GridColumn Field=@nameof(WagonModel.Tvag) HeaderText="Тара" Width="45"></GridColumn>
+        <GridColumn Field=@nameof(WagonModel.WeightNetto) HeaderText="Вес" Width="45"></GridColumn>
+        <GridColumn Field=@nameof(WagonModel.Mark) HeaderText="Отметки" Width="75"></GridColumn>
+    </GridColumns>
+</SfGrid>
+
+<style>
+    thead {
+        font-weight: 500;
+    }
+</style>
+
+@code {
+    [Parameter] public TrainModel trainModel { get; set; }
+}
