@@ -13,29 +13,32 @@
             <GridColumn Field=@nameof(TrainModel.Index) IsPrimaryKey="true" HeaderText="Индекс" Width="14%" AllowEditing="false"></GridColumn>
             <GridColumn Field=@nameof(TrainModel.Length) HeaderText="Длина" Width="10%" AllowEditing="false"></GridColumn>
             <GridColumn Field=@nameof(TrainModel.WeightBrutto) HeaderText="Вес" Width="9%" AllowEditing="false"></GridColumn>
-            @if (ShowDislAndOper)
+            @if (IsOnStation)
+            {
+                <GridColumn Field="Path.Area" HeaderText="Парк" Width="15%" AllowEditing="false"></GridColumn>
+                <GridColumn Field="Path.PathNum" HeaderText="Путь" Width="9%" AllowEditing="false"></GridColumn>
+            }
+            else
             {
                 <GridColumn Field=@nameof(TrainModel.Dislocation) HeaderText="Станция" Width="12%" AllowEditing="false"></GridColumn>
                 <GridColumn Field=@nameof(TrainModel.CodeOper) HeaderText="Операция" Width="12%" AllowEditing="false"></GridColumn>
             }
             <GridColumn Field=@nameof(TrainModel.DateOper) Format="HH:mm" HeaderText="Время" Width="9%" AllowEditing="true" EditType="EditType.DateTimePickerEdit"></GridColumn>
-            <GridColumn Field="Path.Area" HeaderText="Парк" Width="15%" AllowEditing="false"></GridColumn>
-            <GridColumn Field="Path.PathNum" HeaderText="Путь" Width="9%" AllowEditing="false"></GridColumn>
         </GridColumns>
     </SfGrid>
 </div>
-    <SfSpinner @ref="SpinnerObj" Target="#sfGrid"></SfSpinner>
+<SfSpinner @ref="SpinnerObj" Target="#sfGrid"></SfSpinner>
 
 @code {
     SfSpinner SpinnerObj;
     [Parameter] public List<TrainModel> trainList { get; set; }
-    [Parameter] public bool ShowDislAndOper { get; set; } = false;
+    [Parameter] public bool IsOnStation { get; set; } = false;
     [Parameter] public bool AllowEditing { get; set; } = false;
-    [Parameter] public EventCallback IsSelected { get; set; }
-    [Parameter] public EventCallback IsDeselected { get; set; }
     [Parameter] public EventCallback<TrainModel> TrainParamsUpdated { get; set; }
+    [Parameter] public EventCallback IsTrainSelected { get; set; }
+    [Parameter] public EventCallback IsTrainDeselected { get; set; }
+    public TrainModel selectedTrain { get; set; }
     private bool ShowToolbar = false;
-    public TrainModel selectedTrain;
     private int selectedRow;
     SfGrid<TrainModel> Grid;
 
@@ -43,7 +46,7 @@
     {
         selectedRow = (int)args.RowIndex;
         selectedTrain = trainList[selectedRow];
-        await IsSelected.InvokeAsync(args);
+        await IsTrainSelected.InvokeAsync(args);
     }
 
     public void UpdateSelectedRow(TrainModel trainModel)
@@ -54,9 +57,7 @@
     public async Task DeselectRow()
     {
         selectedTrain = null;
-        //await Grid.ClearRowSelection();
-        await Grid.ClearSelection();
-        await IsDeselected.InvokeAsync(null);
+        await IsTrainDeselected.InvokeAsync(null);
     }
 
     public void OnDataBoundHandler(BeforeDataBoundArgs<TrainModel> args)
@@ -80,7 +81,7 @@
 
     public void AddTrain(TrainModel train)
     {
-            Grid.AddRecord(train);
+        Grid.AddRecord(train);
     }
 
     public async Task StateChanged()

@@ -20,18 +20,18 @@
         <div class="row">
 
             <div class="col-xs-6 col-sm-6 col-lg-12 col-md-12">
-                <SfButton Disabled="!TrainIsSelected" IsPrimary="true" IconCss="e-icons e-depart" OnClick="onPreDepart">Отправить поезд</SfButton>
+                <SfButton Disabled="departingList?.selectedTrain == null" IsPrimary="true" IconCss="e-icons e-depart" OnClick="onPreDepart">Отправить поезд</SfButton>
 
-                <SfButton Disabled="!TrainIsSelected" IsPrimary="false" IconCss="e-icons e-tgnl" OnClick="(() => ShowDetails())">Натурный лист</SfButton>
+                <SfButton Disabled="departingList?.selectedTrain == null" IsPrimary="false" IconCss="e-icons e-tgnl" OnClick="(() => ShowDetails())">Натурный лист</SfButton>
 
-                <SfButton Disabled="!TrainIsSelected" IsPrimary="false" IconCss="e-icons e-schedule-icon" OnClick="(async () => await onGetDepartureRoute())">Нитка ГДП</SfButton>
+                <SfButton Disabled="departingList?.selectedTrain == null" IsPrimary="false" IconCss="e-icons e-schedule-icon" OnClick="(async () => await onGetDepartureRoute())">Нитка ГДП</SfButton>
 
-                <SfButton Disabled="!TrainIsSelected" IsPrimary="false" IconCss="e-icons e-relocate" OnClick="(() => onOpenPath())">Перестановка состава</SfButton>
+                <SfButton Disabled="departingList?.selectedTrain == null" IsPrimary="false" IconCss="e-icons e-relocate" OnClick="(() => onOpenPath())">Перестановка состава</SfButton>
             </div>
         </div>
         <div class="content-wrapper">
-                <TrainList @ref="departingList" trainList="departingTrains"IsSelected="@(() => { TrainIsSelected = true; })" 
-                           IsDeselected="@(() => { TrainIsSelected = false; })" AllowEditing="true" TrainParamsUpdated="@TrainParamsUpdated"/> 
+                <TrainList @ref="departingList" trainList="departingTrains" IsOnStation="true" 
+                AllowEditing="true" TrainParamsUpdated="@TrainParamsUpdated"/> 
         </div>
 
     @if((FormationSheetIsVisible || PathSelectorIsVisible)&& departingList.selectedTrain != null)
@@ -62,7 +62,6 @@
     TrainList departingList;
     private List<TrainModel> departingTrains { get; set; }
     private List<PathModel> paths { get; set; }
-    public bool TrainIsSelected { get; set; } = false;
     private bool TrainListIsVisible { get; set; } = false;
     private bool PathSelectorIsVisible { get; set; } = false;
     private bool FormationSheetIsVisible { get; set; } = false;

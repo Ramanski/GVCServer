@@ -22,7 +22,7 @@
 
 @code {
     [Parameter] public TrainModel selectedTrain { get; set; }
-    [Parameter] public bool isArriving { get; set; } = false;
+    [Parameter] public bool ShowArrivingPathsOnly { get; set; } = false;
     [Parameter] public bool isDeparting { get; set; } = false;
     public List<PathData> availablePaths { get; set; }
     public List<PathData> pathsInArea { get; set; }
@@ -31,7 +31,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        availablePaths = (await StationData.GetAvailablePaths(selectedTrain, isArriving, isDeparting))
+        availablePaths = (await StationData.GetAvailablePaths(selectedTrain, ShowArrivingPathsOnly, isDeparting))
                                           .Select(p => new PathData() { Id = p.Id, Area = p.Area, PathNum = p.PathNum } )
                                           .ToList();
         areas = availablePaths.Select(a => a.Area).Distinct().ToList();

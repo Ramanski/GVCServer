@@ -14,50 +14,67 @@
     <h3 class="text-center"> Прогноз прибытия поездов </h3>
     <div class="row">
         <div class="col-xs-4 col-sm-6 col-lg-12 col-md-12">
-            <SfButton Disabled="!ArrivingTrainIsSelected" IsPrimary="true" IconCss="e-icons e-arriving" OnClick="(async() => await Arrived())">Оформить прибытие</SfButton>
-            <SfButton Disabled="!ArrivingTrainIsSelected" IsPrimary="false" IconCss="e-icons e-tgnl" OnClick="(async() => await GetDetails())">Получить ТГНЛ</SfButton>
-            <SfButton Disabled="!ArrivingTrainIsSelected" IsPrimary="false" IconCss="e-icons e-arriving-path" OnClick="(() => onOpenPathSelector(true))">Выбрать путь</SfButton>
+            <SfButton Disabled="selectedArrivingTrain == null" IsPrimary="true" IconCss="e-icons e-arriving" OnClick="(() => onOpenPathSelector(IsArriving:true))">Оформить прибытие</SfButton>
+            <SfButton Disabled="selectedArrivingTrain == null" IsPrimary="false" IconCss="e-icons e-tgnl" OnClick="(async() => await GetDetails())">Получить ТГНЛ</SfButton>
         </div>
     </div>
     <div class="content-wrapper">
         <div class="row">
-            <TrainList @ref="arrivingList" trainList="arrivingTrains" ShowDislAndOper="true" IsSelected="@(() => { ArrivingTrainIsSelected = true; })" IsDeselected="@(() => { ArrivingTrainIsSelected = false; })"></TrainList>
+            <TrainList @ref="arrivingTrainList" trainList="arrivingTrains" IsOnStation="false"
+                       IsTrainSelected="(() => selectedArrivingTrain = arrivingTrainList.selectedTrain)"
+                       IsTrainDeselected="(() => selectedArrivingTrain = null)" />
         </div>
     </div>
 </div>
 <div class="col-lg-12 control-section mt-1">
     <h3 class="text-center"> Прибывшие поезда </h3>
     <div class="col-xs-4 col-sm-6 col-lg-12 col-md-12">
-        <SfButton IsPrimary="true" Disabled="@(!ArrivedTrainIsSelected)" IconCss="e-icons e-disband" OnClick="(async() => await Disband())">Расформировать</SfButton>
-        <SfButton IsPrimary="false" Disabled="@(!ArrivedTrainIsSelected)" IconCss="e-icons e-relocate" OnClick="(() => onOpenPathSelector(false))">Переставить состав</SfButton>
-        <SfButton IsPrimary="false" Disabled="@(!ArrivedTrainIsSelected)" IconCss="e-icons e-arriving-cancel" OnClick="onCancel">Отменить прибытие</SfButton>
+        <SfButton IsPrimary="true" Disabled="selectedArrivedTrain == null" IconCss="e-icons e-disband" OnClick="(async() => await Disband())">Расформировать</SfButton>
+        <SfButton IsPrimary="false" Disabled="selectedArrivedTrain == null" IconCss="e-icons e-relocate" OnClick="(() => onOpenPathSelector(false))">Переставить состав</SfButton>
+        <SfButton IsPrimary="false" Disabled="selectedArrivedTrain == null" IconCss="e-icons e-arriving-cancel" OnClick="(() => CancelDialogIsVisible = true)">Отменить прибытие</SfButton>
     </div>
     <div class="content-wrapper">
         <div class="row">
-            <TrainList @ref="arrivedList" trainList="arrivedTrains" IsSelected="@(() => { ArrivedTrainIsSelected = true; })" IsDeselected="@(() => { ArrivedTrainIsSelected = false; })"></TrainList>
+            <TrainList @ref="arrivedTrainList" trainList="arrivedTrains" IsOnStation="true"
+                       IsTrainSelected="(() => selectedArrivedTrain = arrivedTrainList.selectedTrain)"
+                       IsTrainDeselected="(() => selectedArrivedTrain = null)" />
         </div>
     </div>
 </div>
 
-@if (TrainCompositionVisible || PathSelectorVisible)
+
+@if (TrainCompositionVisible)
 {
-    <ConfirmModal Title="@TitleModal" DialogClose="onCloseModal" OverlayClick="onCloseModal" OKClick="onOK" Width=@(PathSelectorVisible?"450":"850") Height="@(PathSelectorVisible?"180":"80%")">
-        @if (TrainCompositionVisible)
-        {
-            <TrainComposition trainModel="selectedTrainModel"/>
-        }
-        else if (PathSelectorVisible)
-        {
-            <PathSelector @ref="pathSelector" selectedTrain="selectedTrainModel" isArriving="ShowArrivingPathsOnly" />
-        }
+    <ConfirmModal Title="@String.Format($"Телеграмма-натурный лист поезда №{selectedArrivingTrain.Num}")"
+              DialogClose="@(() => TrainCompositionVisible = false)"
+              OverlayClick="@(() => TrainCompositionVisible = false)"
+              OKClick="@(() => TrainCompositionVisible = false)"
+              Width="850" Height="80%">
+        <TrainComposition trainModel="selectedArrivingTrain" />
     </ConfirmModal>
 }
-    <SfDialog @bind-Visible="@CancelDialogIsVisible" Width="400px" Target="#target" ShowCloseIcon="true" Header="@Title" Content="@Body">
+else if (PathSelectorVisible)
+{
+    var selectedTrainModel = isArriving ? selectedArrivingTrain : selectedArrivedTrain;
+
+    <ConfirmModal Title="@String.Format($"Выбор пути для поезда {selectedTrainModel.Num}")"
+              DialogClose="@(() => PathSelectorVisible = false)"
+              OverlayClick="@(() => PathSelectorVisible = false)"
+              OKClick="@(async () => await onPathSelected(pathSelector.PathId))"
+              Width="450" Height="180">
+        <PathSelector @ref="pathSelector" selectedTrain="selectedTrainModel" ShowArrivingPathsOnly="isArriving" />
+    </ConfirmModal>
+}
+else if (CancelDialogIsVisible)
+{
+    <SfDialog Header="Отмена прибытия поезда" Width="400px" ShowCloseIcon="true"
+          Content="@String.Format($"Отменить ранее переданное сообщение о прибытии поезда {arrivedTrainList.selectedTrain.Num}?")">
         <DialogButtons>
             <DialogButton Content="Да" IsPrimary="true" OnClick="(async() => {CancelDialogIsVisible = false; await CancelArrival(); })" />
             <DialogButton Content="Нет" OnClick="(() => { CancelDialogIsVisible = false; })" />
         </DialogButtons>
     </SfDialog>
+}
 
 <style>
 </style>
@@ -65,29 +82,30 @@
 
 @code {
     PathSelector pathSelector;
-    TrainList arrivingList;
-    TrainList arrivedList;
+    TrainList arrivingTrainList;
+    TrainList arrivedTrainList;
+    TrainModel selectedArrivingTrain;
+    TrainModel selectedArrivedTrain;
+    TrainModel selectedTrainModel;
     private List<TrainModel> arrivingTrains { get; set; }
     private List<TrainModel> arrivedTrains { get; set; }
-    TrainModel selectedTrainModel;
-    private string TitleModal { get; set; }
     private bool TrainCompositionVisible { get; set; } = false;
     private bool PathSelectorVisible { get; set; } = false;
     private bool CancelDialogIsVisible { get; set; } = false;
 
-    private bool ShowArrivingPathsOnly = false;
-    public bool ArrivingTrainIsSelected { get; set; } = false;
-    public bool ArrivedTrainIsSelected { get; set; } = false;
-    private string Title;
-    private string Body;
+    private bool isArriving = false;
     private HubConnection hubConnection;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            // TODO: Run task in parallel
             arrivedTrains = await StationData.GetArrivedTrainsAsync();
+            //#warning Mocking is present!
             arrivingTrains = await GvcDataFetch.GetArrivingTrains();
+            //arrivingTrains = new List<TrainModel>(){ new TrainModel() { CodeOper = "ОПЕР", DateOper = DateTime.Now, Id = Guid.NewGuid(),
+              //  DestinationStation = "161306", FormStation = "160002", Kind = 20, Length = 0, WeightBrutto = 100, Dislocation = "ВТБ", Num = 2020} };
         }
         catch (Exception e)
         {
@@ -101,36 +119,41 @@
             }
         }
 
+        // TODO: Move to subscribe to service
         hubConnection = new HubConnectionBuilder().WithUrl(NavigationManager.ToAbsoluteUri("/trainshub")).Build();
         hubConnection.On<string, TrainModel>("TrainArrived", (user, train) =>
             {
                 NotificationService.SetMessage(user, $"Поезд {train.Num} прибыл на станцию");
-                arrivingList.DeleteTrain(train);
-                train.DateOper = DateTime.Now;
-                arrivedList.AddTrain(train);
+                arrivingTrainList.DeleteTrain(train);
+                arrivedTrainList.AddTrain(train);
             });
         await hubConnection.StartAsync();
     }
 
-    async Task NotifyArrived(){
+    // TODO: Move to service
+    async Task NotifyArrived(TrainModel train)
+    {
         var authState = await authProvider.GetAuthenticationStateAsync();
         var userName = authState.User.Identity.Name;
-        await hubConnection.SendAsync("SendArrived", userName, arrivingList.selectedTrain);
+        await hubConnection.SendAsync("SendArrived", userName, train);
     }
 
+    // TODO: Move to unsubscribe to service
     public async ValueTask DisposeAsync()
     {
         await hubConnection.DisposeAsync();
     }
+
     private async Task GetDetails()
     {
         try
         {
-            selectedTrainModel = await GvcDataFetch.GetTrainInfo(arrivingList.selectedTrain.Id);
+            selectedTrainModel = await GvcDataFetch.GetTrainInfo(arrivingTrainList.selectedTrain.Id);
+            TrainCompositionVisible = true;
         }
         catch (Exception e)
         {
-             if (e is RailProcessException)
+            if (e is RailProcessException)
             {
                 NotificationService.SetMessage(TypeNotification.Warning, e.Message);
             }
@@ -139,80 +162,54 @@
                 NotificationService.SetMessage(TypeNotification.Error, "Не удалось выполнить операцию");
             }
         }
-        onOpenList();
     }
 
-    void onCloseModal()
+    async Task onPathSelected(int selectedPathId)
     {
         PathSelectorVisible = false;
-        TrainCompositionVisible = false;
-    }
 
-    void onOpenList()
-    {
-        TitleModal = "Телеграмма-натурный лист поезда №" + selectedTrainModel.Num;
-        TrainCompositionVisible = true;
-    }
-
-    async Task onOK()
-    {
-        if (PathSelectorVisible && pathSelector != null)
+        if (isArriving)
         {
-            try
-            {
-
-                if (ShowArrivingPathsOnly)
-                {
-                    var train = arrivingList.selectedTrain;
-                    train.Path = await StationData.GetPathAsync(pathSelector.PathId);
-                    arrivingList.UpdateSelectedRow(train);
-                    NotificationService.SetMessage(TypeNotification.Success, $"Путь прибытия для поезда №{selectedTrainModel.Num} установлен");
-                }
-                else
-                {
-                    var train = arrivedList.selectedTrain;
-                    await StationData.RelocateTrain(selectedTrainModel.Id, pathSelector.PathId);
-                    train.Path = await StationData.GetPathAsync(pathSelector.PathId);
-                    arrivedList.UpdateSelectedRow(train);
-                    NotificationService.SetMessage(TypeNotification.Success, $"Перестановка поезда №{selectedTrainModel.Num} на другой путь завершена");
-                }
-            }
-            catch (Exception)
-            {
-                NotificationService.SetMessage(TypeNotification.Error, "Не удалось установить путь для поезда");
-            }
+            await Arrived(selectedPathId);
         }
-        onCloseModal();
+        else
+        {
+            await Relocate(selectedPathId);
+        }
     }
 
-    void onOpenPathSelector(bool ShowOnlyArriving)
+    void onOpenPathSelector(bool IsArriving)
     {
-        selectedTrainModel = (ShowOnlyArriving ? arrivingList.selectedTrain : arrivedList.selectedTrain);
-        if (selectedTrainModel == null)
-        {
-            NotificationService.SetMessage(TypeNotification.Info, "Выберите поезд из списка");
-            return;
-        }
-        ShowArrivingPathsOnly = ShowOnlyArriving;
-        TitleModal = $"Выбор пути для поезда {selectedTrainModel.Num}";
+        isArriving = IsArriving;
         PathSelectorVisible = true;
     }
 
-    private async Task Arrived()
+    private async Task Relocate(int pathId)
     {
-        selectedTrainModel = arrivingList.selectedTrain;
-
-        if (selectedTrainModel.Path == null)
-        {
-            NotificationService.SetMessage(TypeNotification.Warning, "Выберите путь приема");
-            return;
-        }
-
         try
         {
-            await GvcDataFetch.SendTrainArrivedAsync(selectedTrainModel.Id, DateTime.Now);
-            await StationData.AddTrainAsync(selectedTrainModel.Id, DateTime.Now, selectedTrainModel.Path.Id);
-            await NotifyArrived();
+            await StationData.RelocateTrain(selectedArrivedTrain.Id, pathId);
+            selectedArrivedTrain.Path = await StationData.GetPathAsync(pathId);
+            arrivedTrainList.UpdateSelectedRow(selectedArrivedTrain);
+            NotificationService.SetMessage(
+                TypeNotification.Success,
+                $"Перестановка поезда №{selectedArrivedTrain.Num} на другой путь завершена");
+        }
+        catch (Exception)
+        {
+            NotificationService.SetMessage(TypeNotification.Error, "Не удалось установить путь для поезда");
+        }
+    }
+
+    private async Task Arrived(int pathId)
+    {
+        try
+        {
+            selectedArrivingTrain.Path = await StationData.GetPathAsync(pathId);
+            //#warning Mocking is present!
+            await GvcDataFetch.SendTrainArrivedAsync(selectedArrivingTrain.Id, DateTime.Now);
+            await StationData.AddTrainAsync(selectedArrivingTrain.Id, DateTime.Now, selectedArrivingTrain.Path.Id);
+            await NotifyArrived(selectedArrivingTrain);
         }
         catch (Exception e)
         {
@@ -226,29 +223,22 @@
             }
             await CancelArrival();
         }
-        await arrivingList.DeselectRow();
-        await arrivedList.DeselectRow();
-    }
-
-    void onCancel()
-    {
-        Title = "Отмена прибытия поезда";
-        Body = $"Отменить ранее переданное сообщение о прибытии поезда {arrivedList.selectedTrain.Num}?";
-        CancelDialogIsVisible = true;
+        await arrivingTrainList.DeselectRow();
+        await arrivedTrainList.DeselectRow();
     }
 
     private async Task CancelArrival()
     {
-        TrainModel train = arrivedList.selectedTrain;
+        TrainModel train = arrivedTrainList.selectedTrain;
 
         try
         {
             await GvcDataFetch.CancelMovingOperation(train.Id, ModelsLibrary.Codes.OperationCode.TrainArrival);
             await StationData.DeleteTrainAsync(train.Id);
-            arrivedList.DeleteTrain(train);
-            arrivingList.AddTrain(train);
-            await arrivedList.DeselectRow();
-            await arrivingList.DeselectRow();
+            arrivedTrainList.DeleteTrain(train);
+            arrivingTrainList.AddTrain(train);
+            await arrivedTrainList.DeselectRow();
+            await arrivingTrainList.DeselectRow();
             NotificationService.SetMessage(TypeNotification.Success, $"Операция по отмене прибытия поезда №{train.Num} проведена успешно");
         }
         catch (Exception exception)
@@ -268,10 +258,10 @@
     {
         try
         {
-            await GvcDataFetch.SendDisbanding(arrivedList.selectedTrain.Id, DateTime.Now);
-            await StationData.DisbandTrain(arrivedList.selectedTrain);
-            NotificationService.SetMessage(TypeNotification.Success, $"Операция по расформированию поезда №{arrivedList.selectedTrain.Num} завершена");
-            arrivedList.DeleteTrain(arrivedList.selectedTrain);
+            await GvcDataFetch.SendDisbanding(arrivedTrainList.selectedTrain.Id, DateTime.Now);
+            await StationData.DisbandTrain(arrivedTrainList.selectedTrain);
+            NotificationService.SetMessage(TypeNotification.Success, $"Операция по расформированию поезда №{arrivedTrainList.selectedTrain.Num} завершена");
+            arrivedTrainList.DeleteTrain(arrivedTrainList.selectedTrain);
         }
         catch (Exception e)
         {
