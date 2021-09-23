@@ -8,68 +8,75 @@
 @inject StationAssistant.Services.IStationDataService StationData
 @attribute [Authorize]
 
-    <SfDialog @bind-Visible="@ConfirmIsVisible" Width="400px" Target="#target" ShowCloseIcon="true" Header="@Title" Content="@Body">
-        <DialogButtons>
-            <DialogButton Content="Да" IsPrimary="true" OnClick="(async() => await Depart())" />
-            <DialogButton Content="Нет" OnClick="(() => { ConfirmIsVisible = false; })" />
-        </DialogButtons>
-    </SfDialog>
+<SfDialog @bind-Visible="@ConfirmIsVisible" Width="400px" ShowCloseIcon="true" 
+        Header="Подтвердите действие" Content="@String.Format($"Отправить поезд { selectedTrain?.Num } со станции ?")">
+    <DialogButtons>
+        <DialogButton Content="Да" IsPrimary="true" OnClick="(async() => { ConfirmIsVisible = false; await Depart(); })" />
+        <DialogButton Content="Нет" OnClick="(() => { ConfirmIsVisible = false; })" />
+    </DialogButtons>
+</SfDialog>
 
 
-        <h3> Прогноз отправления поездов </h3>
-        <div class="row">
+<h3> Прогноз отправления поездов </h3>
+<div class="row">
 
-            <div class="col-xs-6 col-sm-6 col-lg-12 col-md-12">
-                <SfButton Disabled="selectedTrain == null" IsPrimary="true" IconCss="e-icons e-depart" OnClick="onPreDepart">Отправить поезд</SfButton>
+    <div class="col-xs-6 col-sm-6 col-lg-12 col-md-12">
+        <SfButton OnClick="(() => ConfirmIsVisible = true)" Disabled="(selectedTrain?.Num == 0 || selectedTrain == null)" IsPrimary="true" IconCss="e-icons e-depart">
+            Отправить поезд
+        </SfButton>
 
-                <SfButton Disabled="selectedTrain == null" IsPrimary="false" IconCss="e-icons e-tgnl" OnClick="(() => ShowDetails())">Натурный лист</SfButton>
+        <SfButton OnClick="(() => TrainCompositionVisible = true)" Disabled="selectedTrain == null" IsPrimary="false" IconCss="e-icons e-tgnl">
+            Получить ТГНЛ
+        </SfButton>
 
-                <SfButton Disabled="selectedTrain == null" IsPrimary="false" IconCss="e-icons e-schedule-icon" OnClick="(async () => await onGetDepartureRoute())">Нитка ГДП</SfButton>
+        <SfButton OnClick="(async () => await onGetDepartureRoute())" Disabled="selectedTrain == null" IsPrimary="false" IconCss="e-icons e-schedule-icon">
+            Назначить нитку ГДП
+        </SfButton>
 
-                <SfButton Disabled="selectedTrain == null" IsPrimary="false" IconCss="e-icons e-relocate" OnClick="(() => onOpenPath())">Перестановка состава</SfButton>
-            </div>
-        </div>
-        <div class="content-wrapper">
-                <TrainList @ref="departingList" trainList="departingTrains" IsOnStation="true" Height="500px"
-                    AllowEditing="true" TrainParamsUpdated="@TrainParamsUpdated"
-                    IsTrainSelected="(() => selectedTrain = departingList?.selectedTrain)"
-                    IsTrainDeselected="(() => selectedTrain = null)" /> 
-        </div>
+        <SfButton OnClick="(() => PathSelectorIsVisible = true)" Disabled="selectedTrain == null" IsPrimary="false" IconCss="e-icons e-relocate">
+            Переставить состав
+        </SfButton>
+    </div>
+</div>
+<div class="content-wrapper">
+    <TrainList @ref="departingList" trainList="departingTrains" IsOnStation="true" Height="500px"
+               AllowEditing="true" TrainParamsUpdated="@TrainParamsUpdated"
+               IsTrainSelected="(() => selectedTrain = departingList?.selectedTrain)"
+               IsTrainDeselected="(() => selectedTrain = null)" />
+</div>
 
-    @if((FormationSheetIsVisible || PathSelectorIsVisible)&& selectedTrain != null)
-    {
-        <ConfirmModal Title="@Title" DialogClose="onCloseModal" OverlayClick="onCloseModal" Width=@(FormationSheetIsVisible?"870":"550") Height="@(FormationSheetIsVisible?"80%":"180")" OKClick="onOK">
-            @if (FormationSheetIsVisible)
-            {
-                <FormationSheet trainId="@selectedTrain.Id"></FormationSheet>
-            }
-            else if (PathSelectorIsVisible)
-            {
-                <PathSelector @ref="pathSelector" selectedTrain="selectedTrain" isArriving="false" isDeparting="true"></PathSelector>
-            }
-        </ConfirmModal>
-    }
-
-    <style>
-        .e-play-icon::before {
-            content: '\e677';
-            font-size: 12px;
-        }
-    </style>
+@if (TrainCompositionVisible)
+{
+    <ConfirmModal Title="@String.Format($"Телеграмма-натурный лист поезда { selectedTrain?.Index }")"
+              DialogClose="@(() => TrainCompositionVisible = false)"
+              OverlayClick="@(() => TrainCompositionVisible = false)"
+              OKClick="@(() => TrainCompositionVisible = false)"
+              Width="850" Height="80%">
+        <TrainComposition TrainId="selectedTrain.Id" />
+    </ConfirmModal>
+}
+else if (PathSelectorIsVisible)
+{
+    <ConfirmModal Title="@String.Format($"Путь отправления поезда { selectedTrain?.Index }")" Width="550" Height="180" 
+            DialogClose="(() => PathSelectorIsVisible = false)" 
+            OverlayClick="(() => PathSelectorIsVisible = false)"
+            OKClick="(async () => await onPathSelected(pathSelector.PathId))">
+        <PathSelector @ref="pathSelector" selectedTrain="selectedTrain" ShowDepartingPathsOnly="true"></PathSelector>
+    </ConfirmModal>
+}
 
 
 @code {
 
     PathSelector pathSelector;
     TrainList departingList;
+
     private TrainModel selectedTrain { get; set; }
     private List<TrainModel> departingTrains { get; set; }
-    private List<PathModel> paths { get; set; }
-    private bool TrainListIsVisible { get; set; } = false;
+
     private bool PathSelectorIsVisible { get; set; } = false;
-    private bool FormationSheetIsVisible { get; set; } = false;
+    private bool TrainCompositionVisible { get; set; } = false;
     private bool ConfirmIsVisible { get; set; } = false;
-    private string Title;
     private string Body;
 
     protected override async Task OnInitializedAsync()
@@ -77,7 +84,6 @@
         try
         {
             departingTrains = await StationData.GetDepartingTrains();
-            TrainListIsVisible = true;
         }
         catch (Exception e)
         {
@@ -90,20 +96,6 @@
                 NotificationService.SetMessage(TypeNotification.Error, $"Не удалось загрузить поезда");
             }
         }
-    }
-
-    private void ShowDetails()
-    {
-        Title = "Натурный лист поезда " + selectedTrain.Index;
-        TrainListIsVisible = false;
-        FormationSheetIsVisible = true;
-        StateHasChanged();
-    }
-
-    void onCloseModal()
-    {
-        PathSelectorIsVisible = false;
-        TrainListIsVisible = true;
     }
 
     public async Task TrainParamsUpdated(TrainModel updatedModel)
@@ -119,48 +111,20 @@
         }
     }
 
-    async Task onOK()
+    async Task onPathSelected(int pathId)
     {
-        if (PathSelectorIsVisible && pathSelector != null)
+        try
         {
-            //departingList.selectedTrain.Path = await StationData.GetPathAsync(pathSelector.PathId);
-            try
-            {
-                var train = selectedTrain;
-                await StationData.RelocateTrain(train.Id, pathSelector.PathId);
-                train.Path = await StationData.GetPathAsync(pathSelector.PathId);
-                departingList.UpdateSelectedRow(train);
-                NotificationService.SetMessage(TypeNotification.Success, $"Перестановка поезда №{train.Num} на путь отправления завершена");
-
-            }
-            catch (Exception e)
-            {
-                if (e is HttpRequestException)
-                {
-                    NotificationService.SetMessage(TypeNotification.Warning, e.Message);
-                }
-                else
-                {
-                    NotificationService.SetMessage(TypeNotification.Error, $"Не удалось загрузить поезда");
-                }
-            }
+            await StationData.RelocateTrain(selectedTrain.Id, pathId);
+            selectedTrain.Path = await StationData.GetPathAsync(pathId);
+            departingList.UpdateSelectedRow(selectedTrain);
+            NotificationService.SetMessage(TypeNotification.Success, $"Перестановка поезда { selectedTrain.Index } выполнена");
         }
-        onCloseModal();
-    }
-
-    void onOpenPath()
-    {
-        var train = selectedTrain;
-        Title = "Выбор пути отправления " + (train.Num == 0 ? train.Num : train.Index);
-        PathSelectorIsVisible = true;
-        TrainListIsVisible = false;
-    }
-
-    void onPreDepart()
-    {
-        Title = $"Подтвердите действие";
-        Body = "Отправить поезд ?";
-        ConfirmIsVisible = true;
+        catch (Exception)
+        {
+            NotificationService.SetMessage(TypeNotification.Error, $"Не удалось выполнить перестановку состава");
+        }
+        PathSelectorIsVisible = false;
     }
 
     async Task onGetDepartureRoute()
@@ -189,14 +153,9 @@
     {
         try
         {
-            TrainModel train = selectedTrain;
-            if (train.Num == 0)
-            {
-                NotificationService.SetMessage(TypeNotification.Warning, "Не выбрана нитка отправления");
-            }
-            await StationData.TrainDeparture(train.Id);
-            departingList.DeleteTrain(train);
-            NotificationService.SetMessage(TypeNotification.Success, $"Операция по отправлению поезда №{train.Num} проведена успешно");
+            await StationData.TrainDeparture(selectedTrain.Id);
+            departingList.DeleteTrain(selectedTrain);
+            NotificationService.SetMessage(TypeNotification.Success, $"Операция по отправлению поезда №{selectedTrain.Num} проведена успешно");
         }
         catch (Exception e)
         {
@@ -209,8 +168,6 @@
                 NotificationService.SetMessage(TypeNotification.Error, $"Не удалось отправить поезд");
             }
         }
-        //todo
-        StateHasChanged();
     }
 
 }

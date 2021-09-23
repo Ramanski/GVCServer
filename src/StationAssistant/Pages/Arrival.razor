@@ -1,21 +1,29 @@
 ﻿@page "/arrival"
+
+@using Microsoft.AspNetCore.SignalR.Client
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Popups
+
 @inject StationAssistant.Services.IGvcDataService GvcDataFetch
 @inject StationAssistant.Services.IStationDataService StationData
 @inject StationAssistant.Services.NotificationService NotificationService
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider authProvider
 
-@using Microsoft.AspNetCore.SignalR.Client
-@using Syncfusion.Blazor.Buttons
-@using Syncfusion.Blazor.Popups
 @attribute [AuthorizeRoles(Role.Admin, Role.DSC, Role.DSP)]
 
 <div class="col-lg-12 control-section">
     <h3 class="text-center"> Прогноз прибытия поездов </h3>
     <div class="row">
         <div class="col-xs-4 col-sm-6 col-lg-12 col-md-12">
-            <SfButton Disabled="selectedArrivingTrain == null" IsPrimary="true" IconCss="e-icons e-arriving" OnClick="(() => onOpenPathSelector(IsArriving:true))">Оформить прибытие</SfButton>
-            <SfButton Disabled="selectedArrivingTrain == null" IsPrimary="false" IconCss="e-icons e-tgnl" OnClick="(async() => await GetDetails())">Получить ТГНЛ</SfButton>
+            <SfButton Disabled="selectedArrivingTrain == null" IsPrimary="true" IconCss="e-icons e-arriving"
+                      OnClick="(() => { selectedTrain = selectedArrivingTrain; PathSelectorVisible = true; })">
+                Оформить прибытие
+            </SfButton>
+            <SfButton Disabled="selectedArrivingTrain == null" IsPrimary="false" IconCss="e-icons e-tgnl"
+                      OnClick="(() => { selectedTrain = selectedArrivingTrain; TrainCompositionVisible = true; })">
+                Получить ТГНЛ
+            </SfButton>
         </div>
     </div>
     <div class="content-wrapper">
@@ -29,9 +37,22 @@
 <div class="col-lg-12 control-section mt-1">
     <h3 class="text-center"> Прибывшие поезда </h3>
     <div class="col-xs-4 col-sm-6 col-lg-12 col-md-12">
-        <SfButton IsPrimary="true" Disabled="selectedArrivedTrain == null" IconCss="e-icons e-disband" OnClick="(async() => await Disband())">Расформировать</SfButton>
-        <SfButton IsPrimary="false" Disabled="selectedArrivedTrain == null" IconCss="e-icons e-relocate" OnClick="(() => onOpenPathSelector(false))">Переставить состав</SfButton>
-        <SfButton IsPrimary="false" Disabled="selectedArrivedTrain == null" IconCss="e-icons e-arriving-cancel" OnClick="(() => CancelDialogIsVisible = true)">Отменить прибытие</SfButton>
+        <SfButton IsPrimary="true" Disabled="selectedArrivedTrain == null" IconCss="e-icons e-disband"
+                  OnClick="(async() => await Disband())">
+            Расформировать
+        </SfButton>
+        <SfButton IsPrimary="false" Disabled="selectedArrivedTrain == null" IconCss="e-icons e-relocate"
+                  OnClick="(() => { selectedTrain = selectedArrivedTrain; PathSelectorVisible = true; })">
+            Переставить состав
+        </SfButton>
+        <SfButton Disabled="selectedArrivedTrain == null" IsPrimary="false" IconCss="e-icons e-tgnl"
+                  OnClick="(() => { selectedTrain = selectedArrivedTrain; TrainCompositionVisible = true; })">
+            Получить ТГНЛ
+        </SfButton>
+        <SfButton IsPrimary="false" Disabled="selectedArrivedTrain == null" IconCss="e-icons e-arriving-cancel"
+                  OnClick="(() => CancelDialogIsVisible = true)">
+            Отменить прибытие
+        </SfButton>
     </div>
     <div class="content-wrapper">
         <div class="row">
@@ -45,38 +66,39 @@
 
 @if (TrainCompositionVisible)
 {
-    <ConfirmModal Title="@String.Format($"Телеграмма-натурный лист поезда №{selectedTrainModel.Num}")"
+    <ConfirmModal Title="@String.Format($"Телеграмма-натурный лист поезда №{selectedTrain.Num}")"
               DialogClose="@(() => TrainCompositionVisible = false)"
               OverlayClick="@(() => TrainCompositionVisible = false)"
               OKClick="@(() => TrainCompositionVisible = false)"
               Width="850" Height="80%">
-        <TrainComposition trainModel="selectedTrainModel" />
+        <TrainComposition TrainId="selectedTrain.Id" />
     </ConfirmModal>
 }
 else if (PathSelectorVisible)
 {
-    <ConfirmModal Title="@String.Format($"Путь {(isArriving ? "прибытия" : "")} для поезда №{selectedTrainModel.Num}")"
+    var title = String.Format($"Путь {(selectedArrivingTrain != null ? "прибытия" : "")} для поезда №{ selectedTrain.Num }");
+
+    <ConfirmModal Title="@title"
               DialogClose="@(() => PathSelectorVisible = false)"
               OverlayClick="@(() => PathSelectorVisible = false)"
               OKClick="@(async () => await onPathSelected(pathSelector.PathId))"
               Width="450px" Height="180px">
-        <PathSelector @ref="pathSelector" selectedTrain="selectedTrainModel" ShowArrivingPathsOnly="isArriving" />
+        <PathSelector @ref="pathSelector" selectedTrain="selectedTrain"
+                  ShowArrivingPathsOnly="selectedTrain == selectedArrivingTrain" />
     </ConfirmModal>
 }
 else if (CancelDialogIsVisible)
 {
     <SfDialog Header="Отмена прибытия поезда" Width="400px" ShowCloseIcon="true"
-          Content="@String.Format($"Отменить ранее переданное сообщение о прибытии поезда {arrivedTrainList.selectedTrain.Num}?")">
+          Content="@String.Format($@"Отменить ранее переданное сообщение
+                                     о прибытии поезда {arrivedTrainList.selectedTrain.Num}?")">
         <DialogButtons>
-            <DialogButton Content="Да" IsPrimary="true" OnClick="(async() => {CancelDialogIsVisible = false; await CancelArrival(); })" />
+            <DialogButton Content="Да" IsPrimary="true"
+                      OnClick="(async() => { CancelDialogIsVisible = false; await CancelArrival(); })" />
             <DialogButton Content="Нет" OnClick="(() => { CancelDialogIsVisible = false; })" />
         </DialogButtons>
     </SfDialog>
 }
-
-<style>
-</style>
-
 
 @code {
     PathSelector pathSelector;
@@ -84,14 +106,13 @@ else if (CancelDialogIsVisible)
     TrainList arrivedTrainList;
     TrainModel selectedArrivingTrain;
     TrainModel selectedArrivedTrain;
-    TrainModel selectedTrainModel;
+    TrainModel selectedTrain;
     private List<TrainModel> arrivingTrains { get; set; }
     private List<TrainModel> arrivedTrains { get; set; }
     private bool TrainCompositionVisible { get; set; } = false;
     private bool PathSelectorVisible { get; set; } = false;
     private bool CancelDialogIsVisible { get; set; } = false;
 
-    private bool isArriving = false;
     private HubConnection hubConnection;
 
     protected override async Task OnInitializedAsync()
@@ -139,45 +160,18 @@ else if (CancelDialogIsVisible)
         await hubConnection.DisposeAsync();
     }
 
-    private async Task GetDetails()
-    {
-        try
-        {
-            selectedTrainModel = await GvcDataFetch.GetTrainInfo(selectedArrivingTrain.Id);
-            TrainCompositionVisible = true;
-        }
-        catch (Exception e)
-        {
-            if (e is RailProcessException)
-            {
-                NotificationService.SetMessage(TypeNotification.Warning, e.Message);
-            }
-            else
-            {
-                NotificationService.SetMessage(TypeNotification.Error, "Не удалось выполнить операцию");
-            }
-        }
-    }
-
     async Task onPathSelected(int selectedPathId)
     {
         PathSelectorVisible = false;
 
-        if (isArriving)
+        if (selectedArrivingTrain != null)
         {
             await Arrived(selectedPathId);
         }
-        else
+        else if (selectedArrivedTrain != null)
         {
             await Relocate(selectedPathId);
         }
-    }
-
-    void onOpenPathSelector(bool IsArriving)
-    {
-        selectedTrainModel = (IsArriving ? selectedArrivingTrain : selectedArrivedTrain);
-        isArriving = IsArriving;
-        PathSelectorVisible = true;
     }
 
     private async Task Relocate(int pathId)

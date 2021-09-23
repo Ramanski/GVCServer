@@ -21,13 +21,13 @@
 @code {
     [Parameter] public TrainModel selectedTrain { get; set; }
     [Parameter] public bool ShowArrivingPathsOnly { get; set; } = false;
-    [Parameter] public bool isDeparting { get; set; } = false;
+    [Parameter] public bool ShowDepartingPathsOnly { get; set; } = false;
     public List<PathData> availablePaths { get; set; }
     public int PathId { get; set; } = 0;
 
     protected override async Task OnInitializedAsync()
     {
-        availablePaths = (await StationData.GetAvailablePaths(selectedTrain, ShowArrivingPathsOnly, isDeparting))
+        availablePaths = (await StationData.GetAvailablePaths(selectedTrain, ShowArrivingPathsOnly, ShowDepartingPathsOnly))
                                            .Select(p => new PathData()
                                            {
                                                Id = p.Id,
