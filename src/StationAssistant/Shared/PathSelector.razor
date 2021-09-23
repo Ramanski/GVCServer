@@ -4,18 +4,16 @@
 
 <div class="row">
     <div class="col-6 m-1">
-        @if(availablePaths?.Any() ?? false)
+        @if (availablePaths?.Any() ?? false)
         {
-            <select id="pathsList" @bind="PathId" >
-                @foreach (string area in areas)
-                {
-                    <optgroup label="@area"></optgroup>
-                    @foreach(PathData pathData in availablePaths.Where(p => p.Area == area))
-                    {
-                        <option value="@pathData.Id">@pathData.PathNum</option>
-                    }
-                }
-            </select>
+            <SfDropDownList TValue="int" 
+                    DataSource="@availablePaths" 
+                    TItem="PathData" 
+                    Width="350px"
+                    Placeholder="Выберите доступный путь" 
+                    @bind-Value="@PathId">
+                <DropDownListFieldSettings GroupBy="Area" Text="Description" Value="Id"></DropDownListFieldSettings>
+            </SfDropDownList>
         }
     </div>
 </div>
@@ -25,22 +23,24 @@
     [Parameter] public bool ShowArrivingPathsOnly { get; set; } = false;
     [Parameter] public bool isDeparting { get; set; } = false;
     public List<PathData> availablePaths { get; set; }
-    public List<PathData> pathsInArea { get; set; }
-    public List<string> areas;
     public int PathId { get; set; } = 0;
 
     protected override async Task OnInitializedAsync()
     {
         availablePaths = (await StationData.GetAvailablePaths(selectedTrain, ShowArrivingPathsOnly, isDeparting))
-                                          .Select(p => new PathData() { Id = p.Id, Area = p.Area, PathNum = p.PathNum } )
-                                          .ToList();
-        areas = availablePaths.Select(a => a.Area).Distinct().ToList();
+                                           .Select(p => new PathData()
+                                           {
+                                               Id = p.Id,
+                                               Area = p.Area,
+                                               Description = String.Format($"№{ p.PathNum } - { p.Length } усл.ваг. { p.Marks?.Trim() }")
+                                           })
+                                           .ToList();
     }
 
     public class PathData
     {
         public int Id { get; set; }
         public string Area { get; set; }
-        public string PathNum { get; set; }
+        public string Description { get; set; }
     }
 }

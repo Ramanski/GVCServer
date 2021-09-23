@@ -44,7 +44,7 @@ else
                                         {
                                             <AccordionItem Expanded="@(path.Occupation != 0)" CssClass="border-1" @key="path.Id">
                                                 <HeaderTemplate>
-                                                    <h6 class="ml-1"> Путь №@path.PathNum (@path.Length)   @path.Marks </h6>
+                                                    <h6 class="ml-1"> Путь №@path.PathNum - @path.Length усл.ваг. @path.Marks </h6>
                                                 </HeaderTemplate>
                                                 <ContentTemplate>
                                                     <div class="container">

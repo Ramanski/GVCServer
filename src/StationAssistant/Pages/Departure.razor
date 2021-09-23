@@ -10,8 +10,8 @@
 
     <SfDialog @bind-Visible="@ConfirmIsVisible" Width="400px" Target="#target" ShowCloseIcon="true" Header="@Title" Content="@Body">
         <DialogButtons>
-            <DialogButton Content="Yes" IsPrimary="true" OnClick="(async() => await Depart())" />
-            <DialogButton Content="No" OnClick="(() => { ConfirmIsVisible = false; })" />
+            <DialogButton Content="Да" IsPrimary="true" OnClick="(async() => await Depart())" />
+            <DialogButton Content="Нет" OnClick="(() => { ConfirmIsVisible = false; })" />
         </DialogButtons>
     </SfDialog>
 
@@ -20,30 +20,32 @@
         <div class="row">
 
             <div class="col-xs-6 col-sm-6 col-lg-12 col-md-12">
-                <SfButton Disabled="departingList?.selectedTrain == null" IsPrimary="true" IconCss="e-icons e-depart" OnClick="onPreDepart">Отправить поезд</SfButton>
+                <SfButton Disabled="selectedTrain == null" IsPrimary="true" IconCss="e-icons e-depart" OnClick="onPreDepart">Отправить поезд</SfButton>
 
-                <SfButton Disabled="departingList?.selectedTrain == null" IsPrimary="false" IconCss="e-icons e-tgnl" OnClick="(() => ShowDetails())">Натурный лист</SfButton>
+                <SfButton Disabled="selectedTrain == null" IsPrimary="false" IconCss="e-icons e-tgnl" OnClick="(() => ShowDetails())">Натурный лист</SfButton>
 
-                <SfButton Disabled="departingList?.selectedTrain == null" IsPrimary="false" IconCss="e-icons e-schedule-icon" OnClick="(async () => await onGetDepartureRoute())">Нитка ГДП</SfButton>
+                <SfButton Disabled="selectedTrain == null" IsPrimary="false" IconCss="e-icons e-schedule-icon" OnClick="(async () => await onGetDepartureRoute())">Нитка ГДП</SfButton>
 
-                <SfButton Disabled="departingList?.selectedTrain == null" IsPrimary="false" IconCss="e-icons e-relocate" OnClick="(() => onOpenPath())">Перестановка состава</SfButton>
+                <SfButton Disabled="selectedTrain == null" IsPrimary="false" IconCss="e-icons e-relocate" OnClick="(() => onOpenPath())">Перестановка состава</SfButton>
             </div>
         </div>
         <div class="content-wrapper">
-                <TrainList @ref="departingList" trainList="departingTrains" IsOnStation="true" 
-                AllowEditing="true" TrainParamsUpdated="@TrainParamsUpdated"/> 
+                <TrainList @ref="departingList" trainList="departingTrains" IsOnStation="true" Height="500px"
+                    AllowEditing="true" TrainParamsUpdated="@TrainParamsUpdated"
+                    IsTrainSelected="(() => selectedTrain = departingList?.selectedTrain)"
+                    IsTrainDeselected="(() => selectedTrain = null)" /> 
         </div>
 
-    @if((FormationSheetIsVisible || PathSelectorIsVisible)&& departingList.selectedTrain != null)
+    @if((FormationSheetIsVisible || PathSelectorIsVisible)&& selectedTrain != null)
     {
         <ConfirmModal Title="@Title" DialogClose="onCloseModal" OverlayClick="onCloseModal" Width=@(FormationSheetIsVisible?"870":"550") Height="@(FormationSheetIsVisible?"80%":"180")" OKClick="onOK">
             @if (FormationSheetIsVisible)
             {
-                <FormationSheet trainId="@departingList.selectedTrain.Id"></FormationSheet>
+                <FormationSheet trainId="@selectedTrain.Id"></FormationSheet>
             }
             else if (PathSelectorIsVisible)
             {
-                <PathSelector @ref="pathSelector" selectedTrain="departingList.selectedTrain" isArriving="false" isDeparting="true"></PathSelector>
+                <PathSelector @ref="pathSelector" selectedTrain="selectedTrain" isArriving="false" isDeparting="true"></PathSelector>
             }
         </ConfirmModal>
     }
@@ -60,6 +62,7 @@
 
     PathSelector pathSelector;
     TrainList departingList;
+    private TrainModel selectedTrain { get; set; }
     private List<TrainModel> departingTrains { get; set; }
     private List<PathModel> paths { get; set; }
     private bool TrainListIsVisible { get; set; } = false;
@@ -91,12 +94,7 @@
 
     private void ShowDetails()
     {
-        if (departingList.selectedTrain == null)
-        {
-            NotificationService.SetMessage(TypeNotification.Info, "Выберите поезд из списка");
-            return;
-        }
-        Title = "Натурный лист поезда " + departingList.selectedTrain.Index;
+        Title = "Натурный лист поезда " + selectedTrain.Index;
         TrainListIsVisible = false;
         FormationSheetIsVisible = true;
         StateHasChanged();
@@ -128,7 +126,7 @@
             //departingList.selectedTrain.Path = await StationData.GetPathAsync(pathSelector.PathId);
             try
             {
-                var train = departingList.selectedTrain;
+                var train = selectedTrain;
                 await StationData.RelocateTrain(train.Id, pathSelector.PathId);
                 train.Path = await StationData.GetPathAsync(pathSelector.PathId);
                 departingList.UpdateSelectedRow(train);
@@ -152,7 +150,7 @@
 
     void onOpenPath()
     {
-        var train = departingList.selectedTrain;
+        var train = selectedTrain;
         Title = "Выбор пути отправления " + (train.Num == 0 ? train.Num : train.Index);
         PathSelectorIsVisible = true;
         TrainListIsVisible = false;
@@ -169,7 +167,7 @@
     {
         try
         {
-            var train = departingList.selectedTrain;
+            var train = selectedTrain;
             TrainModel trainModel = await StationData.SetDepartureRoute(train);
             departingList.UpdateSelectedRow(trainModel);
             NotificationService.SetMessage(TypeNotification.Success, $"Для поезда {trainModel.Index} установлен №{trainModel.Num} и время отправления {trainModel.DateOper.ToShortTimeString()}");
@@ -191,7 +189,7 @@
     {
         try
         {
-            TrainModel train = departingList.selectedTrain;
+            TrainModel train = selectedTrain;
             if (train.Num == 0)
             {
                 NotificationService.SetMessage(TypeNotification.Warning, "Не выбрана нитка отправления");

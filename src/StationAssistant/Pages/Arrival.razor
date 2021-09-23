@@ -20,7 +20,7 @@
     </div>
     <div class="content-wrapper">
         <div class="row">
-            <TrainList @ref="arrivingTrainList" trainList="arrivingTrains" IsOnStation="false"
+            <TrainList @ref="arrivingTrainList" trainList="arrivingTrains" IsOnStation="false" Height="230"
                        IsTrainSelected="(() => selectedArrivingTrain = arrivingTrainList.selectedTrain)"
                        IsTrainDeselected="(() => selectedArrivingTrain = null)" />
         </div>
@@ -35,7 +35,7 @@
     </div>
     <div class="content-wrapper">
         <div class="row">
-            <TrainList @ref="arrivedTrainList" trainList="arrivedTrains" IsOnStation="true"
+            <TrainList @ref="arrivedTrainList" trainList="arrivedTrains" IsOnStation="true" Height="230"
                        IsTrainSelected="(() => selectedArrivedTrain = arrivedTrainList.selectedTrain)"
                        IsTrainDeselected="(() => selectedArrivedTrain = null)" />
         </div>
@@ -45,23 +45,21 @@
 
 @if (TrainCompositionVisible)
 {
-    <ConfirmModal Title="@String.Format($"Телеграмма-натурный лист поезда №{selectedArrivingTrain.Num}")"
+    <ConfirmModal Title="@String.Format($"Телеграмма-натурный лист поезда №{selectedTrainModel.Num}")"
               DialogClose="@(() => TrainCompositionVisible = false)"
               OverlayClick="@(() => TrainCompositionVisible = false)"
               OKClick="@(() => TrainCompositionVisible = false)"
               Width="850" Height="80%">
-        <TrainComposition trainModel="selectedArrivingTrain" />
+        <TrainComposition trainModel="selectedTrainModel" />
     </ConfirmModal>
 }
 else if (PathSelectorVisible)
 {
-    var selectedTrainModel = isArriving ? selectedArrivingTrain : selectedArrivedTrain;
-
-    <ConfirmModal Title="@String.Format($"Выбор пути для поезда {selectedTrainModel.Num}")"
+    <ConfirmModal Title="@String.Format($"Путь {(isArriving ? "прибытия" : "")} для поезда №{selectedTrainModel.Num}")"
               DialogClose="@(() => PathSelectorVisible = false)"
               OverlayClick="@(() => PathSelectorVisible = false)"
               OKClick="@(async () => await onPathSelected(pathSelector.PathId))"
-              Width="450" Height="180">
+              Width="450px" Height="180px">
         <PathSelector @ref="pathSelector" selectedTrain="selectedTrainModel" ShowArrivingPathsOnly="isArriving" />
     </ConfirmModal>
 }
@@ -102,10 +100,7 @@ else if (CancelDialogIsVisible)
         {
             // TODO: Run task in parallel
             arrivedTrains = await StationData.GetArrivedTrainsAsync();
-            //#warning Mocking is present!
             arrivingTrains = await GvcDataFetch.GetArrivingTrains();
-            //arrivingTrains = new List<TrainModel>(){ new TrainModel() { CodeOper = "ОПЕР", DateOper = DateTime.Now, Id = Guid.NewGuid(),
-              //  DestinationStation = "161306", FormStation = "160002", Kind = 20, Length = 0, WeightBrutto = 100, Dislocation = "ВТБ", Num = 2020} };
         }
         catch (Exception e)
         {
@@ -148,7 +143,7 @@ else if (CancelDialogIsVisible)
     {
         try
         {
-            selectedTrainModel = await GvcDataFetch.GetTrainInfo(arrivingTrainList.selectedTrain.Id);
+            selectedTrainModel = await GvcDataFetch.GetTrainInfo(selectedArrivingTrain.Id);
             TrainCompositionVisible = true;
         }
         catch (Exception e)
@@ -180,6 +175,7 @@ else if (CancelDialogIsVisible)
 
     void onOpenPathSelector(bool IsArriving)
     {
+        selectedTrainModel = (IsArriving ? selectedArrivingTrain : selectedArrivedTrain);
         isArriving = IsArriving;
         PathSelectorVisible = true;
     }
@@ -206,7 +202,6 @@ else if (CancelDialogIsVisible)
         try
         {
             selectedArrivingTrain.Path = await StationData.GetPathAsync(pathId);
-            //#warning Mocking is present!
             await GvcDataFetch.SendTrainArrivedAsync(selectedArrivingTrain.Id, DateTime.Now);
             await StationData.AddTrainAsync(selectedArrivingTrain.Id, DateTime.Now, selectedArrivingTrain.Path.Id);
             await NotifyArrived(selectedArrivingTrain);
@@ -223,8 +218,6 @@ else if (CancelDialogIsVisible)
             }
             await CancelArrival();
         }
-        await arrivingTrainList.DeselectRow();
-        await arrivedTrainList.DeselectRow();
     }
 
     private async Task CancelArrival()

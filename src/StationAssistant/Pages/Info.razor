@@ -84,7 +84,7 @@ else
 
             StackedColumnChartData data = new StackedColumnChartData()
             {
-                xname = $"{path.Area}№{path.PathNum} ({path.Marks?.Trim()})",
+                xname = path.ToString(),
                 ps = vagonsOnPath.Where(v => v.Kind == 1).Count(),
                 kr = vagonsOnPath.Where(v => v.Kind == 20).Count(),
                 pl = vagonsOnPath.Where(v => v.Kind == 40).Count(),

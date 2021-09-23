@@ -16,5 +16,9 @@ namespace ModelsLibrary
         public string Marks { get; set; }
         public bool AnyTrain { get; set; }
         public int TrainLength { get; set; }
+        public override string ToString()
+        {
+            return $"{ Area }№{ PathNum } ({ Marks?.Trim() })";
+        }
     }
 }

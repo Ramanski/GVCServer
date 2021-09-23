@@ -5,7 +5,7 @@
     var Tools = new List<string>() { "Update", "Cancel" };
 }
 <div id="sfGrid">
-    <SfGrid DataSource="@trainList" @ref="Grid" EnableVirtualization="false" AllowSelection="true" AllowSorting="true" Height="270" Toolbar="@(ShowToolbar?Tools:null)">
+    <SfGrid DataSource="@trainList" @ref="Grid" EnableVirtualization="false" AllowSelection="true" AllowSorting="true" Height="@Height" Toolbar="@(ShowToolbar?Tools:null)">
         <GridEditSettings AllowAdding="true" AllowDeleting="true" AllowEditing="AllowEditing"></GridEditSettings>
         <GridEvents OnLoad="DataBoundHandler" OnDataBound="OnDataBoundHandler" DataBound="DataBoundHandler" OnBeginEdit="()=> { ShowToolbar = true; }" OnActionComplete="ActionCompleted" RowSelected="RecordSelected" RowDeselected="DeselectRow" TValue="TrainModel"></GridEvents>
         <GridColumns>
@@ -37,6 +37,7 @@
     [Parameter] public EventCallback<TrainModel> TrainParamsUpdated { get; set; }
     [Parameter] public EventCallback IsTrainSelected { get; set; }
     [Parameter] public EventCallback IsTrainDeselected { get; set; }
+    [Parameter] public string Height { get; set; } = "95%";
     public TrainModel selectedTrain { get; set; }
     private bool ShowToolbar = false;
     private int selectedRow;
