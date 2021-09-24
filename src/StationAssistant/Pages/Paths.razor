@@ -27,7 +27,7 @@ else
             </tr>
         </table>
     </div>
-    <SfTab @ref="Tab">
+    <SfTab>
         <TabItems>
             @foreach (string area in paths.Select(p => p.Area).Distinct())
             {
@@ -51,20 +51,21 @@ else
                                                         <div class="row">
                                                             @if (path.AnyTrain)
                                                             {
-                                                                <div class="col-2 align-content-start">
-                                                                    <SfButton OnClick="async () => await OnPathSelect(path.Id)">Перестановка</SfButton>
-                                                                </div>
-                                                                <div class="col-2 align-content-start">
-                                                                    <SfButton OnClick="@(() => {NavigationManager.NavigateTo("departure");})">Отправление</SfButton>
-                                                                </div>
-                                                                <div class="col-2">
-                                                                    <SfButton OnClick="(async() => await OnTrainListCall(path.Id))">Натурный лист</SfButton>
+                                                                <div class="col-6 align-content-start">
+                                                                    <SfButton IsPrimary="true" OnClick="@(() => {NavigationManager.NavigateTo("departure");})">
+                                                                        Перейти к отправлению
+                                                                    </SfButton>
+                                                                    <SfButton OnClick="async () => await OnPathSelect(path.Id)">
+                                                                        Переставить состав
+                                                                    </SfButton>
                                                                 </div>
                                                             }
                                                             else if (path.Occupation != 0)
                                                             {
                                                                 <div class="col-2">
-                                                                    <SfButton OnClick="(() => { FormationIsVisible = true; selectedPathItem = path; })">@(path.Sort ? "Накопительная ведомость" : "Ведомость вагонов")</SfButton>
+                                                                    <SfButton OnClick="(() => { FormationIsVisible = true; selectedPathItem = path; })">
+                                                                        @(path.Sort ? "Накопительная ведомость" : "Ведомость вагонов")
+                                                                    </SfButton>
                                                                 </div>
                                                             }
                                                         </div>
@@ -92,31 +93,20 @@ else
     </SfTab>
     @if (PathSelectorVisible)
     {
-        <ConfirmModal Title="Путь перестановки" DialogClose="() => { PathSelectorVisible = false; }" OverlayClick="() => { PathSelectorVisible = false; }" OKClick="(async () => { PathSelectorVisible = false; await OnRelocateTrain(); })" Width="450" Height="180">
+        <ConfirmModal Title="Путь перестановки" Width="450" Height="180"
+                DialogClose="() => { PathSelectorVisible = false; }" 
+                OverlayClick="() => { PathSelectorVisible = false; }" 
+                OKClick="(async () => { PathSelectorVisible = false; await OnRelocateTrain(); })">
             <PathSelector @ref="pathSelector" selectedTrain="targetTrainModel" />
         </ConfirmModal>
     }
-    @if (FormationIsVisible)
+    else if (FormationIsVisible)
     {
-        <ConfirmModal Title="Накопительная ведомость" DialogClose="(() => FormationIsVisible = false)" OverlayClick="(() => FormationIsVisible = false)" OKButtonName="Сформировать" OKClick="OnFormTrain">
+        <ConfirmModal Title="Накопительная ведомость" 
+                DialogClose="(() => FormationIsVisible = false)" 
+                OverlayClick="(() => FormationIsVisible = false)" 
+                OKButtonName="Сформировать" OKClick="OnFormTrain">
             <FormationSheet @ref="formationSheet" path="selectedPathItem" onUpdateVagon="onUpdateVagon"></FormationSheet>
-        </ConfirmModal>
-    }
-    @if (TrainListIsVisible)
-    {
-        <ConfirmModal Title="Натурный лист" DialogClose="(() => TrainListIsVisible = false)" OverlayClick="(() => TrainListIsVisible = false)" OKButtonName="ОК" OKClick="(() => TrainListIsVisible = false)">
-            <SfGrid DataSource="targetTrainModel?.Wagons" EnableVirtualization="false" AllowSorting="true" TValue="WagonModel">
-                <GridColumns>
-                    <GridColumn Field=@nameof(WagonModel.SequenceNum) HeaderText="№" Width="25"></GridColumn>
-                    <GridColumn Field=@nameof(WagonModel.Num) HeaderText="Номер" TextAlign="TextAlign.Left" IsPrimaryKey="true" Width="50"></GridColumn>
-                    <GridColumn Field=@nameof(WagonModel.Kind) HeaderText="Род" Width="40"></GridColumn>
-                    <GridColumn Field=@nameof(WagonModel.Destination) HeaderText="Назначение" Width="60"></GridColumn>
-                    <GridColumn Field=@nameof(WagonModel.Ksob) HeaderText="Собственник" Width="70"></GridColumn>
-                    <GridColumn Field=@nameof(WagonModel.Tvag) HeaderText="Тара" Width="40"></GridColumn>
-                    <GridColumn Field=@nameof(WagonModel.WeightNetto) HeaderText="Вес" Width="40"></GridColumn>
-                    <GridColumn Field=@nameof(WagonModel.Mark) HeaderText="Отметки" Width="60"></GridColumn>
-                </GridColumns>
-            </SfGrid>
         </ConfirmModal>
     }
 }
@@ -145,16 +135,18 @@ else
         margin-left: 10px;
         padding: 0px;
     }
+
+    .row {
+        margin: 0px 15px 5px -5px;
+    }
 </style>
 
 
 @code {
-    SfTab Tab;
     private bool FormationIsVisible = false;
-    private bool TrainListIsVisible = false;
     private bool PathSelectorVisible { get; set; } = false;
     public bool onlySort { get; set; } = false;
-    public bool onlyOccupied { get; set; } = false;
+    public bool onlyOccupied { get; set; } = true;
     bool dataIsLoaded = false;
     SfAccordion Accordion;
     SfProgressBar sfProgress;
@@ -176,13 +168,6 @@ else
         PathSelectorVisible = true;
     }
 
-    [AuthorizeRoles(Role.DSC)]
-    private async Task OnTrainListCall(int pathId)
-    {
-        targetTrainModel = await StationData.GetTrainOnPath(pathId, true);
-        TrainListIsVisible = true;
-    }
-
     private async Task OnFormTrain()
     {
         FormationIsVisible = false;
@@ -194,7 +179,6 @@ else
         try
         {
             byte trainKind = formationSheet.GetSelectedTrainKind();
-            //#warning Mocking FormTrain is present!!!
             await StationData.FormTrain(formationSheet.selectedVagons, trainKind, formationSheet.PFclaimsOn);
             NotificationService.SetMessage(TypeNotification.Success, $"Операция по формированию поезда проведена успешно");
             // TODO: consider using watcher for selectedPathItem

@@ -29,7 +29,9 @@
     <div class="content-wrapper">
         <div class="row">
             <TrainList @ref="arrivingTrainList" trainList="arrivingTrains" IsOnStation="false" Height="230"
-                       IsTrainSelected="(() => selectedArrivingTrain = arrivingTrainList.selectedTrain)"
+                       isVisibleSpinner="arrivingTrains == null"
+                       IsTrainSelected="(async () => { selectedArrivingTrain = arrivingTrainList.selectedTrain; 
+                                                       await arrivedTrainList.ClearSelections(); })"
                        IsTrainDeselected="(() => selectedArrivingTrain = null)" />
         </div>
     </div>
@@ -57,7 +59,9 @@
     <div class="content-wrapper">
         <div class="row">
             <TrainList @ref="arrivedTrainList" trainList="arrivedTrains" IsOnStation="true" Height="230"
-                       IsTrainSelected="(() => selectedArrivedTrain = arrivedTrainList.selectedTrain)"
+                       isVisibleSpinner="arrivedTrains == null"
+                       IsTrainSelected="(async () => { selectedArrivedTrain = arrivedTrainList.selectedTrain; 
+                                                       await arrivingTrainList.ClearSelections(); })"
                        IsTrainDeselected="(() => selectedArrivedTrain = null)" />
         </div>
     </div>
@@ -120,8 +124,8 @@ else if (CancelDialogIsVisible)
         try
         {
             // TODO: Run task in parallel
-            arrivedTrains = await StationData.GetArrivedTrainsAsync();
             arrivingTrains = await GvcDataFetch.GetArrivingTrains();
+            arrivedTrains = await StationData.GetArrivedTrainsAsync();
         }
         catch (Exception e)
         {
@@ -137,11 +141,11 @@ else if (CancelDialogIsVisible)
 
         // TODO: Move to subscribe to service
         hubConnection = new HubConnectionBuilder().WithUrl(NavigationManager.ToAbsoluteUri("/trainshub")).Build();
-        hubConnection.On<string, TrainModel>("TrainArrived", (user, train) =>
+        hubConnection.On<string, TrainModel>("TrainArrived", async (user, train) =>
             {
                 NotificationService.SetMessage(user, $"Поезд {train.Num} прибыл на станцию");
-                arrivingTrainList.DeleteTrain(train);
-                arrivedTrainList.AddTrain(train);
+                await arrivingTrainList.DeleteTrain(train);
+                await arrivedTrainList.AddTrain(train);
             });
         await hubConnection.StartAsync();
     }
@@ -212,6 +216,8 @@ else if (CancelDialogIsVisible)
             }
             await CancelArrival();
         }
+        arrivingTrainList.ClearSelections();
+        arrivedTrainList.ClearSelections();
     }
 
     private async Task CancelArrival()
@@ -222,11 +228,6 @@ else if (CancelDialogIsVisible)
         {
             await GvcDataFetch.CancelMovingOperation(train.Id, ModelsLibrary.Codes.OperationCode.TrainArrival);
             await StationData.DeleteTrainAsync(train.Id);
-            arrivedTrainList.DeleteTrain(train);
-            arrivingTrainList.AddTrain(train);
-            await arrivedTrainList.DeselectRow();
-            await arrivingTrainList.DeselectRow();
-            NotificationService.SetMessage(TypeNotification.Success, $"Операция по отмене прибытия поезда №{train.Num} проведена успешно");
         }
         catch (Exception exception)
         {
@@ -239,6 +240,10 @@ else if (CancelDialogIsVisible)
                 NotificationService.SetMessage(TypeNotification.Error, "Не удалось выполнить отмену прибытия");
             }
         }
+
+        await arrivedTrainList.DeleteTrain(train);
+        await arrivingTrainList.AddTrain(train);
+        NotificationService.SetMessage(TypeNotification.Success, $"Операция по отмене прибытия поезда №{train.Num} проведена успешно");
     }
 
     private async Task Disband()

@@ -5,9 +5,9 @@
     var Tools = new List<string>() { "Update", "Cancel" };
 }
 <div id="sfGrid">
-    <SfGrid DataSource="@trainList" @ref="Grid" EnableVirtualization="false" AllowSelection="true" AllowSorting="true" Height="@Height" Toolbar="@(ShowToolbar?Tools:null)">
+    <SfGrid DataSource="@trainList" @ref="Grid" AllowSelection="true" AllowSorting="true" Height="@Height" Toolbar="@(ShowToolbar?Tools:null)">
         <GridEditSettings AllowAdding="true" AllowDeleting="true" AllowEditing="AllowEditing"></GridEditSettings>
-        <GridEvents OnLoad="DataBoundHandler" OnDataBound="OnDataBoundHandler" DataBound="DataBoundHandler" OnBeginEdit="()=> { ShowToolbar = true; }" OnActionComplete="ActionCompleted" RowSelected="RecordSelected" RowDeselected="DeselectRow" TValue="TrainModel"></GridEvents>
+        <GridEvents OnBeginEdit="()=> { ShowToolbar = true; }" OnActionComplete="ActionCompleted" RowSelected="RecordSelected" RowDeselected="DeselectRow" TValue="TrainModel"></GridEvents>
         <GridColumns>
             <GridColumn Field=@nameof(TrainModel.Num) HeaderText="Номер" TextAlign="TextAlign.Left" Width="10%" AllowEditing="true" ValidationRules="@(new ValidationRules { Number = true, Range = new double[] { 1, 9999 } })"></GridColumn>
             <GridColumn Field=@nameof(TrainModel.Index) IsPrimaryKey="true" HeaderText="Индекс" Width="14%" AllowEditing="false"></GridColumn>
@@ -25,12 +25,11 @@
             }
             <GridColumn Field=@nameof(TrainModel.DateOper) Format="HH:mm" HeaderText="Время" Width="9%" AllowEditing="true" EditType="EditType.DateTimePickerEdit"></GridColumn>
         </GridColumns>
+    <SfSpinner @bind-Visible="@isVisibleSpinner"></SfSpinner>
     </SfGrid>
 </div>
-<SfSpinner @ref="SpinnerObj" Target="#sfGrid"></SfSpinner>
 
 @code {
-    SfSpinner SpinnerObj;
     [Parameter] public List<TrainModel> trainList { get; set; }
     [Parameter] public bool IsOnStation { get; set; } = false;
     [Parameter] public bool AllowEditing { get; set; } = false;
@@ -38,10 +37,12 @@
     [Parameter] public EventCallback IsTrainSelected { get; set; }
     [Parameter] public EventCallback IsTrainDeselected { get; set; }
     [Parameter] public string Height { get; set; } = "95%";
+    [Parameter] public bool isVisibleSpinner { get; set; }
+
+    SfGrid<TrainModel> Grid;
     public TrainModel selectedTrain { get; set; }
     private bool ShowToolbar = false;
     private int selectedRow;
-    SfGrid<TrainModel> Grid;
 
     public async Task RecordSelected(RowSelectEventArgs<TrainModel> args)
     {
@@ -61,16 +62,6 @@
         await IsTrainDeselected.InvokeAsync(null);
     }
 
-    public void OnDataBoundHandler(BeforeDataBoundArgs<TrainModel> args)
-    {
-        SpinnerObj.Show();
-    }
-
-    public void DataBoundHandler(object args)
-    {
-        SpinnerObj.Hide();
-    }
-
     public void ActionCompleted(ActionEventArgs<TrainModel> args)
     {
         if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
@@ -80,19 +71,20 @@
         }
     }
 
-    public void AddTrain(TrainModel train)
+    public async Task AddTrain(TrainModel train)
     {
-        Grid.AddRecord(train);
+        await Grid.AddRecord(train);
+        await Grid.ClearSelection();
     }
 
-    public async Task StateChanged()
+    public async Task ClearSelections()
     {
-        await Grid.CallStateHasChangedAsync();
-        StateHasChanged();
+        await Grid.ClearSelection();
     }
 
-    public void DeleteTrain(TrainModel train)
+    public async Task DeleteTrain(TrainModel train)
     {
-        Grid.DeleteRecord(null, train);
+        await Grid.DeleteRecord(null, train);
+        await Grid.ClearSelection();
     }
 }

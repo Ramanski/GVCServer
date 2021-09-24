@@ -40,6 +40,7 @@
 </div>
 <div class="content-wrapper">
     <TrainList @ref="departingList" trainList="departingTrains" IsOnStation="true" Height="500px"
+               isVisibleSpinner="departingTrains == null"
                AllowEditing="true" TrainParamsUpdated="@TrainParamsUpdated"
                IsTrainSelected="(() => selectedTrain = departingList?.selectedTrain)"
                IsTrainDeselected="(() => selectedTrain = null)" />
@@ -67,7 +68,6 @@ else if (PathSelectorIsVisible)
 
 
 @code {
-
     PathSelector pathSelector;
     TrainList departingList;
 
@@ -77,7 +77,6 @@ else if (PathSelectorIsVisible)
     private bool PathSelectorIsVisible { get; set; } = false;
     private bool TrainCompositionVisible { get; set; } = false;
     private bool ConfirmIsVisible { get; set; } = false;
-    private string Body;
 
     protected override async Task OnInitializedAsync()
     {
@@ -85,16 +84,9 @@ else if (PathSelectorIsVisible)
         {
             departingTrains = await StationData.GetDepartingTrains();
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            if (e is HttpRequestException)
-            {
-                NotificationService.SetMessage(TypeNotification.Warning, e.Message);
-            }
-            else
-            {
-                NotificationService.SetMessage(TypeNotification.Error, $"Не удалось загрузить поезда");
-            }
+            NotificationService.SetMessage(TypeNotification.Error, $"Не удалось загрузить поезда");
         }
     }
 
@@ -154,8 +146,8 @@ else if (PathSelectorIsVisible)
         try
         {
             await StationData.TrainDeparture(selectedTrain.Id);
-            departingList.DeleteTrain(selectedTrain);
             NotificationService.SetMessage(TypeNotification.Success, $"Операция по отправлению поезда №{selectedTrain.Num} проведена успешно");
+            await departingList.DeleteTrain(selectedTrain);
         }
         catch (Exception e)
         {

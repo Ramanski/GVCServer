@@ -156,7 +156,7 @@ namespace StationAssistant.Services
                                                                 .FirstOrDefaultAsync();
             TrainRoute route = await _igvcData.GetNearestScheduleRoute(departureDirectionId, train.TrainKindId);
             train.Num = route.TrainNumber.ToString();
-            train.ScheduleTime = route.DepartureTime; // DateTime.ParseExact(route[1], "M/d/yyyy h:mm:ss tt", System.Globalization.CultureInfo.InvariantCulture);
+            train.ScheduleTime = route.DepartureTime;
             await _context.SaveChangesAsync();
             return _imapper.Map<TrainModel>(train);
         }
@@ -199,7 +199,7 @@ namespace StationAssistant.Services
         {
             List<TrainModel> arrivedTrainModels = new();
             var trains = await _context.Train
-                                        .Where(t => t.FormStation.Equals(_configuration["Auth:StationCode"]))
+                                        //.Where(t => t.FormStation.Equals(_configuration["Auth:StationCode"]))
                                         .ToListAsync();
             foreach (Train train in trains)
             {
