@@ -31,7 +31,7 @@
             <TrainList @ref="arrivingTrainList" trainList="arrivingTrains" IsOnStation="false" Height="230"
                        isVisibleSpinner="arrivingTrains == null"
                        IsTrainSelected="(async () => { selectedArrivingTrain = arrivingTrainList.selectedTrain; 
-                                                       await arrivedTrainList.ClearSelections(); })"
+                                                       await arrivedTrainList.DeselectRows(); })"
                        IsTrainDeselected="(() => selectedArrivingTrain = null)" />
         </div>
     </div>
@@ -61,7 +61,7 @@
             <TrainList @ref="arrivedTrainList" trainList="arrivedTrains" IsOnStation="true" Height="230"
                        isVisibleSpinner="arrivedTrains == null"
                        IsTrainSelected="(async () => { selectedArrivedTrain = arrivedTrainList.selectedTrain; 
-                                                       await arrivingTrainList.ClearSelections(); })"
+                                                       await arrivingTrainList.DeselectRows(); })"
                        IsTrainDeselected="(() => selectedArrivedTrain = null)" />
         </div>
     </div>
@@ -216,8 +216,6 @@ else if (CancelDialogIsVisible)
             }
             await CancelArrival();
         }
-        arrivingTrainList.ClearSelections();
-        arrivedTrainList.ClearSelections();
     }
 
     private async Task CancelArrival()
@@ -253,7 +251,7 @@ else if (CancelDialogIsVisible)
             await GvcDataFetch.SendDisbanding(arrivedTrainList.selectedTrain.Id, DateTime.Now);
             await StationData.DisbandTrain(arrivedTrainList.selectedTrain);
             NotificationService.SetMessage(TypeNotification.Success, $"Операция по расформированию поезда №{arrivedTrainList.selectedTrain.Num} завершена");
-            arrivedTrainList.DeleteTrain(arrivedTrainList.selectedTrain);
+            await arrivedTrainList.DeleteTrain(arrivedTrainList.selectedTrain);
         }
         catch (Exception e)
         {

@@ -60,7 +60,7 @@ namespace StationAssistant.Services
 
         public Task<List<Vagon>> DisbandTrain(TrainModel train);
 
-        public Task FormTrain(List<Vagon> vagons, byte trainKind, bool checkPFclaims);
+        public Task FormTrain(IEnumerable<string> wagonNums, byte trainKind, bool checkPFclaims);
 
         public void CheckPFclaimsAsync(string destination, ref List<Vagon> vagons);
     }
@@ -419,24 +419,28 @@ namespace StationAssistant.Services
             return vagons;
         }
 
-        public async Task FormTrain(List<Vagon> vagons, byte trainKind, bool checkPFclaims = true)
+        public async Task FormTrain(IEnumerable<string> wagonNums, byte trainKind, bool checkPFclaims = true)
         {
-            string destination = vagons[0].PlanForm;
+            List<Vagon> wagons = await _context.Vagon
+                                   .Where(v => wagonNums.Contains(v.Num))
+                                   .ToListAsync();
+
+            string destination = wagons.First().PlanForm;
             byte sequenceNum = 1;
 
             // Проверка требований к составу Плана формирования
             if (checkPFclaims)
             {
-                CheckPFclaimsAsync(destination, ref vagons);
+                CheckPFclaimsAsync(destination, ref wagons);
             }
 
-            foreach (Vagon vagon in vagons)
+            foreach (Vagon wagon in wagons)
             {
-                vagon.SequenceNum = sequenceNum++;
-                vagon.DateOper = DateTime.Now;
+                wagon.SequenceNum = sequenceNum++;
+                wagon.DateOper = DateTime.Now;
             }
 
-            List<WagonModel> wagonModels = _imapper.Map<List<WagonModel>>(vagons);
+            List<WagonModel> wagonModels = _imapper.Map<List<WagonModel>>(wagons);
 
             TrainModel trainModel = new()
             {
@@ -444,16 +448,16 @@ namespace StationAssistant.Services
                 CodeOper = OperationCode.TrainComposition,
                 FormStation = _configuration["Auth:StationCode"],
                 DestinationStation = destination,
-                Length = (short)vagons.Count,
-                WeightBrutto = (short)((vagons.Sum(v => v.Tvag) + vagons.Sum(v => v.WeightNetto)) / 10),
+                Length = (short)wagons.Count,
+                WeightBrutto = (short)(wagons.Sum(v => v.Tvag + v.WeightNetto) / 10),
                 Kind = trainKind,
                 Wagons = wagonModels,
             };
 
             var createdTrainModel = await _igvcData.SendTrainCompositionAsync(trainModel);
             var train = _imapper.Map<Train>(createdTrainModel);
-            train.Path = vagons.First().Path;
-
+            train.Path = wagons.First().Path;
+            train.Vagon = wagons;
 
             _context.Train.Add(train);
             await _context.SaveChangesAsync();

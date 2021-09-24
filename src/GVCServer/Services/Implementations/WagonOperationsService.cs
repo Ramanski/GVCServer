@@ -46,7 +46,7 @@ namespace GVCServer.Repositories
 
             _context.AddRange(newWagOpers);
             var affected = await _context.SaveChangesAsync();
-            _logger.LogInformation($"Saved {affected} of {newWagOpers.Count()} records");
+            _logger.LogInformation($"Saved {affected} of {newWagOpers.Count} records");
         }
         public async Task DisbandWagons(Train train, string station, DateTime timeOper)
         {
@@ -66,7 +66,7 @@ namespace GVCServer.Repositories
             _context.OpVag.AddRange(vagonOperations);
             _logger.LogInformation("Saving operation to wagons", vagonOperations);
             var affected = await _context.SaveChangesAsync();
-            _logger.LogInformation($"Saved {affected} of {vagonOperations.Count()} records");
+            _logger.LogInformation($"Saved {affected} of {vagonOperations.Count} records");
         }
         public async Task AddWagonOperations(Guid trainId, string codeOper, List<string> wagonNums, DateTime timeOper, string station)
         {
@@ -94,7 +94,7 @@ namespace GVCServer.Repositories
             _logger.LogInformation($"Wagon Operations {codeOper} added", wagonOperations);
 
             var affected = await _context.SaveChangesAsync();
-            _logger.LogInformation($"Saved {affected} of {wagonNums.Count()} records");
+            _logger.LogInformation($"Saved {affected} of {wagonNums.Count} records");
         }
         public async Task CorrectComposition(Guid trainId, List<string> newComposition, DateTime timeOper, string station)
         {
@@ -140,7 +140,7 @@ namespace GVCServer.Repositories
         }
         public async Task CheckWagonOperationsToAdd(List<OpVag> newWagOpers, string station)
         {
-            List<RailProcessException> errors = new List<RailProcessException>();
+            List<RailProcessException> errors = new();
             var wagonNums = newWagOpers.Select(nwgo => nwgo.Num).ToArray();
             var lastWagOpers = await _context.OpVag.Where(ov => wagonNums.Contains(ov.Num) && ov.LastOper).ToListAsync();
 
@@ -155,7 +155,7 @@ namespace GVCServer.Repositories
                 string[] notExistingWagons = wagonNums.Except(existingWagons).ToArray();
                 if (notExistingWagons.Length > 0)
                 {
-                    throw  new RailProcessException($"Не найдены вагоны в картотеке БД: {string.Join(',', notExistingWagons)}");
+                    throw  new RailProcessException($"Not found wagons with id: {string.Join(',', notExistingWagons)}");
                 }
             }
 
@@ -164,16 +164,20 @@ namespace GVCServer.Repositories
                 OpVag newWagOper = newWagOpers.Where(nwgo => lastWgOper.Num.Equals(nwgo.Num)).First();
 
                 if (!lastWgOper.Source.Equals(station))
-                    errors.Add(new RailProcessException($"Вагон {lastWgOper.Num} на станции {lastWgOper.Source}"));
+                    errors.Add(new RailProcessException($"Wagon {lastWgOper.Num} on station {lastWgOper.Source}"));
 
                 if (lastWgOper.TrainId != null)
-                    errors.Add(new RailProcessException($"Вагон {lastWgOper.Num} в другом поезде"));
+                    errors.Add(new RailProcessException($"Wagon {lastWgOper.Num} is in other train"));
 
                 if (lastWgOper.DateOper > newWagOper.DateOper)
-                    errors.Add(new RailProcessException($"Для вагона {lastWgOper.Num} после {lastWgOper.DateOper}"));
+                    errors.Add(new RailProcessException($"Wager operation {lastWgOper.Num} is later than {lastWgOper.DateOper}"));
             }
-            if(errors.Any())
+            if (errors.Any())
+            {
+                foreach(var error in errors)
+                    _logger.LogWarning(error.Message);
                 throw new RailProcessException("Ошибки контроля операций с вагонами", new AggregateException(errors));
+            }
 
         }
         public IQueryable<OpVag> GetLastWagonOperationsQuery(Guid trainGuid, bool includeVagonParams)

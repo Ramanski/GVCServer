@@ -60,11 +60,11 @@ namespace StationAssistant.Services
             return comingTrains;
         }
 
-        public async Task<TrainModel> GetTrainInfo(Guid trainId) => await httpService.Get<TrainModel>($"trains/{trainId.ToString()}");
+        public async Task<TrainModel> GetTrainInfo(Guid trainId) => await httpService.Get<TrainModel>($"trains/{trainId}");
 
         public async Task SendTrainArrivedAsync(Guid trainId, DateTime timeArrived)
         {
-            MovingMsg msgArrive = new MovingMsg( OperationCode.TrainArrival, trainId, timeArrived);
+            MovingMsg msgArrive = new(OperationCode.TrainArrival, trainId, timeArrived);
             await httpService.Post<object>($"{trainId}/operations", msgArrive);
         }
 
@@ -82,19 +82,19 @@ namespace StationAssistant.Services
 
         public async Task SendDisbanding(Guid trainId, DateTime timeDisbanded)
         {
-            MovingMsg msgDisbanding = new MovingMsg(OperationCode.TrainDisbanding, trainId, timeDisbanded);
+            MovingMsg msgDisbanding = new (OperationCode.TrainDisbanding, trainId, timeDisbanded);
             await httpService.Post<object>($"{trainId}/operations", msgDisbanding);
         }
 
         public async Task SendDeparting(Guid trainId, DateTime timeDeparted)
         {
-            MovingMsg msgDeparting = new MovingMsg(OperationCode.TrainDeparture, trainId, timeDeparted);
+            MovingMsg msgDeparting = new(OperationCode.TrainDeparture, trainId, timeDeparted);
             await httpService.Post<object>($"{trainId}/operations", msgDeparting);
         }
 
         public async Task<TrainRoute> GetNearestScheduleRoute(int directionId, byte trainKind, int minutesOffset = 30)
         {
-            QueryBuilder query = new QueryBuilder();
+            QueryBuilder query = new();
             query.Add("direction", directionId.ToString());
             query.Add("kind", trainKind.ToString());
             query.Add("minsOffset", minutesOffset.ToString());
@@ -104,7 +104,7 @@ namespace StationAssistant.Services
 
         public async Task<TrainModel> SendTrainCompositionAsync(TrainModel trainModel)
         {
-            ConsistList consistList = new ConsistList(OperationCode.TrainComposition, trainModel, DateTime.Now);
+            ConsistList consistList = new (OperationCode.TrainComposition, trainModel, DateTime.Now);
             return await httpService.Post<TrainModel>("trains", consistList);
         }
     }

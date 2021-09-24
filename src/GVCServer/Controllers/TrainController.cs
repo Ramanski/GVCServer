@@ -16,21 +16,18 @@ namespace GVCServer.Controllers
     public class TrainController : ControllerBase
     {
         private readonly TrainRepository _trainRepository;
-        private string station { get; set; }
-        private readonly ILogger<TrainController> _logger;
+        private string Station { get; set; }
 
-        public TrainController(ILogger<TrainController> logger,
-        TrainRepository trainRepository)
+        public TrainController(TrainRepository trainRepository)
         {
-            _logger = logger;
             _trainRepository = trainRepository;
         }
 
         [HttpGet("coming")]
         public async Task<ActionResult<TrainModel[]>> Get()
         {
-            station = User?.Claims.Where(cl => cl.Type == ClaimTypes.Locality).FirstOrDefault()?.Value;
-            TrainModel[] comingTrains = await _trainRepository.GetComingTrainsAsync(station);
+            Station = User?.Claims.Where(cl => cl.Type == ClaimTypes.Locality).FirstOrDefault()?.Value;
+            TrainModel[] comingTrains = await _trainRepository.GetComingTrainsAsync(Station);
             return (comingTrains.Length == 0) ? NoContent() : comingTrains;
         }
 
@@ -46,18 +43,18 @@ namespace GVCServer.Controllers
                                                                 [FromServices] TrainOperationsService trainOperationsService,
                                                                 [FromServices] WagonOperationsService wagonOperationsService)
         {
-            station = User?.Claims.Where(cl => cl.Type == ClaimTypes.Locality).FirstOrDefault()?.Value;
-            var createdTrain = await _trainRepository.AddTrainAsync(consistList.TrainModel, station);
-            await wagonOperationsService.AttachToTrain(createdTrain, consistList.TrainModel.Wagons, consistList.DatOper, station);
-            await trainOperationsService.CreateTrainAsync(createdTrain.Id, consistList.DatOper, station);
+            Station = User?.Claims.Where(cl => cl.Type == ClaimTypes.Locality).FirstOrDefault()?.Value;
+            var createdTrain = await _trainRepository.AddTrainAsync(consistList.TrainModel, Station);
+            await wagonOperationsService.AttachToTrain(createdTrain, consistList.TrainModel.Wagons, consistList.DatOper, Station);
+            await trainOperationsService.CreateTrainAsync(createdTrain.Id, consistList.DatOper, Station);
             return createdTrain;
         }
 
         [HttpDelete]
         public async Task<IActionResult> CancelTrainCreation(ConsistList cancelMsg)
         {
-            station = User?.Claims.Where(cl => cl.Type == ClaimTypes.Locality).FirstOrDefault()?.Value;
-            await _trainRepository.CancelTrainCreation(cancelMsg.TrainModel.Id, station);
+            Station = User?.Claims.Where(cl => cl.Type == ClaimTypes.Locality).FirstOrDefault()?.Value;
+            await _trainRepository.CancelTrainCreation(cancelMsg.TrainModel.Id, Station);
             return Ok();
         }
 

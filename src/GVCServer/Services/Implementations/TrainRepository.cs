@@ -55,17 +55,19 @@ namespace GVCServer.Repositories
                                                                 .Where(ov => ov.LastOper))
                                           .Where(t => t.Uid == trainId)
                                           .FirstOrDefaultAsync();
+
             if (train.OpTrain.FirstOrDefault().Kop == OperationCode.TrainComposition &&
-               train.OpVag.All(ov => ov.CodeOper == OperationCode.TrainComposition))
+               train.OpVag.All(ov => ov.CodeOper == OperationCode.TrainComposition) &&
+               train.FormStation == station)
             {
                 _context.Remove(train);
                 _logger.LogInformation("Canceling creation of train {0}", train);
                 var affected = await _context.SaveChangesAsync();
-                _logger.LogInformation("Saved {0} of {1} records", affected, train.OpVag.Count() + 2);
+                _logger.LogInformation("Saved {0} of {1} records", affected, train.OpVag.Count + 2);
             }
             else
             {
-                throw new RailProcessException();
+                throw new RailProcessException("Отмена не возможна. Поезд ушел");
             }
         }
         public async Task UpdateTrainParams(TrainModel actualTrainModel)

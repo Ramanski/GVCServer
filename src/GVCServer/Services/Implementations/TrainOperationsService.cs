@@ -48,7 +48,7 @@ namespace GVCServer.Repositories
             if(train == null)
                 throw new RailProcessException($"Указанного поезда не существует");
 
-            OpTrain newOperation = new OpTrain()
+            OpTrain newOperation = new()
             {
                 Datop = timeOper,
                 Kop = operationCode,
@@ -85,7 +85,7 @@ namespace GVCServer.Repositories
 
         public async Task CorrectComposition(Guid trainId, DateTime timeOper, string station)
         {
-            OpTrain correctOperation = new OpTrain()
+            OpTrain correctOperation = new()
             {
                 Datop = timeOper,
                 Kop = OperationCode.CorrectingComposition,
@@ -111,12 +111,12 @@ namespace GVCServer.Repositories
 
             var wagOpers = await _context.OpVag
                                             .Where(ov => ov.TrainId == train.Uid && ov.LastOper)
-                                            .Select(op => new { WeightNetto = op.WeightNetto, WagonNum = op.Num })
+                                            .Select(op => new { op.WeightNetto, WagonNum = op.Num })
                                             .ToListAsync();
             var wagons = wagOpers.Select(wo => wo.WagonNum);
             var taraOverall = await _context.Vagon.Where(w => wagons.Contains(w.Id)).SumAsync(w => w.Tvag);
 
-            train.Length = (short)(wagOpers.Count());
+            train.Length = (short)(wagOpers.Count);
             train.WeightBrutto = (short)(wagOpers.Sum(o => o.WeightNetto) + taraOverall);
 
             _context.Update(train);

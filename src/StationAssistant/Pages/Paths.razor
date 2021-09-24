@@ -171,15 +171,18 @@ else
     private async Task OnFormTrain()
     {
         FormationIsVisible = false;
+
         if (!formationSheet.selectedVagons.Any())
         {
             NotificationService.SetMessage(TypeNotification.Warning, "Не выделено ни одного вагона для формирования поезда");
             return;
         }
+
         try
         {
             byte trainKind = formationSheet.GetSelectedTrainKind();
-            await StationData.FormTrain(formationSheet.selectedVagons, trainKind, formationSheet.PFclaimsOn);
+            var wagonNums = formationSheet.selectedVagons.Select(w => w.Num);
+            await StationData.FormTrain(wagonNums, trainKind, formationSheet.PFclaimsOn);
             NotificationService.SetMessage(TypeNotification.Success, $"Операция по формированию поезда проведена успешно");
             // TODO: consider using watcher for selectedPathItem
             #region

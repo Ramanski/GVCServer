@@ -7,7 +7,7 @@
 <div id="sfGrid">
     <SfGrid DataSource="@trainList" @ref="Grid" AllowSelection="true" AllowSorting="true" Height="@Height" Toolbar="@(ShowToolbar?Tools:null)">
         <GridEditSettings AllowAdding="true" AllowDeleting="true" AllowEditing="AllowEditing"></GridEditSettings>
-        <GridEvents OnBeginEdit="()=> { ShowToolbar = true; }" OnActionComplete="ActionCompleted" RowSelected="RecordSelected" RowDeselected="DeselectRow" TValue="TrainModel"></GridEvents>
+        <GridEvents OnBeginEdit="()=> { ShowToolbar = true; }" OnActionComplete="ActionCompleted" RowSelected="RecordSelected" RowDeselected="DeselectRows" TValue="TrainModel"></GridEvents>
         <GridColumns>
             <GridColumn Field=@nameof(TrainModel.Num) HeaderText="Номер" TextAlign="TextAlign.Left" Width="10%" AllowEditing="true" ValidationRules="@(new ValidationRules { Number = true, Range = new double[] { 1, 9999 } })"></GridColumn>
             <GridColumn Field=@nameof(TrainModel.Index) IsPrimaryKey="true" HeaderText="Индекс" Width="14%" AllowEditing="false"></GridColumn>
@@ -56,8 +56,9 @@
         Grid.UpdateRow(selectedRow, trainModel);
     }
 
-    public async Task DeselectRow()
+    public async Task DeselectRows()
     {
+        await Grid.ClearSelection();
         selectedTrain = null;
         await IsTrainDeselected.InvokeAsync(null);
     }
@@ -74,17 +75,12 @@
     public async Task AddTrain(TrainModel train)
     {
         await Grid.AddRecord(train);
-        await Grid.ClearSelection();
-    }
-
-    public async Task ClearSelections()
-    {
-        await Grid.ClearSelection();
+        await DeselectRows();
     }
 
     public async Task DeleteTrain(TrainModel train)
     {
         await Grid.DeleteRecord(null, train);
-        await Grid.ClearSelection();
+        await DeselectRows();
     }
 }
