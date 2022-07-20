@@ -26,7 +26,7 @@ namespace GvcApiUnitTests
         public async void GetClosestDeparture_ReturnsNextDateTime()
         {
             GuideRepository guideRepository = new(contextMock);
-            TrainRoute closestTrainRoute = await guideRepository.GetClosestDeparture(station:station, trainKind:10, directionId:1);
+            var closestTrainRoute = await guideRepository.GetClosestDeparture(station:station, trainKind:10, directionId:1);
             Assert.Equal(DateTime.Today.AddDays(1), closestTrainRoute.DepartureTime.Date);
         } 
     }
